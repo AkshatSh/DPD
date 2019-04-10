@@ -37,7 +37,7 @@ Explore using grammar information: POS tags, Consitiuency Parse, Dependency Pars
 - Create pipeline for generating labeling functions based on a small amount of labeled examples
 - MVP:
     - Build a dictionary based label function described in MVP of Plan 1.
-    - Identify potential spans using part of speech tags.
+    - Identify potential spans using part of speech tags (for example are all nouns being labeled? are all verbs being labeled? is there some combination of POS tags ADJ + NOUN being labeled?).
 - Stretch Goal: instead of just POS tags, investigate how different parse trees can be used (Constitiuency Parse, Dependency Parse)
 
 #### Plan 3: Using regex/pattern matching
