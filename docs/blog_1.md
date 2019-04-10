@@ -6,10 +6,6 @@ DPD (Data Programming By Demonstration)
 ### list of members:
 Akshat Shrivastava (Advised by Jeffrey Heer and Tongshuang (Sherry) Wu)
 
- - top three project ideas you’re excited about (Data Programming By Demonstration)
- - minimal viable action plan for each with stretch goals
- 
- 
 ### Plans
 
 For this project, We are continuing a research project in interactive machine learning (IML). Previously, we have worked on a system for IML for sequence modeling tasks (NER, Identifying drug reactions, etc.). A core part of this is that users have to hand label training examples (~100) to build a model to identify their sequence class. We hope to extend this, by applying Weak Supervision through Data Programming with Snorkel [1].
