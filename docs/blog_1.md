@@ -57,8 +57,8 @@ Explore mixing language and grammar information (POS tags) to group positive and
     - CONLL [8] PER tag (identifying people)
 - MVP for labeling functions:
     - Build a dictionary based label function described in MVP of Plan 1.
-    - Analyze positive and negative groups to find trends in words through a series of regex matches. For example, if the goal was to identify phrases about service a rule could be: `*waiter*` to identify spans that contain the word *"waiter"*.
-- Stretch Goal: implement a mix of POS tags and words. For example, we could use `ADJ waiter*` to identify spans with an adjective then waiter/waitress.
+    - Analyze positive and negative groups to find trends in words through a series of regex matches. For example, if the goal was to identify phrases about restaurant service, a simple set of rules could be: `*waiter*` and `*waitress*` to identify spans that contain the word *"waiter"*.
+- Stretch Goal: implement a mix of POS tags and words. For example, we could use `ADJ waiter` and `ADJ waitress` to identify spans with an adjective then waiter/waitress.
 
 Most likely, we will implement the pipeline with a mix of the techniques described above.
 
