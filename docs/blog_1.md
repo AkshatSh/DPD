@@ -21,7 +21,11 @@ We have 3 plans on what to focus on in terms of different ways to generate label
 Explore creating labeling functions by checking if the words of a span are similar to already labeled words, through an embedding space.
 
 - Create pipeline for generating labeling functions based on a small amount of labeled examples
-- MVP:
+    - Support an active learning loop of labeling N examples, generating label functions, training model on noisy dataset, and evaluate model, then grabe N more examples so dataset size is (2N) and continue and analyze model performance vs number of labeled examples
+- Run evaluation experiments on
+    - CADEC [7] Adverse Drug Reactions
+    - CONLL [8] PER tag (identifying people)
+- MVP for labeling functions:
     - Take all the positively labeled spans in the sentence and create a dictionary of labeled words
     - use a word embedding space (word2vec, glove, ELMo, BERT) to augment the dictionary with more words
 - Stretch goal: extend this dictionary to account for phrases by using sentence embedding techniques (averaging word embeddings, random encoders [6])
@@ -31,7 +35,11 @@ Explore creating labeling functions by checking if the words of a span are simil
 Explore using grammar information: POS tags, Consitiuency Parse, Dependency Parse to group positive and negative labeled spans of text.
 
 - Create pipeline for generating labeling functions based on a small amount of labeled examples
-- MVP:
+    - Support an active learning loop of labeling N examples, generating label functions, training model on noisy dataset, and evaluate model, then grabe N more examples so dataset size is (2N) and continue and analyze model performance vs number of labeled examples
+- Run evaluation experiments on
+    - CADEC [7] Adverse Drug Reactions
+    - CONLL [8] PER tag (identifying people)
+- MVP for labeling functions:
     - Build a dictionary based label function described in MVP of Plan 1.
     - Identify potential spans using part of speech tags (for example are all nouns being labeled? are all verbs being labeled? is there some combination of POS tags ADJ + NOUN being labeled?).
 - Stretch Goal: instead of just POS tags, investigate how different parse trees can be used (Constitiuency Parse, Dependency Parse)
@@ -41,7 +49,11 @@ Explore using grammar information: POS tags, Consitiuency Parse, Dependency Pars
 Explore mixing language and grammar information (POS tags) to group positive and negative labeled spans of text
 
 - Create pipeline for generating labeling functions based on a small amount of labeled examples
-- MVP:
+    - Support an active learning loop of labeling N examples, generating label functions, training model on noisy dataset, and evaluate model, then grabe N more examples so dataset size is (2N) and continue and analyze model performance vs number of labeled examples
+- Run evaluation experiments on
+    - CADEC [7] Adverse Drug Reactions
+    - CONLL [8] PER tag (identifying people)
+- MVP for labeling functions:
     - Build a dictionary based label function described in MVP of Plan 1.
     - Analyze positive and negative groups to find trends in words through a series of regex matches. For example, if the goal was to identify phrases about service a rule could be: `*waiter*` to identify spans that contain the word *"waiter"*.
 - Stretch Goal: implement a mix of POS tags and words. For example, we could use `ADJ waiter*` to identify spans with an adjective then waiter/waitress.
@@ -60,3 +72,5 @@ Most likely, we will implement the pipeline with a mix of the techniques describ
 4. Snorkel Labeling Functions Workshop: https://www.youtube.com/watch?v=mrIkus844B4
 5. Natural Language Explanation to Labeling Functions (Babble Labble Snorkel): https://arxiv.org/pdf/1805.03818.pdf
 6. Random Encoders for Sentence Embeddings: https://arxiv.org/abs/1901.10444
+7. CADEC Dataset: https://www.ncbi.nlm.nih.gov/pubmed/25817970
+8. CONLL Dataset: https://cogcomp.org/page/resource_view/81
