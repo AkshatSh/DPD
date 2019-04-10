@@ -3,3 +3,4 @@
 ### Blog Posts
 
 - [Blog Post #1](blog_1.md)
+- [Blog Post #2](blog_2.md)
