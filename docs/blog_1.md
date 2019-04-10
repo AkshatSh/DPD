@@ -23,7 +23,7 @@ We have 3 plans on what to focus on in terms of different ways to generate label
 Explore creating labeling functions by checking if the words of a span are similar to already labeled words, through an embedding space.
 
 - Create pipeline for generating labeling functions based on a small amount of labeled examples
-    - Support an active learning loop of labeling N examples, generating label functions, training model on noisy dataset, and evaluate model, then grabe N more examples so dataset size is (2N) and continue and analyze model performance vs number of labeled examples
+    - Support an active learning loop of labeling N examples, generating label functions, training model on noisy dataset, and evaluate model, then grab N more examples so dataset size is (2N) and continue and analyze model performance vs number of labeled examples
 - Run evaluation experiments on
     - CADEC [7] Adverse Drug Reactions
     - CONLL [8] PER tag (identifying people)
@@ -37,7 +37,7 @@ Explore creating labeling functions by checking if the words of a span are simil
 Explore using grammar information: POS tags, Consitiuency Parse, Dependency Parse to group positive and negative labeled spans of text.
 
 - Create pipeline for generating labeling functions based on a small amount of labeled examples
-    - Support an active learning loop of labeling N examples, generating label functions, training model on noisy dataset, and evaluate model, then grabe N more examples so dataset size is (2N) and continue and analyze model performance vs number of labeled examples
+    - Support an active learning loop of labeling N examples, generating label functions, training model on noisy dataset, and evaluate model, then grab N more examples so dataset size is (2N) and continue and analyze model performance vs number of labeled examples
 - Run evaluation experiments on
     - CADEC [7] Adverse Drug Reactions
     - CONLL [8] PER tag (identifying people)
@@ -51,7 +51,7 @@ Explore using grammar information: POS tags, Consitiuency Parse, Dependency Pars
 Explore mixing language and grammar information (POS tags) to group positive and negative labeled spans of text
 
 - Create pipeline for generating labeling functions based on a small amount of labeled examples
-    - Support an active learning loop of labeling N examples, generating label functions, training model on noisy dataset, and evaluate model, then grabe N more examples so dataset size is (2N) and continue and analyze model performance vs number of labeled examples
+    - Support an active learning loop of labeling N examples, generating label functions, training model on noisy dataset, and evaluate model, then grab N more examples so dataset size is (2N) and continue and analyze model performance vs number of labeled examples
 - Run evaluation experiments on
     - CADEC [7] Adverse Drug Reactions
     - CONLL [8] PER tag (identifying people)
