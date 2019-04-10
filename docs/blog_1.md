@@ -16,6 +16,8 @@ Similar work has been done in Snuba/Reef [2] for text classification through bag
 
 We have 3 plans on what to focus on in terms of different ways to generate labeling functions:
 
+*Note **MVP** stands for Minimal Viable action Plan.*
+
 #### Plan 1: Using an embedding space
 
 Explore creating labeling functions by checking if the words of a span are similar to already labeled words, through an embedding space.
