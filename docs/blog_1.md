@@ -26,7 +26,7 @@ Explore creating labeling functions by checking if the words of a span are simil
     - use a word embedding space (word2vec, glove, ELMo, BERT) to augment the dictionary with more words
 - Stretch goal: extend this dictionary to account for phrases by using sentence embedding techniques (averaging word embeddings, random encoders [6])
 
-#### Plan 2: Using parse trees
+#### Plan 2: Using Structural Information
 
 Explore using grammar information: POS tags, Consitiuency Parse, Dependency Parse to group positive and negative labeled spans of text.
 
