@@ -1,9 +1,9 @@
 ## Introduction: First Blog Post
 
-### team name
+### Team Name
 DPD (Data Programming By Demonstration)
 
-### list of members:
+### List of Members:
 Akshat Shrivastava (Advised by Jeffrey Heer and Tongshuang (Sherry) Wu)
 
 ### Plans
