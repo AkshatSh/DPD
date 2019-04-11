@@ -35,7 +35,6 @@ From the previous blog post, we identified 3 directions to go down for generatin
 
 - Could potentially be computational expensive to analyze a tree and group them for every sentence in a dataset
 
-
 #### Regex/Pattern Matching
 
 **Pros**:
