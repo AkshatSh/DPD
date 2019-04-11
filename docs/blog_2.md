@@ -7,38 +7,64 @@ From the previous blog post, we identified 3 directions to go down for generatin
 
 #### Embedding space
 
-**Pros**
+**Pros**:
 
-- Item 1
+- Investigates how contextual embeddings can be used in low resource settings, and what representations can be generalized from them
 
-**Cons**
+- Does not need many computational resources
 
-- Item 1
+- Potentially simple to implement
 
+**Cons**:
+
+- Building out a dictionary may not be innovative
+
+- May be potentially too simplistic
 
 #### Structural information
 
-**Pros**
+**Pros**:
 
-- Item 1
+- More novel
 
-**Cons**
+- Analyzing and grouping structures could be an important step in generating these labeling functions
 
-- Item 1
+**Cons**:
+
+- May not necessairly leverage new things in the NLP domain
+
+- Could potentially be computational expensive to analyze a tree and group them for every sentence in a dataset
 
 
 #### Regex/Pattern Matching
 
-**Pros**
+**Pros**:
 
-- Item 1
+- Mixes some structural information and word information to provide potentially stronger functions
 
-**Cons**
+**Cons**:
 
-- Item 1
+- Could be hard to generalize
+
+- May be quite difficult to explore a rather large combinatorial space
 
 ### Final Plan
 
+With the information from above, we think the best would be to implement a mix of the ideas above. Using an embedding space with a dictionary is a good first step in order to incorporate some domain knowledge, and then investigate how to further use the embedding space or look into structural information depending on initial results.
+
+Current Plan:
+
+1. Build out a generic pipeline, that allows us to iteratively evaluate model performance as a dataset grows.
+
+2. Hard code some functions to use Snorkel for applying the same pipeline to a noisy dataset instead of gold one.
+
+3. Look into building an augmenting a dictionary through the labeled instances in the dataset, and use this to generate the first set of labeling functions
+
+4. Compare this method against baselines (Snuba/Reef, AutoNER)
+
+5. Look into incorporating structural information by analyzing different parse trees and POS tags of the labeled instances, and use this to generate the next set of labeling functions
+
+6. Compare this method against baselines
 
 ### Codebases
 
