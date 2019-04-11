@@ -1,4 +1,4 @@
-#!bin/bash
+#!/bin/bash
 
 # create virtual env
 DIR_ENV="./env"
