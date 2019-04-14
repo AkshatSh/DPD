@@ -4,6 +4,8 @@ from typing import (
     Dict,
 )
 
+from collections import Counter
+
 import torch
 import torchvision.transforms as transforms
 import torch.utils.data as data
@@ -25,8 +27,8 @@ class BIODataset(object):
     def __init__(self, file_name: str):
         self.file_name = file_name
         self.data = []
-        self.word_list = []
-        self.tags = []
+        self.word_list = Counter()
+        self.tags = Counter()
 
     def __len__(self) -> int:
         return len(self.data)
@@ -51,10 +53,9 @@ class BIODataset(object):
                     # seperates each line to 2 different things
                     # [word, tag]
                     word, output = tokens
-                    self.word_list.append(word)
+                    self.word_list[word] += 1
                     currInput.append(word)
 
-                    if output not in self.tags:
-                        self.tags.append(output)
+                    self.tags[output] += 1
                     
                     currOutput.append(output)
