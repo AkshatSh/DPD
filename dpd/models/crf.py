@@ -7,9 +7,6 @@ from .utils import log_sum_exp
 
 from ner import constants
 
-# to ensure replication of results is deterministic
-# torch.manual_seed(1)
-
 class CRF(nn.Module):
     '''
     This model is a BiLSTM CRF for Named Entity Recognition, this involes a Bidirectional 
