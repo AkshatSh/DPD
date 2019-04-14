@@ -1,0 +1,9 @@
+import os
+import sys
+
+# Special Tokens 
+UNKNOWN_TOKEN = '<UNK>'
+START_TOKEN = '<START>'
+END_TOKEN = '<END>'
+PAD_TOKEN = '<PAD>'
+SPECIAL_TOKENS = [UNKNOWN_TOKEN, START_TOKEN, END_TOKEN, PAD_TOKEN]
