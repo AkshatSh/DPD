@@ -51,8 +51,10 @@ class BIODataset(object):
                         # marks the end of a sentence
                         self.data.append(
                             {
+                                'id': len(self.data),
                                 'input': currInput,
                                 'output': currOutput,
+                                'weight': 1.0,
                             }
                         )
                         currInput = []
@@ -73,3 +75,36 @@ class BIODataset(object):
                     self.tags[output] += 1
                     
                     currOutput.append(output)
+
+class ActiveBIODataset(object):
+    def __init__(
+        self,
+        data: List[Tuple[int, List[str], List[str], float]],
+    ):
+        self.data = [
+            {
+                'input': input,
+                'output': output,
+                'id': data_id,
+                'weight': weight,
+            } for data_id, input, output, weight in data
+        ]
+    
+    def __len__(self):
+        return len(self.data)
+
+class UnlabeledBIODataset(object):
+    def __init__(
+        self,
+        bio_data: BIODataset,
+    ):
+        self.data = [
+            {
+                'input': data['input'],
+                'id': data['id'],
+                'weight': data['weight'],
+            } for data in bio_data
+        ]
+    
+    def __len__(self):
+        return len(self.data)
