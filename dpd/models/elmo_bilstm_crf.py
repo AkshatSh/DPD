@@ -9,9 +9,6 @@ from embedder.elmo import FrozenELMo, ELMo
 
 from ner import constants
 
-# to ensure replication of results is deterministic
-# torch.manual_seed(1)
-
 class ELMo_BiLSTM_CRF(CRF):
     '''
     This model is a BiLSTM CRF for Named Entity Recognition, this involes a Bidirectional 
@@ -44,36 +41,6 @@ class ELMo_BiLSTM_CRF(CRF):
         # Project LSTM outputs to the taget set space
         self.tag_projection = nn.Linear(hidden_dim, len(self.tag_set))
 
-
-        # Matrix of transition scores, transitions[i][j] is the cost to transition
-        # to tag[i] from tag[j]
-        self.transitions = nn.Parameter(
-            torch.randn(len(self.tag_set), len(self.tag_set))
-        )
-
-        # very high cost to transition to the start token
-        self.transitions.data[self.tag_set(constants.START_TOKEN), :] = -100000
-
-        # very high cost to transition from the end token
-        self.transitions.data[:, self.tag_set(constants.END_TOKEN)] = -100000
-
-        # very high cost to transition from pading to anything aside from padding 
-        self.transitions.data[:, self.tag_set(constants.PAD_TOKEN)] = -100000
-
-        # very high cost to transition from anything to padding aside from EOS
-        self.transitions.data[self.tag_set(constants.PAD_TOKEN), :] = -100000
-
-        # special cases of earlier
-        self.transitions.data[
-            self.tag_set(constants.PAD_TOKEN), 
-            self.tag_set(constants.PAD_TOKEN)
-        ] = 0
-
-        self.transitions.data[
-            self.tag_set(constants.PAD_TOKEN), 
-            self.tag_set(constants.END_TOKEN)
-        ] = 0
-
         self.hidden = self.init_hidden(batch_size, 'cpu')
     
     def init_hidden(self, batch_size, device):
@@ -96,34 +63,14 @@ class ELMo_BiLSTM_CRF(CRF):
         self.hidden = self.init_hidden(sentence.shape[0], device)
         long_sentence = sentence.long()
 
-        raw_sentence = []
-        if sentence_chars is not None:
-            character_ids = sentence_chars
-        else:
-            for i in range(len(sentence)):
-                curr_sentence = []
-                for j in range(len(sentence[i])):
-                    if sentence[i][j] == 0:
-                        continue
-                    word = self.vocab.get_word(int(sentence[i][j].item()))
-                    curr_sentence.append(word)
-                raw_sentence.append(curr_sentence)
-            character_ids = batch_to_ids(raw_sentence)
-        embeddings = self.elmo(character_ids)
+        embeddings = self.elmo(sentence_chars)
         embeded_sentence = embeddings['elmo_representations'][0]
 
         # embeded_sentence is now (batch_size x max_length x embedding dim)
 
         lstm_output, self.hidden = self.lstm(embeded_sentence, self.hidden)
 
-        # fix graph retention problem
-        self.hidden = (
-            torch.autograd.Variable(self.hidden[0].data, requires_grad=True), 
-            torch.autograd.Variable(self.hidden[1].data, requires_grad=True),
-        )
-
         # lstm output is now (batch_size x max_length x hidden_dim)
-
         features = self.tag_projection(lstm_output)
 
         # features is now (batch_size x max_length x tag_set size)

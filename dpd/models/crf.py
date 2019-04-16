@@ -3,9 +3,11 @@ import torch.autograd as autograd
 import torch.nn as nn
 import torch.optim as optim
 
-from .utils import log_sum_exp
+from dpd import constants
 
-from ner import constants
+def log_sum_exp(x):
+    m = torch.max(x, -1)[0]
+    return m + torch.log(torch.sum(torch.exp(x - m.unsqueeze(-1)), -1))
 
 class CRF(nn.Module):
     '''
