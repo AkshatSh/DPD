@@ -20,12 +20,12 @@ class BIODatasetReader(DatasetReader):
     """
     def __init__(
         self,
-        dataset_constructor = BIODataset,
+        bio_dataset: BIODataset,
         token_indexers: Dict[str, TokenIndexer] = None,
     ) -> None:
         super().__init__(lazy=False)
         self.token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
-        self.dataset_constructor = dataset_constructor
+        self.bio_dataset = bio_dataset
 
     def text_to_instance(self, tokens: List[Token], tags: List[str] = None) -> Instance:
         sentence_field = TextField(tokens, self.token_indexers)
@@ -38,7 +38,6 @@ class BIODatasetReader(DatasetReader):
         return Instance(fields)
 
     def _read(self, file_path: str) -> Iterator[Instance]:
-        self.bio_dataset = self.dataset_constructor(file_path)
         for instance in self.bio_dataset.data:
             sentence = instance['input']
             tags = instance['output']
