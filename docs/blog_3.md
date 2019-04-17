@@ -26,7 +26,7 @@ In particular, we take a look at binary sequence classification problems such as
 ## Minimum Viable Action Plan
 
 1. Build a supervised pipeline for NER and other sequence classification tasks with BIO encoding
-2. Evaluate a benchmark with random sampling to see how this compares against dataset sizes in [1 ... 1000], with a heavy focus on sizes between [1...100]
+2. Evaluate a benchmark with random sampling to see how this compares against dataset sizes in `{1 ... 1000}`, with a heavier focus on sizes between `{1 ... 100}`
 3. Investigate semi/weak supervision (presence of a small annotation set and a noisy set), with the following labeling functions
     1. Every positively annotated word gets stored in a dictionary and is in the noisy set is assumed to be true
         - The labeling function labels words that have already been annotated as positive
