@@ -2,7 +2,7 @@
 
 ## Motivation
 
-One of the biggest bottlenecks in machine learning pipelines is how data hungry they are. There have been various methods to reduce the amount of data needed to train machine learning models such as: transfer learning, active learning, and weak supervision to name a few. This project focuses on combining those 3. The goal being, as a user hand labels a set of instances, we generate a set of labeling functions that learn heuristics about the instances that have been labeled and apply it to the entire corpus, to get additional signal from unlabeled instances. The generic pipeline is described in figure 1.
+One of the biggest bottlenecks in machine learning pipelines is the amount of data necessary to train a model. There have been various methods to reduce the amount of data needed to train machine learning models such as: transfer learning, active learning, and weak supervision to name a few. This project focuses on combining those 3. The goal being, as a user hand labels a set of instances, we generate a set of labeling functions that learn heuristics about the instances that have been labeled and apply it to the entire corpus, to get additional signal from unlabeled instances. The generic pipeline is described in figure 1.
 
 <img src="figures/active_learning_loop.png" alt="active_learining_loop" width="400"/>
 
