@@ -49,7 +49,7 @@ Assuming the minimum viable plan goes as expected, the stretch goals are the fol
 
 ## Methodologies
 
-**Implementation**: We will build our models in PyTorch [12] and potentially using AllenNLP [10]. We will build our system ontop of Snorkel [1]. We will compare our implementation against Snuba/Reef [2] and AutoNER [9], and use Snorkel MeTal (a implementation of Snorkel for GLUE) [11] to help with writing models for sequence classification.
+**Implementation**: We will build our models in PyTorch [12] and using AllenNLP [10]. We will build our system ontop of Snorkel [1]. We will compare our implementation against Snuba/Reef [2] and AutoNER [9], and use Snorkel MeTal (a implementation of Snorkel for GLUE) [11] to help with writing models for sequence classification.
 
 ## Resources
 
