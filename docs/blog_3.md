@@ -8,7 +8,7 @@ One of the biggest bottlenecks in machine learning pipelines is the amount of la
 
 *Figure 1: Description of a generic active learning workflow. (1) end user annotates data, (2) from the annotated data a model is trained, (3) the model is evaluated on the entire corpus, (4) a new query of data for the user to annotated is selected based on some heuristic, then process repeats*
 
-In particular, we take a look at binary sequence classification problems such as NER (named entity recognition). We call our approach DPD (data programming by demonstration) as this is an application of programming by demonstration in the language domain. We build on top of Snorkel [1], a machine learning platform that introduces data programming where users write python functions to label their data, and train models to learn from it. This process is described in figure 2. We follow the traditional active learning pipeline (figure 1), where the training set is iteratively built up and a model is trained on it. During training we not only the use annotated data, but also the annotated instances to generate a set of labeling functions and apply to the unlabeled corpus to hopefully get more signal during training.
+In particular, we take a look at binary sequence classification problems such as NER (named entity recognition). We call our approach DPD (data programming by demonstration) as this is an application of programming by demonstration in the language domain. We build on top of Snorkel [1 Ratner et al. 2017], a machine learning platform that introduces data programming where users write python functions to label their data, and train models to learn from it. This process is described in figure 2. We follow the traditional active learning pipeline (figure 1), where the training set is iteratively built up and a model is trained on it. During training we not only the use annotated data, but also the annotated instances to generate a set of labeling functions and apply to the unlabeled corpus to hopefully get more signal during training.
 
 ![snorkel](figures/snorkel.png)
 
@@ -49,19 +49,19 @@ Assuming the minimum viable plan goes as expected, the stretch goals are the fol
 
 ## Methodologies
 
-**Implementation**: We will build our models in PyTorch [12] and using AllenNLP [10]. We will build our system ontop of Snorkel [1]. We will compare our implementation against Snuba/Reef [2] and AutoNER [9], and use Snorkel MeTal [11] (an implementation of Snorkel for GLUE) to help with the finer grained details of writing models for sequence classification.
+**Implementation**: We will build our models in PyTorch [12 PyTorch] and using AllenNLP [10 Gardner et al. 2018]. We will build our system ontop of Snorkel [1 Ratner et al. 2017]. We will compare our implementation against Snuba/Reef [2 Varma et al. 2018] and AutoNER [9 Shang et al. 2018], and use Snorkel MeTal [11 Hancock et al. 2019] (an implementation of Snorkel for GLUE) to help with the finer grained details of writing models for sequence classification.
 
 ## Resources
 
-**Training Data**: We will evaluate our pipelines on the, CADEC [7] Adverse Drug Reactions tag, and CONLL [8] PER tag (identifying people).
+**Training Data**: We will evaluate our pipelines on the, CADEC [7 Karimi et al. 2015] Adverse Drug Reactions tag, and CONLL [8 Sang et al. 2003] PER tag (identifying people).
 
 **Computational Resources**: The methods we propose do not rely on large amounts of computational resources, single GPU machines or maybe even CPU machines should be sufficient in the proposed project.
 
 **Existing Codebases**:
 
-- Snorkel [1] is a publicily available project (python library) that we intend to use
-- SwellShark [3] is a paper that describes how Snorkel can be applied to sequence classification problems (biomedical NER), and we will follow the pipeline described there
-- AutoNER [9] is released on github, and describes an implementation of a CRF that relies on probabilistic labels (Fuzzy CRF) as compared to gold labels. We will use this implementation in our experiments.
+- Snorkel [1 Ratner et al. 2017] is a publicily available project (python library) that we intend to use
+- SwellShark [3 Alan et al. 2017] is a paper that describes how Snorkel can be applied to sequence classification problems (biomedical NER), and we will follow the pipeline described there
+- AutoNER [9 Shang et al. 2018] is released on github, and describes an implementation of a CRF that relies on probabilistic labels (Fuzzy CRF) as compared to gold labels. We will use this implementation in our experiments.
 
 ## Evaluation
 
@@ -75,7 +75,7 @@ We will evaluate our project through comparing F1 score with amount of annotated
 
 ## Related work
 
-Similar work has been done in Snuba/Reef [2] for text classification through bag of word features, however bag of words is not expressive enough for sequence modeling since context of the words and order of them matters. SwellShark [3] automatically generates a series of labeling functions for Biomedical NER, which is a promising start, however it relies on access to an external knowledge base, a rather limited set of labeling functions, and has been hand tuned for the tasks at hand. We hope to extend this in a more general setting by looking at (1) a more complex DSL by taking into account linguistic features such as (POS, Constituency Parse Trees, Dependency Parses) and (2) no reliance on an external knowledge base (KB). Babble Labble [5], describes a process in which users provide natural language explanations for a label, and labeling functions are generated based off of these descriptions. We will use the insights in this paper to see what features they extracted from explanations and see if they can be generalized, however our pipeline itself will not rely on explanations provided by users.  Lastly, AutoNER [9] relies on no human annotation but the presence of external dictionaries. We hope to rely on a small amount of human annotation as comapred to any external sources such as KB and dictionaries.
+Similar work has been done in Snuba/Reef [2 Varma et al. 2018] for text classification through bag of word features, however bag of words is not expressive enough for sequence modeling since context of the words and order of them matters. SwellShark [3 Alan et al. 2017] automatically generates a series of labeling functions for Biomedical NER, which is a promising start, however it relies on access to an external knowledge base, a rather limited set of labeling functions, and has been hand tuned for the tasks at hand. We hope to extend this in a more general setting by looking at (1) a more complex DSL by taking into account linguistic features such as (POS, Constituency Parse Trees, Dependency Parses) and (2) no reliance on an external knowledge base (KB). Babble Labble [3 Hancock et al. 2018], describes a process in which users provide natural language explanations for a label, and labeling functions are generated based off of these descriptions. We will use the insights in this paper to see what features they extracted from explanations and see if they can be generalized, however our pipeline itself will not rely on explanations provided by users.  Lastly, AutoNER [9 Shang et al. 2018] relies on no human annotation but the presence of external dictionaries. We hope to rely on a small amount of human annotation as comapred to any external sources such as KB and dictionaries.
 
 ## References
 
