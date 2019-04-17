@@ -40,12 +40,12 @@ In particular, we take a look at binary sequence classification problems such as
 
 ### Stretch Goals
 
-1. Assuming the minimum viable plan goes as expected, the stretch goals are the following
-2. Look into POS tags and see if patterns can be drawn there
+Assuming the minimum viable plan goes as expected, the stretch goals are the following
+1. Look into POS tags and see if patterns can be drawn there
    - Labeling functions could check to see if the POS tags match a regex patterns (e.g. `NN*` would refer to any noun phrases).
-3. Look into constituency and dependency parses
+2. Look into constituency and dependency parses
    - Labeling functions could rely on Tree Kernels
-4. Look into a mix of structural and word embedding based methods
+3. Look into a mix of structural and word embedding based methods
 
 ## Methodologies
 
