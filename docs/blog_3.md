@@ -79,15 +79,51 @@ Similar work has been done in Snuba/Reef [2] for text classification through bag
 
 ## References
 
-1. Snorkel Project: https://hazyresearch.github.io/snorkel/
-2. Snorkel Reef/Snuba: http://www.vldb.org/pvldb/vol12/p223-varma.pdf
-3. SwellShark: https://arxiv.org/abs/1704.06360
-4. Snorkel Labeling Functions Workshop: https://www.youtube.com/watch?v=mrIkus844B4
-5. Natural Language Explanation to Labeling Functions (Babble Labble Snorkel): https://arxiv.org/pdf/1805.03818.pdf
-6. Random Encoders for Sentence Embeddings: https://arxiv.org/abs/1901.10444
-7. CADEC Dataset: https://www.ncbi.nlm.nih.gov/pubmed/25817970
-8. CONLL Dataset: https://cogcomp.org/page/resource_view/81
-9. AutoNER: https://github.com/shangjingbo1226/AutoNER
-10. AllenNLP: https://allennlp.org/
-11. Snorkel MeTal: https://github.com/HazyResearch/metal 
-12. PyTorch: https://pytorch.org/
+1. Snorkel: Rapid Training Data Creation with Weak Supervision
+    - Alexander J. Ratner and Stephen H. Bach and Henry R. Ehrenberg and Jason Alan Fries and Sen Wu and Christopher R'e
+    - 2017 VLDB
+    - [Project Website](https://hazyresearch.github.io/snorkel/)
+    - [Paper](https://arxiv.org/abs/1711.10160)
+2. Snorkel Reef/Snuba (Snuba: Automating Weak Supervision to Label Training Data):
+    - Paroma Varma and Christopher R'e
+    - 2018 PVLDB
+    - [Paper](http://www.vldb.org/pvldb/vol12/p223-varma.pdf)
+3. SwellShark: A Generative Model for Biomedical Named Entity Recognition without Labeled Data
+    - Jason Alan Fries and Sen Wu and Alexander J. Ratner and Christopher R'e
+    - 2017 CoRR
+    - [Paper](https://arxiv.org/abs/1704.06360)
+4. Snorkel Labeling Functions Workshop
+    - [youtube.com/watch?v=mrIkus844B4](https://www.youtube.com/watch?v=mrIkus844B4)
+5. Training Classifiers with Natural Language Explanations (Babble Labble Snorkel)
+    - Braden Hancock and Paroma Varma and Stephanie Wang and Martin Bringmann and Percy S. Liang and Christopher R'e
+    - 2018 ACL
+    - [Paper](https://arxiv.org/pdf/1805.03818.pdf)
+6. No Training Required: Exploring Random Encoders for Sentence Classification
+    - John Wieting and Douwe Kiela
+    - 2018 CoRR
+    - [Paper](https://arxiv.org/abs/1901.10444)
+7. Cadec: A corpus of adverse drug event annotation
+    - Sarvnaz Karimi and Alejandro Metke-Jimenez and Madonna Kemp and Chen Wang}
+    - 2015 Journal of biomedical informatics
+    - [Paper](https://www.ncbi.nlm.nih.gov/pubmed/25817970)
+8. CONLL Dataset (Introduction to the CoNLL-2003 Shared Task: Language-Independent Named Entity Recognition)
+    - Erik Tjong Kim Sang and Fien De Meulder
+    - 2003 CoNLL
+    - [Paper](https://arxiv.org/pdf/cs/0306050.pdf)
+    - [Dataset](https://cogcomp.org/page/resource_view/81)
+9. AutoNER
+    - Jingbo Shang and Liyuan Liu and Xiaotao Gu and Xiang Ren and Teng Ren and Jiawei Han
+    - 2018 EMNLP
+    - [Paper](https://arxiv.org/pdf/1809.03599.pdf)
+    - [Github](https://github.com/shangjingbo1226/AutoNER)
+10. AllenNLP
+    - Matt Gardner and Joel Grus and Mark Neumann and Oyvind Tafjord and Pradeep Dasigi and Nelson F. Liu and Matthew E. Peters and Michael Schmitz and Luke S.
+    - 2018 CoRR
+    - [Paper](https://arxiv.org/pdf/1803.07640.pdf)
+    - [Project Website](https://allennlp.org/)
+11. Snorkel MeTal
+    - Braden Hancock, Clara McCreery, Ines Chami, Vincent Chen, Sen Wu, Jared Dunnmon, Paroma Varma, Max Lam, and Chris Ré
+    - 2019
+    - [Blog Post](https://dawn.cs.stanford.edu/2019/03/22/glue/)
+    - [Github](https://github.com/HazyResearch/metal)
+12. PyTorch: [pytorch.org/](https://pytorch.org/)
