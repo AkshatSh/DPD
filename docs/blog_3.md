@@ -2,7 +2,7 @@
 
 ## Motivation
 
-One of the biggest bottlenecks in machine learning pipelines is the amount of data necessary to train a model. There have been various methods to reduce the amount of data needed to train machine learning models such as: transfer learning, active learning, and weak supervision to name a few. This project focuses on combining those 3. The goal being, as a user hand labels a set of instances, we generate a set of labeling functions that learn heuristics about the instances that have been labeled and apply it to the entire corpus, to get additional signal from unlabeled instances. The generic pipeline is described in figure 1.
+One of the biggest bottlenecks in machine learning pipelines is the amount of labeled data necessary to train a model. There have been various methods to reduce the amount of data needed to train machine learning models such as: transfer learning, active learning, and weak supervision to name a few. This project focuses on combining those 3. The goal being, as a user hand labels a set of instances, we generate a set of labeling functions that learn heuristics about the instances that have been labeled and apply it to the entire corpus, to get additional signal from unlabeled instances. The problem setup is we have a large unlabeled corpus of documents and can ask an annotator to provide labels for the documents however there is an associated cost to annotate a document. The goal is to maximize model performance and minimize annotation cost. The generic pipeline is described in figure 1.
 
 <img src="figures/active_learning_loop.png" alt="active_learining_loop" width="400"/>
 
@@ -13,6 +13,15 @@ In particular, we take a look at binary sequence classification problems such as
 ![snorkel](figures/snorkel.png)
 
 *Figure 2: Description of the snorkel pipeline. (1) Users write a set of labeling functions to noisily label their data. (2) A discriminative model is trained based on these labeling functions to produce probabilistic labels for a training set. (3) An end model is trained on these probabilistic labels to be the final classifier*
+
+## Project Objectives
+
+- Understand how natural language processing models can be used in environments with relatively low annotated data
+- Understand what linguistic features are important to gain signal from an unlabeled corpus
+    - Do word embeddings help give better signal than looking for keywords?
+    - Do contextual embeddings give better signal than word embeddings, since sequence classification is heavily dependend on the context that the sequence appears in?
+    - Do POS tags, constituencey parses, and dependency parses provide structural information that gives better signal than just semantic information in the word embedding space?
+- Understand how to best generate labeling functions from a small set of annotated instances
 
 ## Minimum Viable Action Plan
 
