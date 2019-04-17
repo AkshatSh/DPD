@@ -14,7 +14,7 @@ In particular, we take a look at binary sequence classification problems such as
 
 *Figure 2: Description of the snorkel pipeline. (1) Users write a set of labeling functions to noisily label their data. (2) A discriminative model is trained based on these labeling functions to produce probabilistic labels for a training set. (3) An end model is trained on these probabilistic labels to be the final classifier*
 
-## Minimum Viable Plan
+## Minimum Viable Action Plan
 
 1. Build a supervised pipeline for NER and other sequence classification tasks with BIO encoding
 2. Evaluate a benchmark with random sampling to see how this compares against dataset sizes in [1 ... 1000], with a heavy focus on sizes between [1...100]
