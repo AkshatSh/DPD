@@ -16,6 +16,8 @@ In particular, we take a look at binary sequence classification problems such as
     3. Expand the dictionary above with contextual word embeddings to hopefully be more relevant in context
     4. Investigate some structural method (described in stretch goals)
 
+*Note: for each of the described methods above, in dictionary classifiers and structural methods, we will represent each of these as a labeling function and investigate various combinations of the labeling functions*
+
 ### Stretch Goals
 
 1. Assuming the minimum viable plan goes as expected, the stretch goals are the following
