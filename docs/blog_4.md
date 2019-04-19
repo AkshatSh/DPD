@@ -89,7 +89,9 @@ Before using Snorkel or anything fancy for creating a noisy set, this baseline t
 
 #### Weighted Training
 
-This experiment introduces the first noisy set, however during training it may not make sense that training on a noisy label is weighted the same, so for the noisy set I multiplied the loss for a noisy instance by some episilon. Where I varied epsilon to be in `[1, 0.1, 0.01, 0.001, 0]`. Where `1` signifies the noisy set and gold set are weighted the same, `0` should ideally ignore the noisy set as a sanity check this should be the same as the `Active Learning with Random Sampling` method described above.
+This experiment introduces the first noisy set, however during training it may not make sense that training on a noisy label is weighted the same, so for the noisy set I multiplied the loss for a noisy instance by some episilon. Where the intuition would be that the learning rate would be lower by a factor of epsilion for the noisy set since we are not as confident about the labels provided by it.
+
+The epsilon was tested in the range `[1, 0.1, 0.01, 0.001, 0]`. Where `1` signifies the noisy set and gold set are weighted the same, `0` should ideally ignore the noisy set as a sanity check this should be the same as the `Active Learning with Random Sampling` method described above.
 
 
 #### Experiment Results
