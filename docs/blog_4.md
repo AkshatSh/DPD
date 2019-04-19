@@ -8,7 +8,6 @@ As our initial baseline approach we report the performance of the following expe
     - Establish a basline of an active learning method
 3. Creating a noisy set with keyword matching and weighted training
 
-
 ## Model
 
 For the experiments here we use an ELMo word embedding layer that feeds into a bidirectional LSTM and finally has a CRF tagger. It is important to note here that we freeze ELMo and use it as a feature extractor as comapred to fine tuning because this allows us to cache all the ELMo vectors, and gives us a massive improvement in runtime over having to run ELMo for each iteraiton. It has also been noted that for NER, there is not a substantial difference between freezing ELMo and fine tuning [1 Peters et al. 2019].
@@ -94,7 +93,6 @@ This experiment introduces the first noisy set, however during training it may n
 
 The epsilon was tested in the range `[1, 0.1, 0.01, 0.001, 0]`. Where `1` signifies the noisy set and gold set are weighted the same, `0` should ideally ignore the noisy set as a sanity check this should be the same as the `Active Learning with Random Sampling` method described above.
 
-
 #### Experiment Results
 
 The experiment resutls are below, comparing the F1, precission, and recall on the valid set.
@@ -104,7 +102,6 @@ The experiment resutls are below, comparing the F1, precission, and recall on th
 Here we notice, that all the models converge to around the same performance since a training set size of 1000 is almost the entire dataset. The best performing model disregards the noisy set or has a low weight (`0.001`) associated with it.
 
 The main conclusion is that more trials need to be run, because this looks quite noisy to make a conclusion from. However, from what is there we can see that at a dataset size of ~100, there would be roughly ~1000 instances in the unlabeled corpus. Since our 100 labeled instances are much more valuable than our 1100 noisy instances, we would expect that equally weighting these would perform poorly and even a weight of 0.1 seems a bit high, which the experiment data seems to confirm, but again I think this would require some more trials before any hard conclusions are made from it.
-
 
 ## References
 
