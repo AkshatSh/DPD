@@ -26,11 +26,11 @@ As mentioned in earlier blog posts, we will investigate two datasets.
 1. CoNLL 2003: PER tag
     - The task simplifies to identifying mentions of people in text
     - [2 Sang et al. 2003]
-    - Roughly 15000 sentences in the dataset
+    - Roughly 15000 sentences in the train set
 2. CADEC: Adverse Drug Reaction (ADR) tag
     - The task is identifying adverse drug reactions in patient authored drug reviews
     - [3 Karimi et al. 2015]
-    - Roughly 1200 drug reviews in the dataset
+    - Roughly 1000 drug reviews in the train set
 
 We have supervised benchmarks and a random sampling active learning benchmark on both datasets, however for our baseline of keyword matching, we have only experimented with CADEC.
 
@@ -47,6 +47,7 @@ Training Supervised:
 Active Learning Training:
 
 - Increase our dataset in increments of `[1, 5, 10, 25, 50, 100, 200, 400, 400]`
+    - *Note this is how much we increment our dataset size by, the true sizes are `[1, 6, 16, 41, 91, 191, 391, 791, 1191]`, however since there are only 1000 instances in the train set, the last iteration is 1000 instead of 1191.*
 - At each iteration train our model with batch size `1` and `5` epochs
 - Using `SGD` config described below
 
@@ -102,7 +103,7 @@ The experiment resutls are below, comparing the F1, precission, and recall.
 
 Here we notice, that all the models converge to around the same performance since a training set size of 1000 is almost the entire dataset. The best performing model disregards the noisy set or has a low weight (`0.001`) associated with it.
 
-The main conclusion is that more trials need to be run, because this looks quite noisy to make a conclusion from. However, from what is there we can see that at a dataset size of ~100, there would be roughly ~1100 instances in the unlabeled corpus. Since our 100 labeled instances are much more valuable than our 1100 noisy instances, we would expect that equally weighting these would perform poorly and even a weight of 0.1 seems a bit high, which the experiment data seems to confirm, but again I think this would require some more trials before any hard conclusions are made from it.
+The main conclusion is that more trials need to be run, because this looks quite noisy to make a conclusion from. However, from what is there we can see that at a dataset size of ~100, there would be roughly ~1000 instances in the unlabeled corpus. Since our 100 labeled instances are much more valuable than our 1100 noisy instances, we would expect that equally weighting these would perform poorly and even a weight of 0.1 seems a bit high, which the experiment data seems to confirm, but again I think this would require some more trials before any hard conclusions are made from it.
 
 
 ## References
