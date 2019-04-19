@@ -97,7 +97,7 @@ The epsilon was tested in the range `[1, 0.1, 0.01, 0.001, 0]`. Where `1` signif
 
 #### Experiment Results
 
-The experiment resutls are below, comparing the F1, precission, and recall.
+The experiment resutls are below, comparing the F1, precission, and recall on the valid set.
 
 ![experiment_results](figures/weak_keyword_experiment.png)
 
