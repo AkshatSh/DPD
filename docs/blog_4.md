@@ -17,6 +17,8 @@ We also hypothesize this helps during our active learning experiments, since the
 
 ELMo learns a scalar mix representation of all of its layers during fine tuning, since we are not fine tuning, we use the scalar mix parameters from the Ai2 released ELMo model for Named Entity Recognition.
 
+The loss function for the model is the negative log probability of the correct sequence through the forward backward algorithm.
+
 ## Datasets
 
 As mentioned in earlier blog posts, we will investigate two datasets.
@@ -24,9 +26,11 @@ As mentioned in earlier blog posts, we will investigate two datasets.
 1. CoNLL 2003: PER tag
     - The task simplifies to identifying mentions of people in text
     - [2 Sang et al. 2003]
+    - Roughly 15000 sentences in the dataset
 2. CADEC: Adverse Drug Reaction (ADR) tag
     - The task is identifying adverse drug reactions in patient authored drug reviews
     - [3 Karimi et al. 2015]
+    - Roughly 1200 drug reviews in the dataset
 
 We have supervised benchmarks and a random sampling active learning benchmark on both datasets, however for our baseline of keyword matching, we have only experimented with CADEC.
 
@@ -81,13 +85,22 @@ The F1 score of the model on the valid set is reported below
 
 For the sake of this blog post, we only ran a single trial for each of the experiments below, before we do further analysis more will have to be run.
 
-#### Weighted Equally
+Before using Snorkel or anything fancy for creating a noisy set, this baseline takes every positively labeled word, and creates a noisy set by marking every occurence of a word in this set as a postive label and training on the gold set along side the noisy set.
+
+#### Weighted Training
+
+This experiment introduces the first noisy set, however during training it may not make sense that training on a noisy label is weighted the same, so for the noisy set I multiplied the loss for a noisy instance by some episilon. Where I varied epsilon to be in `[1, 0.1, 0.01, 0.001, 0]`. Where `1` signifies the noisy set and gold set are weighted the same, `0` should ideally ignore the noisy set as a sanity check this should be the same as the `Active Learning with Random Sampling` method described above.
 
 
-#### Noisy Set has 0.1 Weight
+#### Experiment Results
 
+The experiment resutls are below, comparing the F1, precission, and recall.
 
-#### Noisy Set has 0.01 Weight
+![experiment_results](figures/weak_keyword_experiment.png)
+
+Here we notice, that all the models converge to around the same performance since a training set size of 1000 is almost the entire dataset. The best performing model disregards the noisy set or has a low weight (`0.001`) associated with it.
+
+The main conclusion is that more trials need to be run, because this looks quite noisy to make a conclusion from. However, from what is there we can see that at a dataset size of ~100, there would be roughly ~1100 instances in the unlabeled corpus. Since our 100 labeled instances are much more valuable than our 1100 noisy instances, we would expect that equally weighting these would perform poorly and even a weight of 0.1 seems a bit high, which the experiment data seems to confirm, but again I think this would require some more trials before any hard conclusions are made from it.
 
 
 ## References
