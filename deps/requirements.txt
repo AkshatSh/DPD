@@ -1,5 +1,6 @@
 alabaster==0.7.12
 allennlp==0.8.3
+altair==2.4.1
 asn1crypto==0.24.0
 atomicwrites==1.3.0
 attrs==19.1.0
@@ -16,16 +17,18 @@ chardet==3.0.4
 Click==7.0
 colorama==0.3.9
 conllu==0.11
+coverage==4.5.3
 cryptography==2.6.1
 cycler==0.10.0
 cymem==2.0.2
 docker==3.7.2
 docker-pycreds==0.4.0
 docutils==0.14
--e git+git@github.com:AkshatSh/DPD.git@6d3c47498901de93d836260cfae7a08ab8336dc5#egg=dpd
+-e git+git@github.com:AkshatSh/DPD.git@6fd515c223be3c1fbff2f12435ab4c01838d731b#egg=dpd
 ecdsa==0.13
 editdistance==0.5.3
 en-core-web-sm==2.1.0
+entrypoints==0.3
 flaky==3.5.3
 Flask==1.0.2
 Flask-Cors==3.0.7
@@ -56,8 +59,10 @@ numpy==1.16.2
 numpydoc==0.8.0
 overrides==1.9
 packaging==19.0
+pandas==0.24.2
 parsimonious==0.8.1
 pbr==5.1.3
+Pillow==6.0.0
 plac==0.9.6
 pluggy==0.9.0
 preshed==2.0.1
@@ -97,7 +102,9 @@ sqlparse==0.3.0
 srsly==0.0.5
 tensorboardX==1.6
 thinc==7.0.4
+toolz==0.9.0
 torch==1.0.1.post2
+torchvision==0.2.2.post3
 tqdm==4.31.1
 Unidecode==1.0.23
 urllib3==1.24.1
