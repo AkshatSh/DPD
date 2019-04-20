@@ -90,7 +90,8 @@ class TestTagF1(unittest.TestCase):
                 predictions_tensor[i, j, vocab.get_token_index(pred_label, namespace='labels')] = 1.
         
         metric(predictions_tensor, gold_tensor)
-        precision, recall, f1 = metric.get_metric()
+        metric_dict = metric.get_metric()
+        precision, recall, f1 = metric_dict['precision'], metric_dict['recall'], metric_dict['f1']
 
         assert metric._true_positives == 2.0
         assert metric._true_negatives == 4.0
@@ -100,11 +101,3 @@ class TestTagF1(unittest.TestCase):
         np.testing.assert_almost_equal(precision, 0.6666666666666666)
         np.testing.assert_almost_equal(recall, 0.666666666)
         np.testing.assert_almost_equal(f1, 0.6666666666666167)
-        
-
-
-
-
-
-
-
