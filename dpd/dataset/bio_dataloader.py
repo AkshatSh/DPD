@@ -33,7 +33,7 @@ class BIODatasetReader(DatasetReader):
         fields = {
             'sentence': sentence_field,
             'dataset_id': IntField(dataset_id),
-            'weight': FloatFIeld(entry_weight),
+            'weight': FloatField(entry_weight),
         }
 
         if tags:
