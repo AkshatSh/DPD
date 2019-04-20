@@ -24,7 +24,6 @@ cymem==2.0.2
 docker==3.7.2
 docker-pycreds==0.4.0
 docutils==0.14
--e git+git@github.com:AkshatSh/DPD.git@6fd515c223be3c1fbff2f12435ab4c01838d731b#egg=dpd
 ecdsa==0.13
 editdistance==0.5.3
 en-core-web-sm==2.1.0
