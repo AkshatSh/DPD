@@ -5,6 +5,7 @@ from overrides import overrides
 import torch
 
 from allennlp.data.fields.field import Field
+from allennlp.common.checks import ConfigurationError
 
 
 class IntField(Field[torch.Tensor]):
@@ -15,6 +16,11 @@ class IntField(Field[torch.Tensor]):
         the number to be stored
     """
     def __init__(self, number: int) -> None:
+        if type(number) != int:
+            raise ConfigurationError(
+                f'Not supported type for IntField: {number}'
+            )
+
         self.number = number
 
     @overrides

@@ -5,6 +5,7 @@ from overrides import overrides
 import torch
 
 from allennlp.data.fields.field import Field
+from allennlp.common.checks import ConfigurationError
 
 
 class FloatField(Field[torch.Tensor]):
@@ -15,6 +16,10 @@ class FloatField(Field[torch.Tensor]):
         the number to be stored
     """
     def __init__(self, number: float) -> None:
+        if type(number) != float:
+            raise ConfigurationError(
+                f'Not supported type for FloatField: {number}'
+            )
         self.number = number
 
     @overrides
@@ -30,10 +35,10 @@ class FloatField(Field[torch.Tensor]):
 
     @overrides
     def empty_field(self):
-        return FloatField(-1)
+        return FloatField(-1.0)
 
     def __str__(self) -> str:
-        return f"IntField with value: ({self.number})."
+        return f"FloatField with value: ({self.number})."
 
     def __eq__(self, other) -> bool:
         if isinstance(other, float):
