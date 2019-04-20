@@ -24,12 +24,13 @@ class BIODataset(object):
     Arguments:
         file_name: the name of the BIO encoded file
     '''
-    def __init__(self, file_name: str, binary_class: str = None):
+    def __init__(self, dataset_id: int, file_name: str, binary_class: str = None):
         self.file_name = file_name
         self.data = []
         self.word_list = Counter()
         self.tags = Counter()
         self.binary_class = binary_class
+        self.dataset_id = dataset_id
 
     def __len__(self) -> int:
         return len(self.data)
@@ -62,7 +63,7 @@ class BIODataset(object):
                 else:
                     tokens = line.split()
                     # there has to be at least 2 things
-                    assert len(tokens) > 2
+                    assert len(tokens) >= 2
 
                     # seperates each line to 2 different things
                     # [word, tag]

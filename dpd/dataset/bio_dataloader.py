@@ -13,6 +13,7 @@ from allennlp.data.token_indexers import TokenIndexer, SingleIdTokenIndexer
 from allennlp.data.tokenizers import Token
 
 from .bio_dataset import BIODataset
+from .fields import IntField, FloatField
 
 class BIODatasetReader(DatasetReader):
     """
@@ -27,13 +28,21 @@ class BIODatasetReader(DatasetReader):
         self.token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
         self.bio_dataset = bio_dataset
 
-    def text_to_instance(self, tokens: List[Token], tags: List[str] = None) -> Instance:
+    def text_to_instance(self, dataset_id: int, tokens: List[Token], tags: List[str] = None, entry_id: int = None, entry_weight: float = 1.0) -> Instance:
         sentence_field = TextField(tokens, self.token_indexers)
-        fields = {"sentence": sentence_field}
+        fields = {
+            'sentence': sentence_field,
+            'dataset_id': IntField(dataset_id),
+            'weight': FloatFIeld(entry_weight),
+        }
 
         if tags:
             label_field = SequenceLabelField(labels=tags, sequence_field=sentence_field)
             fields["labels"] = label_field
+        
+        if entry_id is not None:
+            id_field = IntField(entry_id)
+            fields['entry_id'] = id_field
 
         return Instance(fields)
 
@@ -41,4 +50,6 @@ class BIODatasetReader(DatasetReader):
         for instance in self.bio_dataset.data:
             sentence = instance['input']
             tags = instance['output']
-            yield self.text_to_instance([Token(word) for word in sentence], tags)
+            entry_id = instance['id']
+            entry_weight = instance['weight']
+            yield self.text_to_instance(self.bio_dataset.dataset_id, [Token(word) for word in sentence], tags, entry_id, entry_weight)
