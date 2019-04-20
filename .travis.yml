@@ -1,0 +1,19 @@
+language: python
+python:
+  - "3.7"
+sudo: required
+dist: xenial
+install:
+  - sudo apt-get update
+  - pwd
+  # We do this conditionally because it saves us some downloading if the
+  # version is the same.
+  - bash scripts/setup.sh
+  - source env/bin/activate
+script:
+  # - python -m unittest discover (no need to run twice)
+  - python -m unittest discover
+cache: pip
+cache:
+  directories:
+  - $HOME/.m2
