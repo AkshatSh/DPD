@@ -251,5 +251,5 @@ class CrfTagger(Model):
             else:
                 metrics_to_return.update({
                         x: y for x, y in f1_dict.items() if
-                        "overall" in x})
+                        "f1-measure-overall" in x})
         return metrics_to_return
