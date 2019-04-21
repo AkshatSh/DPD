@@ -24,9 +24,12 @@ from allennlp.predictors import SentenceTaggerPredictor
 
 from dpd.dataset.bio_dataset import BIODataset
 from dpd.dataset.bio_dataloader import BIODatasetReader
+from dpd.training.metrics import TagF1
 from dpd.constants import (
     CONLL2003_TRAIN,
     CONLL2003_VALID,
+    CADEC_TRAIN,
+    CADEC_VALID,
 )
 
 class LstmTagger(Model):
@@ -42,18 +45,31 @@ class LstmTagger(Model):
         self.hidden2tag = torch.nn.Linear(in_features=encoder.get_output_dim(),
                                           out_features=vocab.get_vocab_size('labels'))
         self.accuracy = CategoricalAccuracy()
-        self._f1_metric = SpanBasedF1Measure(
+        # self._f1_metric = TagF1(
+        #     vocab=vocab,
+        #     class_labels=['B-PER', 'I-PER']
+        # )
+
+        self._span_f1 = SpanBasedF1Measure(
             vocab,
             tag_namespace="labels",
             label_encoding="BIO",
         )
+
+        # self._negative_f1_metric = TagF1(
+        #     vocab=vocab,
+        #     class_labels=['O'],
+        # )
 
         self._verbose_metrics = False
 
     def forward(
         self,
         sentence: Dict[str, torch.Tensor],
+        # dataset_id: torch.Tensor,
         labels: torch.Tensor = None,
+        # entry_id: torch.Tensor = None,
+        # weight: torch.Tensor = None,
     ) -> Dict[str, torch.Tensor]:
         mask = get_text_field_mask(sentence)
         embeddings = self.word_embeddings(sentence)
@@ -61,8 +77,10 @@ class LstmTagger(Model):
         tag_logits = self.hidden2tag(encoder_out)
         output = {"tag_logits": tag_logits}
         if labels is not None:
+            accuracy_args = (tag_logits, labels, mask)
             self.accuracy(tag_logits, labels, mask)
-            self._f1_metric(tag_logits, labels, mask)
+            # self._f1_metric(*accuracy_args)
+            self._span_f1(tag_logits, labels, mask)
             output["loss"] = sequence_cross_entropy_with_logits(tag_logits, labels, mask)
 
         return output
@@ -72,15 +90,18 @@ class LstmTagger(Model):
             "accuracy": self.accuracy.get_metric(reset),
         }
 
-        f1_dict = self._f1_metric.get_metric(reset=reset)
+        # f1_dict = self._f1_metric.get_metric(reset=reset)
+        # metrics_to_return.update(f1_dict)
+
+        span_f1_dict = self._span_f1.get_metric(reset=reset)
         if self._verbose_metrics:
-            metrics_to_return.update(f1_dict)
+            metrics_to_return.update(span_f1_dict)
         else:
             metrics_to_return.update({
-                x: y for x, y in f1_dict.items() if
+                x: y for x, y in span_f1_dict.items() if
                 "overall" in x
             })
-        
+
         return metrics_to_return
 
 class CrfLstmTagger(Model):
@@ -98,21 +119,43 @@ class CrfLstmTagger(Model):
             label_encoding='BIO',
             calculate_span_f1=True,
             # constrain_crf_decoding=True,
+            verbose_metrics=False,
+        )
+
+        self._tag_f1_metric = TagF1(
+            vocab=vocab,
+            class_labels=['B-ADR', 'I-ADR']
         )
     
     def forward(
         self,
         sentence: Dict[str, torch.Tensor],
+        dataset_id: torch.Tensor,
+        weight: torch.Tensor,
         labels: torch.Tensor = None,
+        entry_id: torch.Tensor = None,
     ) -> Dict[str, torch.Tensor]:
-        return self.model(tokens=sentence, tags=labels)
+        model_out = self.model(
+            tokens=sentence,
+            tags=labels,
+        )
+
+        if labels is not None:
+            tag_logits = model_out['logits']
+            mask = model_out['mask']
+            self._tag_f1_metric(tag_logits, labels, mask)
+
+        return model_out
     
     def get_metrics(self, reset: bool = False) -> Dict[str, float]:
-        return self.model.get_metrics()
+        metrics = self.model.get_metrics(reset)
+        metrics.update(self._tag_f1_metric.get_metric(reset))
+        return metrics
 
 
-def setup_reader(file_name: str, binary_class: str) -> DatasetReader:
+def setup_reader(d_id: int, file_name: str, binary_class: str) -> DatasetReader:
     bio_dataset = BIODataset(
+        dataset_id=d_id,
         file_name=file_name,
         binary_class=binary_class,
     )
@@ -123,13 +166,13 @@ def setup_reader(file_name: str, binary_class: str) -> DatasetReader:
         bio_dataset=bio_dataset,
     )
 
-train_reader = setup_reader(CONLL2003_TRAIN, 'PER')
-valid_reader = setup_reader(CONLL2003_VALID, 'PER')
+train_reader = setup_reader(0, CADEC_TRAIN, 'ADR')
+valid_reader = setup_reader(1, CADEC_VALID, 'ADR')
 
 train_dataset = train_reader.read(cached_path(CONLL2003_TRAIN))
 validation_dataset = valid_reader.read(cached_path(CONLL2003_VALID))
 
-EMBEDDING_DIM = 300
+EMBEDDING_DIM = 512
 HIDDEN_DIM = 512
 
 vocab = Vocabulary.from_instances(train_dataset + validation_dataset)
@@ -152,8 +195,8 @@ if torch.cuda.is_available():
 else:
     cuda_device = -1
 
-optimizer = optim.SGD(model.parameters(), lr=0.1)
-iterator = BucketIterator(batch_size=2, sorting_keys=[("sentence", "num_tokens")])
+optimizer = optim.SGD(model.parameters(), lr=.01, weight_decay=1e-4)
+iterator = BucketIterator(batch_size=1, sorting_keys=[("sentence", "num_tokens")])
 iterator.index_with(vocab)
 
 
@@ -170,7 +213,3 @@ for i in range(10):
     )
     metrics = trainer.train()
     # print(metrics)
-
-predictor = SentenceTaggerPredictor(model, dataset_reader=reader)
-
-
