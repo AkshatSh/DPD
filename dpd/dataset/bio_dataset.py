@@ -49,7 +49,7 @@ class BIODataset(object):
         return self.data[index]
     
     def __iter__(self) -> Iterator[BIODataEntry]:
-        for item in self.data.__iter__(self):
+        for item in self.data.__iter__():
             yield item
 
     def parse_file(self) -> None:
