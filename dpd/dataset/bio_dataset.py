@@ -2,6 +2,7 @@ from typing import (
     List,
     Tuple,
     Dict,
+    Iteartor,
 )
 
 from collections import Counter
@@ -13,6 +14,8 @@ import os
 import pickle
 import numpy as np
 from tqdm import tqdm
+
+BIODataEntry = Dict[str, object]
 
 class BIODataset(object):
     '''
@@ -41,6 +44,13 @@ class BIODataset(object):
         elif token[2:] != self.binary_class:
             return 'O'
         return token
+    
+    def __getitem__(self, index) -> BIODataEntry:
+        return self.data[index]
+    
+    def __iter__(self) -> Iterator[BIODataEntry]:
+        for item in self.data.__iter__(self):
+            yield item
 
     def parse_file(self) -> None:
         with open(self.file_name) as f:
