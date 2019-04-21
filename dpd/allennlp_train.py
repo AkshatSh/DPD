@@ -34,6 +34,8 @@ from dpd.constants import (
     CADEC_VALID,
 )
 
+from dpd.models.embedder.ner_elmo import NERElmoTokenEmbedder
+
 class LstmTagger(Model):
     def __init__(
         self,
@@ -177,21 +179,16 @@ valid_reader = setup_reader(1, CADEC_VALID, 'ADR')
 train_dataset = train_reader.read(cached_path(CONLL2003_TRAIN))
 validation_dataset = valid_reader.read(cached_path(CONLL2003_VALID))
 
-EMBEDDING_DIM = 512
+EMBEDDING_DIM = 1024
 HIDDEN_DIM = 512
 
 
 # token_embedding = Embedding(num_embeddings=vocab.get_vocab_size('tokens'),
 #                             embedding_dim=EMBEDDING_DIM)
 # word_embeddings = BasicTextFieldEmbedder({"tokens": token_embedding})
-# vocab = Vocabulary.from_instances(train_dataset + validation_dataset)
-vocab = Vocabulary()
-from allennlp.modules.token_embedders import ElmoTokenEmbedder
-#options_file = "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x4096_512_2048cnn_2xhighway/elmo_2x4096_512_2048cnn_2xhighway_options.json"
-weight_file = "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x4096_512_2048cnn_2xhighway/elmo_2x4096_512_2048cnn_2xhighway_weights.hdf5"
-
-elmo_embedder = ElmoTokenEmbedder(options_file, weight_file)
-raise Exception(elmo_embedder.get_output_dim())
+vocab = Vocabulary.from_instances(train_dataset + validation_dataset)
+# vocab = Vocabulary()
+elmo_embedder = NERElmoTokenEmbedder()
 word_embeddings = BasicTextFieldEmbedder({"tokens": elmo_embedder})
 
 lstm = PytorchSeq2SeqWrapper(torch.nn.LSTM(EMBEDDING_DIM, HIDDEN_DIM, bidirectional=True, batch_first=True))
