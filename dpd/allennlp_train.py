@@ -12,7 +12,7 @@ from allennlp.data.token_indexers import TokenIndexer, SingleIdTokenIndexer
 from allennlp.data.token_indexers.elmo_indexer import ELMoTokenCharactersIndexer
 from allennlp.data.tokenizers import Token
 from allennlp.data.vocabulary import Vocabulary
-from allennlp.models import Model, CrfTagger
+from allennlp.models import Model
 from allennlp.modules.text_field_embedders import TextFieldEmbedder, BasicTextFieldEmbedder
 from allennlp.modules.token_embedders import Embedding
 from allennlp.modules.seq2seq_encoders import Seq2SeqEncoder, PytorchSeq2SeqWrapper
@@ -25,6 +25,7 @@ from allennlp.predictors import SentenceTaggerPredictor
 
 from dpd.dataset.bio_dataset import BIODataset
 from dpd.dataset.bio_dataloader import BIODatasetReader
+from dpd.models.allennlp_crf_tagger import CrfTagger
 from dpd.training.metrics import TagF1
 from dpd.constants import (
     CONLL2003_TRAIN,
@@ -123,10 +124,10 @@ class CrfLstmTagger(Model):
             verbose_metrics=False,
         )
 
-        self._tag_f1_metric = TagF1(
-            vocab=vocab,
-            class_labels=['B-ADR', 'I-ADR']
-        )
+        # self._tag_f1_metric = TagF1(
+        #     vocab=vocab,
+        #     class_labels=['B-ADR', 'I-ADR']
+        # )
     
     def forward(
         self,
@@ -141,16 +142,16 @@ class CrfLstmTagger(Model):
             tags=labels,
         )
 
-        if labels is not None:
-            tag_logits = model_out['logits']
-            mask = model_out['mask']
-            self._tag_f1_metric(tag_logits, labels, mask)
+        # if labels is not None:
+        #     tag_logits = model_out['logits']
+        #     mask = model_out['mask']
+        #     self._tag_f1_metric(tag_logits, labels, mask)
 
         return model_out
     
     def get_metrics(self, reset: bool = False) -> Dict[str, float]:
         metrics = self.model.get_metrics(reset)
-        metrics.update(self._tag_f1_metric.get_metric(reset))
+        # metrics.update(self._tag_f1_metric.get_metric(reset))
         return metrics
 
 
@@ -186,10 +187,11 @@ HIDDEN_DIM = 512
 # vocab = Vocabulary.from_instances(train_dataset + validation_dataset)
 vocab = Vocabulary()
 from allennlp.modules.token_embedders import ElmoTokenEmbedder
-options_file = 'https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x1024_128_2048cnn_1xhighway/elmo_2x1024_128_2048cnn_1xhighway_options.json'
-weight_file = 'https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x1024_128_2048cnn_1xhighway/elmo_2x1024_128_2048cnn_1xhighway_weights.hdf5'
+#options_file = "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x4096_512_2048cnn_2xhighway/elmo_2x4096_512_2048cnn_2xhighway_options.json"
+weight_file = "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x4096_512_2048cnn_2xhighway/elmo_2x4096_512_2048cnn_2xhighway_weights.hdf5"
 
 elmo_embedder = ElmoTokenEmbedder(options_file, weight_file)
+raise Exception(elmo_embedder.get_output_dim())
 word_embeddings = BasicTextFieldEmbedder({"tokens": elmo_embedder})
 
 lstm = PytorchSeq2SeqWrapper(torch.nn.LSTM(EMBEDDING_DIM, HIDDEN_DIM, bidirectional=True, batch_first=True))
