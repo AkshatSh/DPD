@@ -164,6 +164,9 @@ def setup_reader(d_id: int, file_name: str, binary_class: str) -> DatasetReader:
 
     return BIODatasetReader(
         bio_dataset=bio_dataset,
+        token_indexer={
+            'tokens': ELMoTokenCharactersIndexer(),
+        }
     )
 
 train_reader = setup_reader(0, CADEC_TRAIN, 'ADR')
@@ -175,11 +178,18 @@ validation_dataset = valid_reader.read(cached_path(CONLL2003_VALID))
 EMBEDDING_DIM = 512
 HIDDEN_DIM = 512
 
-vocab = Vocabulary.from_instances(train_dataset + validation_dataset)
 
-token_embedding = Embedding(num_embeddings=vocab.get_vocab_size('tokens'),
-                            embedding_dim=EMBEDDING_DIM)
-word_embeddings = BasicTextFieldEmbedder({"tokens": token_embedding})
+# token_embedding = Embedding(num_embeddings=vocab.get_vocab_size('tokens'),
+#                             embedding_dim=EMBEDDING_DIM)
+# word_embeddings = BasicTextFieldEmbedder({"tokens": token_embedding})
+# vocab = Vocabulary.from_instances(train_dataset + validation_dataset)
+vocab = Vocabulary()
+from allennlp.modules.token_embedders import ElmoTokenEmbedder
+options_file = 'https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x1024_128_2048cnn_1xhighway/elmo_2x1024_128_2048cnn_1xhighway_options.json'
+weight_file = 'https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x1024_128_2048cnn_1xhighway/elmo_2x1024_128_2048cnn_1xhighway_weights.hdf5'
+
+elmo_embedder = ElmoTokenEmbedder(options_file, weight_file)
+word_embeddings = BasicTextFieldEmbedder({"tokens": elmo_embedder})
 
 lstm = PytorchSeq2SeqWrapper(torch.nn.LSTM(EMBEDDING_DIM, HIDDEN_DIM, bidirectional=True, batch_first=True))
 
