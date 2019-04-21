@@ -5,6 +5,9 @@ from typing import (
     Iterator,
 )
 
+from dpd.constants import STOP_WORDS
+import string
+
 def remove_bio(tag: str) -> str:
     '''
     input:
@@ -17,13 +20,12 @@ def remove_bio(tag: str) -> str:
         return tag[2:]
     return tag
 
-def get_words(sentence: List[str], tags: List[str], tag: str) -> List[str]:
+def get_words(sentence: List[str], tags: List[str], bin_tag: str) -> List[str]:
     output = []
     for word, tag in zip(sentence, tags):
         r_tag = remove_bio(tag)
-        if word in STOP_WORDS or r_tag != tag:
+        if word in STOP_WORDS or r_tag != bin_tag or word in string.punctuation:
             continue
-        
         output.append(word)
     return output
 
