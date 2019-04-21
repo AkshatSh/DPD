@@ -2,7 +2,7 @@ from typing import (
     List,
     Tuple,
     Dict,
-    Iteartor,
+    Iterator,
 )
 
 from collections import Counter
