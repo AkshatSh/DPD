@@ -238,7 +238,8 @@ class CrfTagger(Model):
     def get_metrics(self, reset: bool = False) -> Dict[str, float]:
         metrics_to_return = {metric_name: metric.get_metric(reset) for
                              metric_name, metric in self.metrics.items()}
-        metrics_to_return.update(self._tag_f1_metric.get_metric(reset))
+    
+        metrics_to_return.update({'f1': self._tag_f1_metric.get_metric(reset)['f1']})
 
         if self.calculate_span_f1:
             f1_dict = self._f1_metric.get_metric(reset=reset)
