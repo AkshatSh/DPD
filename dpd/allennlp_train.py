@@ -165,7 +165,7 @@ def setup_reader(d_id: int, file_name: str, binary_class: str) -> DatasetReader:
 
     return BIODatasetReader(
         bio_dataset=bio_dataset,
-        token_indexer={
+        token_indexers={
             'tokens': ELMoTokenCharactersIndexer(),
         }
     )
