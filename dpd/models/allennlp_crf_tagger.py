@@ -13,7 +13,7 @@ from allennlp.models.model import Model
 from allennlp.nn import InitializerApplicator, RegularizerApplicator
 import allennlp.nn.util as util
 from allennlp.training.metrics import CategoricalAccuracy, SpanBasedF1Measure
-from dpd.training.metrics import TagF1
+from dpd.training.metrics import TagF1, AverageTagF1
 
 class CrfTagger(Model):
     """
@@ -131,6 +131,7 @@ class CrfTagger(Model):
                                                  tag_namespace=label_namespace,
                                                  label_encoding=label_encoding)
             self._tag_f1_metric = TagF1(vocab, class_labels=['B-ADR', 'I-ADR'])
+            self._average_f1_metric = AverageTagF1(vocab, class_labels=['B-ADR', 'I-ADR'])
 
         check_dimensions_match(text_field_embedder.get_output_dim(), encoder.get_input_dim(),
                                "text field embedding dim", "encoder input dim")
@@ -215,6 +216,7 @@ class CrfTagger(Model):
             if self.calculate_span_f1:
                 self._f1_metric(class_probabilities, tags, mask.float())
                 self._tag_f1_metric(class_probabilities, tags, mask.float())
+                self._average_f1_metric(class_probabilities, tags, mask.float())
         if metadata is not None:
             output["words"] = [x["words"] for x in metadata]
         return output
@@ -240,6 +242,7 @@ class CrfTagger(Model):
                              metric_name, metric in self.metrics.items()}
     
         metrics_to_return.update({'f1': self._tag_f1_metric.get_metric(reset)['f1']})
+        metrics_to_return.update({'a_f1': self._average_f1_metric.get_metric(reset)['Af1']})
 
         if self.calculate_span_f1:
             f1_dict = self._f1_metric.get_metric(reset=reset)
