@@ -38,6 +38,7 @@ class NERElmoTokenEmbedder(TokenEmbedder):
         The ELMo representations for the input sequence, shape
         ``(batch_size, timesteps, embedding_dim)``
         """
-        elmo_output = self._elmo(inputs)
-        elmo_representations = elmo_output['elmo_representations'][0]
+        with torch.no_grad():
+            elmo_output = self._elmo(inputs)
+            elmo_representations = elmo_output['elmo_representations'][0]
         return elmo_representations
