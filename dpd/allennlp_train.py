@@ -9,6 +9,7 @@ from allennlp.data.fields import TextField, SequenceLabelField
 from allennlp.data.dataset_readers import DatasetReader
 from allennlp.common.file_utils import cached_path
 from allennlp.data.token_indexers import TokenIndexer, SingleIdTokenIndexer
+from allennlp.data.token_indexers.elmo_indexer import ELMoTokenCharactersIndexer
 from allennlp.data.tokenizers import Token
 from allennlp.data.vocabulary import Vocabulary
 from allennlp.models import Model, CrfTagger
