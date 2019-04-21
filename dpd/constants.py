@@ -1,5 +1,8 @@
 import os
 import sys
+import nltk
+from nltk.corpus import stopwords 
+STOP_WORDS = set(stopwords.words('english'))
 
 # Special Tokens 
 UNKNOWN_TOKEN = '<UNK>'
