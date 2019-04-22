@@ -6,4 +6,4 @@
 - [Blog Post #2](blog_2.md)
 - [Project Proposal (Blog Post #3)](blog_3.md)
 - [Baselines (Blog Post #4)](blog_4.md)
-- [More Baselines and Analysis](blog_5.md)
+- [More Baselines and Analysis (Blog Post #5)](blog_5.md)
