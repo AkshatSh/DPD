@@ -76,7 +76,11 @@ Similar to the approach above we attempt to the same algorithm except replacing 
 
 ## Performance Report
 
-### Sampled Dictionaries
+In this section we report the performance of the various baselines we tested.
+
+### Augmented Dictionary Top 10 items
+
+We ran an experiment where we randomly sample 50 instances from our CADEC training set. We then get all the positvely labeled words from our dataset, and create a "dictionary". We then augment this dictionary through one of the various baseline implementations described above. The top 10 words in each augmented set (does not include words already positively labeled) is shown below.
 
 | **kNN**      | **Logistic Regression** | **SVM: Linear** | **SVM: RBF**  | **SVM: Quadratic** |
 |-----------|---------------------|-------------|-----------|----------------|
@@ -91,7 +95,7 @@ Similar to the approach above we attempt to the same algorithm except replacing 
 | worried   | lethargy            | slurred     | vomiting  | sore           |
 | lips      | blisters            | coughing    | aches     | aching         |
 
-### Augmented Dictionary Top 10 items
+Here we can see that using a linear model to predict similar words is working much better than kNN.
 
 ### Active Learning Graphs
 
