@@ -78,9 +78,18 @@ Similar to the approach above we attempt to the same algorithm except replacing 
 
 ### Sampled Dictionaries
 
-| kNN                                                                                                         | Logistic Regression                                                                                                        | SVM: Linear                                                                                                           | SVM: RBF                                                                                                              | SVM: Quadratic                                                                                                   |
-|-------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| [ 'ankle', 'vomiting', 'shortness', 'groin', 'anxiety', 'hamstring', 'elbow', 'maybe', 'worried', 'lips', ] | [ 'numbness', 'rashes', 'dizziness', 'protruding', 'bruised', 'irritability', 'itchy', 'swollen', 'lethargy', 'blisters' ] | [ 'numbness', 'dizziness', 'rashes',  'blisters', 'faint', 'itching', 'bruised', 'tingling', 'slurred', 'coughing', ] | [ 'numbness',  'dizziness', 'rashes', 'blisters', 'nausea', 'cramps', 'cramping', 'twitching', 'vomiting', 'aches', ] | [ 'dizziness', 'nausea', 'numbness', 'headaches', 'vomiting', 'cramps', 'aches', 'cramping', 'sore', 'aching', ] |
+| **kNN**      | **Logistic Regression** | **SVM: Linear** | **SVM: RBF**  | **SVM: Quadratic** |
+|-----------|---------------------|-------------|-----------|----------------|
+| ankle     | numbness            | numbness    | numbness  | dizziness      |
+| vomiting  | rashes              | dizziness   | dizziness | nausea         |
+| shortness | dizziness           | rashes      | rashes    | numbness       |
+| groin     | protruding          | blisters    | blisters  | headaches      |
+| anxiety   | bruised             | faint       | nausea    | vomiting       |
+| hamstring | irritability        | itching     | cramps    | cramps         |
+| elbow     | itchy               | bruised     | craming   | aches          |
+| maybe     | swollen             | tingling    | twitching | cramping       |
+| worried   | lethargy            | slurred     | vomiting  | sore           |
+| lips      | blisters            | coughing    | aches     | aching         |
 
 ### Augmented Dictionary Top 10 items
 
