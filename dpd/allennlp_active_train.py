@@ -5,25 +5,34 @@ from typing import (
     Callable,
 )
 
+import os
 import argparse
 
+import torch
+from torch import optim
 
 from allennlp.models import Model
 from allennlp.data.vocabulary import Vocabulary
+from allennlp.data import DatasetReader
+from allennlp.data.token_indexers.elmo_indexer import ELMoTokenCharactersIndexer
+from allennlp.data.iterators import BucketIterator
+from allennlp.training.trainer import Trainer
 
-from dpd.dataset.bio_dataset import (
+from dpd.dataset import (
     ActiveBIODataset,
     BIODataset,
+    BIODatasetReader,
     UnlabeledBIODataset,
 )
 
 from dpd.utils import (
     get_dataset_files,
+    Logger,
 )
 
 from dpd.models import build_model
-from dpd.dataset.bio_dataloader import BIODatasetReader
-from dpd.oracles import GoldOracle
+from dpd.oracles import Oracle, GoldOracle
+from dpd.heuristics import RandomHeuristic
 
 # type definitions
 
@@ -34,27 +43,33 @@ EntryDataType:
  List[str] (output)
  float (weight)
 '''
-EntryDataType = Tuple[int, List[str], List[str], float]
+EntryDataType = Dict[str, object]
 DatasetType = List[EntryDataType]
 MetricsType = Dict[str, object]
 
 def train(
     model: Model,
+    binary_class: str,
     train_data: DatasetType,
-    test_data: DatasetType,
+    valid_reader: DatasetReader,
     vocab: Vocabulary,
     optimizer_type: str,
     optimizer_learning_rate: float,
+    optimizer_weight_decay: float,
     batch_size: int,
     patience: int,
     num_epochs: int,
     device: str,
 ) -> Tuple[Model, MetricsType]:
-    train_reader = BIODatasetReader(ActiveBIODataset(train_data))
-    test_reader = BIODatasetReader(ActiveBIODataset(test_data))
+    train_reader = BIODatasetReader(
+        ActiveBIODataset(train_data, dataset_id=0, binary_class=binary_class),
+        token_indexers={
+            'tokens': ELMoTokenCharactersIndexer(),
+        },
+    )
 
     train_dataset = train_reader.read('tmp.txt')
-    test_dataset = valid_reader.read('tmp.txt')
+    valid_dataset = valid_reader.read('tmp.txt')
 
     cuda_device = -1
 
@@ -67,6 +82,7 @@ def train(
     optimizer = optim.SGD(
         model.parameters(),
         lr=optimizer_learning_rate,
+        weight_decay=optimizer_weight_decay,
     )
 
     iterator = BucketIterator(
@@ -81,22 +97,35 @@ def train(
         optimizer=optimizer,
         iterator=iterator,
         train_dataset=train_dataset,
-        validation_dataset=test_dataset,
+        validation_dataset=valid_dataset,
         patience=patience,
         num_epochs=num_epochs,
         cuda_device=cuda_device,
     )
     metrics = trainer.train()
 
-    # TODO(akshats): Log some metrics
-
     return model, metrics
+
+def log_train_metrics(
+    logger: Logger,
+    metrics: MetricsType,
+    step: int,
+):
+    logger.scalar_summary(tag='al/valid/average_f1', value=metrics['best_validation_a_f1'], step=step)
+    logger.scalar_summary(tag='al/valid/span_f1', value=metrics['best_validation_f1-measure-overall'], step=step)
+    logger.scalar_summary(tag='al/valid/tag_f1', value=metrics['best_validation_f1'], step=step)
+    logger.scalar_summary(tag='al/valid/accuracy', value=metrics['best_validation_accuracy'], step=step)
+    logger.scalar_summary(tag='al/train/average_f1', value=metrics['training_a_f1'], step=step)
+    logger.scalar_summary(tag='al/train/span_f1', value=metrics['trainig_f1-measure-overall'], step=step)
+    logger.scalar_summary(tag='al/train/tag_f1', value=metrics['training_f1'], step=step)
+    logger.scalar_summary(tag='al/train/accuracy', value=metrics['training_accuracy'], step=step)
 
 
 def active_train(
     model: Model,
     unlabeled_dataset: UnlabeledBIODataset,
     valid_dataset: BIODataset,
+    vocab: Vocabulary,
     oracle: Oracle,
     optimizer_type: str,
     optimizer_learning_rate: float,
@@ -105,42 +134,62 @@ def active_train(
     patience: int,
     num_epochs: int,
     device: str,
+    log_dir: str,
+    model_name: str,
 ) -> Model:
+    heuristic = RandomHeuristic()
+
+    log_dir = os.path.join(log_dir, model_name)
+    logger = Logger(logdir=log_dir)
+
+    # keep track of all the ids that have been
+    # labeled
+    labeled_indexes: List[int] = []
+
+    # the current training data that is being built up
+    train_data: DatasetType = []
+
+    valid_reader = BIODatasetReader(
+        bio_dataset=valid_dataset,
+        token_indexers={
+            'tokens': ELMoTokenCharactersIndexer(),
+        },
+    )
 
     oracle_samples = [1, 5, 10, 25, 50, 100, 200, 400, 400]
-    for i, sample_size in enumerate(iteration_samples):
+    for i, sample_size in enumerate(oracle_samples):
         # select new points from distribution
-        # TODO: implement heuristics
-        distribution = heuritic.evaluate(model, unlabeled_dataset, device)
+        distribution = heuristic.evaluate(unlabeled_dataset)
         new_points = []
         sample_size = min(sample_size, len(distribution) - 1)
         new_points = torch.multinomial(distribution, sample_size)
         new_points = new_points[:sample_size]
 
-
         # use new points to augment train_dataset
         # remove points from unlabaled corpus
         query = [
-            unlabeled_dataset.data[ind]
-            for ind in new_points
+            (
+                unlabeled_dataset[ind]['id'],
+                unlabeled_dataset[ind]['input'],
+            ) for ind in new_points
         ]
 
         labeled_indexes.extend(
             ind for (ind, _) in query
         )
 
-        # adds a weight
-        outputs = [oracle.get_label(q) + (1.0,) for q in query]
+        oracle_labels = [oracle.get_query(q) for q in query]
+        train_data.extend(oracle_labels)
 
-        # move unlabeled points to labeled points
+        # remove unlabeled data points from corpus
         [unlabeled_dataset.remove(q) for q in query]
 
         # TODO: build weak_set
-        # TODO: train model
         model, metrics = train(
             model=model,
+            binary_class=unlabeled_dataset.binary_class,
             train_data=train_data,
-            test_data=test_data,
+            valid_reader=valid_reader,
             vocab=vocab,
             optimizer_type=optimizer_type,
             optimizer_learning_rate=optimizer_learning_rate,
@@ -151,17 +200,8 @@ def active_train(
             device=device,
         )
 
-        # gather some metrics
-        f1_data, acc = utils.compute_f1_dataloader(model, test_data_loader, tag_vocab, device=device)
-        f1_avg_valid = utils.compute_avg_f1(f1_data)
+        log_train_metrics(logger, metrics)
 
-        # TODO(akshats): implement logger
-        # log valid metics
-        logger.scalar_summary("active valid f1", f1_avg_valid, len(train_data))
-        logger.scalar_summary("active valid accuracy", acc, len(train_data))
-        utils.log_metrics(logger, f1_data, "active valid", len(train_data))
-
-        # TODO(akshats): use logger
         print(f'Finished experiment on training set size: {len(train_data)}')
 
 def get_args() -> argparse.ArgumentParser:
@@ -174,10 +214,16 @@ def get_args() -> argparse.ArgumentParser:
     '''
     parser = argparse.ArgumentParser(description='Build an active learning iterative pipeline')
 
-    parser.add_argument('--dataset', type=str, default='CONLL', help='the dataset to use {CONLL, CADEC}')
-    parser.add_argument('--binary_class', type=str, default=None, help='the binary class to use for the dataset')
+    # Active Learning Pipeline Parameters
+    parser.add_argument('--log_dir', type=str, default='logs/', help='the directory to log into')
+    parser.add_argument('--model_name', type=str, default='active_learning_model', help='the name to give the model')
+
+    # dataset parameters
+    parser.add_argument('--dataset', type=str, default='CADEC', help='the dataset to use {CONLL, CADEC}')
+    parser.add_argument('--binary_class', type=str, default='ADR', help='the binary class to use for the dataset')
 
     # hyper parameters
+    parser.add_argument('--model_type', type=str, default='ELMo_bilstm_crf', help='the model type to use')
     parser.add_argument('--hidden_dim', type=int, default=512, help='the hidden dimensions for the model')
 
     # optimizer config
@@ -200,12 +246,30 @@ def construct_f1_class_labels(class_label: str) -> List[str]:
     prefix = ['B', 'I']
     return [f'{p}-{class_label}' for p in prefix]
 
+def construct_vocab(datasets: List[BIODataset]) -> Vocabulary:
+    readers = [BIODatasetReader(
+        bio_dataset=bio_dataset,
+        token_indexers={
+            'tokens': ELMoTokenCharactersIndexer(),
+        },
+    ) for bio_dataset in datasets]
+
+    allennlp_datasets = [r.read('tmp.txt') for r in readers]
+
+    result = allennlp_datasets[0]
+    for i in range(1, len(allennlp_datasets)):
+        result += allennlp_datasets[i]
+
+    vocab = Vocabulary.from_instances(result)
+
+    return vocab
+
 def main():
     args = get_args().parse_args()
 
     device = 'cuda' if torch.cuda.is_available() and args.cuda else 'cpu'
 
-    train_file: str, valid_file: str = get_dataset_files(dataset=args.dataset)
+    train_file, valid_file = get_dataset_files(dataset=args.dataset)
 
     class_labels: List[str] = construct_f1_class_labels(args.binary_class)
 
@@ -215,13 +279,20 @@ def main():
         binary_class=args.binary_class,
     )
 
+    train_bio.parse_file()
+
     valid_bio = BIODataset(
         dataset_id=1,
         file_name=valid_file,
         binary_class=args.binary_class,
     )
 
+    valid_bio.parse_file()
+
+    vocab = construct_vocab([train_bio, valid_bio])
+
     unlabeled_corpus = UnlabeledBIODataset(
+        dataset_id=0,
         bio_data=train_bio,
     )
 
@@ -238,6 +309,7 @@ def main():
         model=model,
         unlabeled_dataset=unlabeled_corpus,
         valid_dataset=valid_bio,
+        vocab=vocab,
         oracle=oracle,
         optimizer_type=args.opt_type,
         optimizer_learning_rate=args.opt_lr,
@@ -246,6 +318,8 @@ def main():
         patience=args.patience,
         num_epochs=args.num_epochs,
         device=device,
+        log_dir=args.log_dir,
+        model_name=args.model_name,
     )
 
 
