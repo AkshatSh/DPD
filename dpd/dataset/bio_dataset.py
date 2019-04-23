@@ -90,7 +90,7 @@ class BIODataset(object):
 class ActiveBIODataset(BIODataset):
     def __init__(
         self,
-        data: List[Tuple[int, List[str], List[str], float]],
+        data: List[Dict[str, object]],
         dataset_id: int,
         binary_class: str,
     ):
@@ -99,14 +99,8 @@ class ActiveBIODataset(BIODataset):
             file_name='temp.txt',
             binary_class=binary_class,
         )
-        self.data = [
-            {
-                'input': input,
-                'output': output,
-                'id': data_id,
-                'weight': weight,
-            } for data_id, input, output, weight in data
-        ]
+        self.dataset_id = dataset_id
+        self.data = data
 
 class UnlabeledBIODataset(BIODataset):
     def __init__(
@@ -128,5 +122,10 @@ class UnlabeledBIODataset(BIODataset):
             } for data in bio_data
         ]
     
-    def __len__(self):
-        return len(self.data)
+    def remove(self, query) -> None:
+        s_id, s_in = query
+        for i, item in enumerate(self.data):
+            if item['id'] == s_id:
+                assert s_in == item['input']
+                del self.data[i]
+                break
