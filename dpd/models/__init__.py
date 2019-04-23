@@ -1,3 +1,7 @@
+from typing import (
+    List,
+)
+
 from allennlp.models import Model
 from allennlp.data.vocabulary import Vocabulary
 
@@ -9,7 +13,7 @@ def build_model(
     hidden_dim: int,
     class_labels: List[str],
 ) -> Model:
-    if model_type == 'ELMo_lstm_crf':
+    if model_type == 'ELMo_bilstm_crf':
         return ELMoCrfTagger(
             vocab=vocab,
             hidden_dim=hidden_dim,

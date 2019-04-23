@@ -20,7 +20,7 @@ from allennlp.nn.util import get_text_field_mask
 
 # local imports
 from .allennlp_crf_tagger import CrfTagger
-from .embedder.ner_elmo import NERELMoTokenEmbedder
+from .embedder.ner_elmo import NERElmoTokenEmbedder
 
 
 '''
