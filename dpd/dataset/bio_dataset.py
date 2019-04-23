@@ -87,11 +87,18 @@ class BIODataset(object):
                     
                     currOutput.append(output)
 
-class ActiveBIODataset(object):
+class ActiveBIODataset(BIODataset):
     def __init__(
         self,
         data: List[Tuple[int, List[str], List[str], float]],
+        dataset_id: int,
+        binary_class: str,
     ):
+        super().__init__(
+            dataset_id=dataset_id,
+            file_name='temp.txt',
+            binary_class=binary_class,
+        )
         self.data = [
             {
                 'input': input,
@@ -100,15 +107,19 @@ class ActiveBIODataset(object):
                 'weight': weight,
             } for data_id, input, output, weight in data
         ]
-    
-    def __len__(self):
-        return len(self.data)
 
-class UnlabeledBIODataset(object):
+class UnlabeledBIODataset(BIODataset):
     def __init__(
         self,
         bio_data: BIODataset,
+        dataset_id: int,
     ):
+        super().__init__(
+            dataset_id=dataset_id,
+            file_name='temp.txt',
+            binary_class=bio_data.binary_class,
+        )
+
         self.data = [
             {
                 'input': data['input'],
