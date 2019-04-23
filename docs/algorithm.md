@@ -42,7 +42,6 @@ This is an extension to the algorithm above, namely it adds this aspect of build
 weak dataset along with the train dataset for training.
 
 ```python
-
 def build_weak_data(
     train_data,
     unlabeled_corpus,
