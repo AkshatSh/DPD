@@ -57,12 +57,11 @@ def build_weak_data(
     for h in heuristics:
         h_ann = h.apply(unlabeled_corpus)
         h_annotations.append(h_ann)
-    
+
     # merge all the annotations
     weak_labels = collate(h_annotations)
 
     return weak_labels
-
 ```
 
 The adjustments to the active learning algorithm to account for this weak set are shown below
