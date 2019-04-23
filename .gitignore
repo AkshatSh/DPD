@@ -108,3 +108,6 @@ venv.bak/
 
 # ignore data files
 data
+
+# ignore log fils
+logs/
