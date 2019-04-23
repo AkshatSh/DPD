@@ -48,7 +48,13 @@ class GoldOracleTest(unittest.TestCase):
         for item in bio_data:
             s_id, s_input, s_output = item['id'], item['input'], item['output']
 
-            o_input, o_output = oracle.get_query(query=(s_id, s_input))
+            oracle_out = oracle.get_query(query=(s_id, s_input))
+            o_input = oracle_out['input']
+            o_output = oracle_out['output']
+            o_id = oracle_out['id']
+            o_weight = oracle_out['weight']
 
+            assert o_id == s_id
             assert s_input == o_input
             assert o_output == s_output
+            assert o_weight == 1.0

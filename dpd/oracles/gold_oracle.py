@@ -11,7 +11,7 @@ from dpd.dataset import BIODataset
 # (id, sentence)
 QueryType = Tuple[int, List[str]]
 # (id, sentence, tags)
-QueryResultType = Tuple[int, List[str], List[str]]
+QueryResultType = Dict[str, object]
 
 class GoldOracle(object):
     def __init__(
@@ -31,4 +31,9 @@ class GoldOracle(object):
         # verify the correct thing was retrieved
         assert query_input == sentence
 
-        return (sentence, query_tags)
+        return {
+            'id': s_id,
+            'input': sentence,
+            'output': query_tags,
+            'weight': 1.0,
+        }
