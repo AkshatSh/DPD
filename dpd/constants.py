@@ -22,3 +22,16 @@ CONLL2003_VALID = os.path.join(CONLL2003_DIR, 'valid.txt')
 CADEC_DIR = os.path.join(os.path.dirname(__file__), '..', 'data', 'cadec')
 CADEC_TRAIN = os.path.join(CADEC_DIR, 'cadec_train_post_conll.txt')
 CADEC_VALID = os.path.join(CADEC_DIR, 'cadec_valid_post_conll.txt')
+
+# GLOVE constants
+GLOVE_DIMS = [50, 100, 200, 300]
+GLOVE_DIR = os.path.join(os.path.dirname(__file__), '..', 'experiments', 'data', 'glove.6B')
+def _construct_glove_files(dims: int) -> str:
+    return os.path.join(
+        GLOVE_DIR,
+        f'glove.6B.{dims}d.txt'
+    )
+
+# access glove files by GLOVE_FILES[dims]
+# e.g. GLOVE_FILES[300] will return the glove file for 300 dimension GLOVE
+GLOVE_FILES = {d: _construct_glove_files(d) for d in GLOVE_DIMS}
