@@ -50,7 +50,7 @@ class BIODatasetReader(DatasetReader):
     def _read(self, file_path: str) -> Iterator[Instance]:
         for instance in self.bio_dataset.data:
             sentence = instance['input']
-            tags = instance['output']
+            tags = instance['output'] if 'output' in instance else None
             entry_id = instance['id']
             entry_weight = instance['weight']
             yield self.text_to_instance(self.bio_dataset.dataset_id, [Token(word) for word in sentence], tags, entry_id, entry_weight)
