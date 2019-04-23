@@ -11,6 +11,7 @@ from torch import nn
 
 # AllenNLP imports
 from allennlp.models import Model
+from allennlp.data.vocabulary import Vocabulary
 from allennlp.modules.text_field_embedders import TextFieldEmbedder, BasicTextFieldEmbedder
 from allennlp.modules.token_embedders import Embedding
 from allennlp.modules.seq2seq_encoders import Seq2SeqEncoder, PytorchSeq2SeqWrapper
@@ -18,49 +19,62 @@ from allennlp.nn.util import get_text_field_mask
 
 
 # local imports
-from .crf import CRF
+from .allennlp_crf_tagger import CrfTagger
+from .embedder.ner_elmo import NERELMoTokenEmbedder
 
 
 '''
 This is a wrapper for the CRF models to be used in the AllenNLP pipeline
 '''
-
-class AllenNLPCRF(Model):
+class ELMoCrfTagger(Model):
     def __init__(
         self,
-        word_embeddings: TextFieldEmbedder,
-        encoder: Seq2SeqEncoder,
         vocab: Vocabulary,
-    ):
+        hidden_dim: int,
+        class_labels: List[str],
+    ) -> None:
         super().__init__(vocab)
-        self.word_embeddings = word_embeddings
-        self.encoder = encoder
-        self.crf = CRF(
-            vocab=vocab,
-            tagset=vocab,
-            hidden_dim=hidden_dim,
-            batch_size=batch_size,
+        elmo_embedder = NERElmoTokenEmbedder()
+        self.vocab = vocab
+        self.word_embeddings = BasicTextFieldEmbedder(
+            {"tokens": elmo_embedder},
+        )
+
+        self.seq2seq_model = PytorchSeq2SeqWrapper(
+            torch.nn.LSTM(
+                elmo_embedder.get_output_dim(),
+                hidden_dim,
+                bidirectional=True,
+                batch_first=True,
+            ),
+        )
+
+        self.model = CrfTagger(
+            vocab,
+            self.word_embeddings,
+            self.seq2seq_model,
+            label_encoding='BIO',
+            calculate_span_f1=True,
+            # constrain_crf_decoding=True,
+            verbose_metrics=False,
+            class_labels=class_labels,
         )
     
     def forward(
         self,
         sentence: Dict[str, torch.Tensor],
+        dataset_id: torch.Tensor,
+        weight: torch.Tensor,
         labels: torch.Tensor = None,
+        entry_id: torch.Tensor = None,
     ) -> Dict[str, torch.Tensor]:
-        mask = get_text_field_mask(sentence)
-        embeddings = self.word_embeddings(sentence)
-        features = self.encoder(embeddings, mask)
-        if labels is not None:
-            # compute MLE
-            partition = self.crf.compute_partion(features, mask)
-            gold_score = self.crf.score(features, labels, mask)
+        model_out = self.model(
+            tokens=sentence,
+            tags=labels,
+        )
 
-            # to make this a gradient descent problem we want to minimze, hence
-            # the order is switched from the MLE equation
-            output['loss'] = partition - gold_score
-        else:
-            # compute viterbi
-            tag_seq = self.crf.viterbi_decode(features, mask)
-            output['tag_seq'] = tag_seq
-
-        return output
+        return model_out
+    
+    def get_metrics(self, reset: bool = False) -> Dict[str, float]:
+        metrics = self.model.get_metrics(reset)
+        return metrics

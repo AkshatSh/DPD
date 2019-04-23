@@ -61,19 +61,23 @@ class CrfTagger(Model):
         If provided, will be used to calculate the regularization penalty during training.
     """
 
-    def __init__(self, vocab: Vocabulary,
-                 text_field_embedder: TextFieldEmbedder,
-                 encoder: Seq2SeqEncoder,
-                 label_namespace: str = "labels",
-                 feedforward: Optional[FeedForward] = None,
-                 label_encoding: Optional[str] = None,
-                 include_start_end_transitions: bool = True,
-                 constrain_crf_decoding: bool = None,
-                 calculate_span_f1: bool = None,
-                 dropout: Optional[float] = None,
-                 verbose_metrics: bool = False,
-                 initializer: InitializerApplicator = InitializerApplicator(),
-                 regularizer: Optional[RegularizerApplicator] = None) -> None:
+    def __init__(
+        self,
+        vocab: Vocabulary,
+        text_field_embedder: TextFieldEmbedder,
+        encoder: Seq2SeqEncoder,
+        label_namespace: str = "labels",
+        class_labels: List[str] = None,
+        feedforward: Optional[FeedForward] = None,
+        label_encoding: Optional[str] = None,
+        include_start_end_transitions: bool = True,
+        constrain_crf_decoding: bool = None,
+        calculate_span_f1: bool = None,
+        dropout: Optional[float] = None,
+        verbose_metrics: bool = False,
+        initializer: InitializerApplicator = InitializerApplicator(),
+        regularizer: Optional[RegularizerApplicator] = None,
+    ) -> None:
         super().__init__(vocab, regularizer)
 
         self.label_namespace = label_namespace
@@ -130,8 +134,8 @@ class CrfTagger(Model):
             self._f1_metric = SpanBasedF1Measure(vocab,
                                                  tag_namespace=label_namespace,
                                                  label_encoding=label_encoding)
-            self._tag_f1_metric = TagF1(vocab, class_labels=['B-ADR', 'I-ADR'])
-            self._average_f1_metric = AverageTagF1(vocab, class_labels=['B-ADR', 'I-ADR'])
+            self._tag_f1_metric = TagF1(vocab, class_labels=class_labels)
+            self._average_f1_metric = AverageTagF1(vocab, class_labels=class_labels)
 
         check_dimensions_match(text_field_embedder.get_output_dim(), encoder.get_input_dim(),
                                "text field embedding dim", "encoder input dim")

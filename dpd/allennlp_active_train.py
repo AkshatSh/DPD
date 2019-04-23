@@ -16,7 +16,14 @@ from dpd.dataset.bio_dataset import (
     BIODataset,
     UnlabeledBIODataset,
 )
+
+from dpd.utils import (
+    get_dataset_files,
+)
+
+from dpd.models import build_model
 from dpd.dataset.bio_dataloader import BIODatasetReader
+from dpd.oracles import GoldOracle
 
 # type definitions
 
@@ -29,6 +36,7 @@ EntryDataType:
 '''
 EntryDataType = Tuple[int, List[str], List[str], float]
 DatasetType = List[EntryDataType]
+MetricsType = Dict[str, object]
 
 def train(
     model: Model,
@@ -41,7 +49,7 @@ def train(
     patience: int,
     num_epochs: int,
     device: str,
-) -> Model:
+) -> Tuple[Model, MetricsType]:
     train_reader = BIODatasetReader(ActiveBIODataset(train_data))
     test_reader = BIODatasetReader(ActiveBIODataset(test_data))
 
@@ -82,15 +90,17 @@ def train(
 
     # TODO(akshats): Log some metrics
 
-    return model
+    return model, metrics
 
 
 def active_train(
     model: Model,
     unlabeled_dataset: UnlabeledBIODataset,
     valid_dataset: BIODataset,
+    oracle: Oracle,
     optimizer_type: str,
     optimizer_learning_rate: float,
+    optimizer_weight_decay: float,
     batch_size: int,
     patience: int,
     num_epochs: int,
@@ -127,6 +137,19 @@ def active_train(
 
         # TODO: build weak_set
         # TODO: train model
+        model, metrics = train(
+            model=model,
+            train_data=train_data,
+            test_data=test_data,
+            vocab=vocab,
+            optimizer_type=optimizer_type,
+            optimizer_learning_rate=optimizer_learning_rate,
+            optimizer_weight_decay=optimizer_weight_decay,
+            batch_size=batch_size,
+            patience=patience,
+            num_epochs=num_epochs,
+            device=device,
+        )
 
         # gather some metrics
         f1_data, acc = utils.compute_f1_dataloader(model, test_data_loader, tag_vocab, device=device)
@@ -151,11 +174,79 @@ def get_args() -> argparse.ArgumentParser:
     '''
     parser = argparse.ArgumentParser(description='Build an active learning iterative pipeline')
 
+    parser.add_argument('--dataset', type=str, default='CONLL', help='the dataset to use {CONLL, CADEC}')
+    parser.add_argument('--binary_class', type=str, default=None, help='the binary class to use for the dataset')
+
+    # hyper parameters
+    parser.add_argument('--hidden_dim', type=int, default=512, help='the hidden dimensions for the model')
+
+    # optimizer config
+    parser.add_argument('--opt_type', type=str, default='SGD', help='the optimizer to use')
+    parser.add_argument('--opt_lr', type=float, default=0.01, help='the learning rate for the optimizer')
+    parser.add_argument('--opt_weight_decay', type=float, default=1e-4, help='weight decay for optimizer')
+
+    # training config
+    parser.add_argument('--num_epochs', type=int, default=5, help='the number of epochs to run each iteration')
+    parser.add_argument('--batch_size', type=int, default=1, help='batch size of training')
+    parser.add_argument('--patience', type=int, default=5, help='patience parameter for training')
+
+    # system config
+    parser.add_argument('--cuda', action='store_true', help='use CUDA if available')
+
     # Parser data loader options
     return parser
 
+def construct_f1_class_labels(class_label: str) -> List[str]:
+    prefix = ['B', 'I']
+    return [f'{p}-{class_label}' for p in prefix]
+
 def main():
     args = get_args().parse_args()
+
+    device = 'cuda' if torch.cuda.is_available() and args.cuda else 'cpu'
+
+    train_file: str, valid_file: str = get_dataset_files(dataset=args.dataset)
+
+    class_labels: List[str] = construct_f1_class_labels(args.binary_class)
+
+    train_bio = BIODataset(
+        dataset_id=0,
+        file_name=train_file,
+        binary_class=args.binary_class,
+    )
+
+    valid_bio = BIODataset(
+        dataset_id=1,
+        file_name=valid_file,
+        binary_class=args.binary_class,
+    )
+
+    unlabeled_corpus = UnlabeledBIODataset(
+        bio_data=train_bio,
+    )
+
+    model = build_model(
+        model_type=args.model_type,
+        vocab=vocab,
+        hidden_dim=args.hidden_dim,
+        class_labels=class_labels,
+    )
+
+    oracle = GoldOracle(train_bio)
+
+    active_train(
+        model=model,
+        unlabeled_dataset=unlabeled_corpus,
+        valid_dataset=valid_bio,
+        oracle=oracle,
+        optimizer_type=args.opt_type,
+        optimizer_learning_rate=args.opt_lr,
+        optimizer_weight_decay=args.opt_weight_decay,
+        batch_size=args.batch_size,
+        patience=args.patience,
+        num_epochs=args.num_epochs,
+        device=device,
+    )
 
 
 if __name__ == "__main__":
