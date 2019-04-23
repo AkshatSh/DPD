@@ -7,3 +7,8 @@
 - [Project Proposal (Blog Post #3)](blog_3.md)
 - [Baselines (Blog Post #4)](blog_4.md)
 - [More Baselines and Analysis (Blog Post #5)](blog_5.md)
+
+
+### Some References
+
+[Algorithms](algorithm.md): gives pseudo code for various algorithms implemented in this project
