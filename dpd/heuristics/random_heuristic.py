@@ -8,6 +8,7 @@ import os
 
 import torch
 from torch import nn
+from torch.nn import functional as F
 
 from dpd.dataset import UnlabeledBIODataset
 
@@ -32,4 +33,5 @@ class RandomHeuristic(object):
             ``torch.Tensor``
                 get the weighted unlabeled corpus
         '''
-        return torch.zeros((len(unlabeled_corpus),))
+        distr = torch.zeros((len(unlabeled_corpus),))
+        return F.softmax(distr, dim=0)
