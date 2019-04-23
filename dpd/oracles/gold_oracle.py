@@ -6,14 +6,15 @@ from typing import (
 
 import os
 
+from .oracle import (
+    Oracle,
+    QueryType,
+    QueryResultType,
+)
+
 from dpd.dataset import BIODataset
 
-# (id, sentence)
-QueryType = Tuple[int, List[str]]
-# (id, sentence, tags)
-QueryResultType = Dict[str, object]
-
-class GoldOracle(object):
+class GoldOracle(Oracle):
     def __init__(
         self,
         train_data: BIODataset,
