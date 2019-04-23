@@ -4,9 +4,34 @@ from typing import (
     Dict,
     Iterator,
 )
-
-from dpd.constants import STOP_WORDS
 import string
+
+from dpd.dataset import BIODataset, BIODatasetReader
+
+from dpd.constants import (
+    STOP_WORDS,
+    CONLL2003_TRAIN,
+    CONLL2003_VALID,
+    CADEC_TRAIN,
+    CADEC_VALID,
+)
+
+def get_dataset_files(dataset: str) -> Tuple[str, str]:
+    '''
+    returns train_file, valid_file in BIO encoding
+    input:
+        ``dataset`` str
+            the dataset type specified in a string in {CONLL, CADEC}
+    output:
+        ``Tuple[str, str]``
+            the train file and valid file
+    '''
+    if dataset == 'CONLL':
+        return CONLL2003_TRAIN, CONLL2003_VALID
+    elif dataset == 'CADEC':
+        return CADEC_TRAIN, CADEC_VALID
+    else:
+        raise Exception(f'Unknown dataset: {dataset}')
 
 def remove_bio(tag: str) -> str:
     '''
