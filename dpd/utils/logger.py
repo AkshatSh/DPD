@@ -1,0 +1,43 @@
+# Code referenced from https://gist.github.com/gyglim/1f8dfb1b5c82627ae3efcfbbadb9f514
+import tensorflow as tf
+import os
+import csv
+import numpy as np
+import scipy.misc 
+try:
+    from StringIO import StringIO  # Python 2.7
+except ImportError:
+    from io import BytesIO         # Python 3.x
+
+class Logger(object):
+    '''
+    Logger object for tensorboard with the option to produce a summary csv file
+    '''
+    def __init__(self, logdir: str=None, summary_file: str='summary.csv'):
+        """Create a summary writer logging to log_dir."""
+        self.log_data = {}
+        self.log_dir = logdir
+        self.writer = tf.summary.FileWriter(logdir)
+        self.summary_file_name = 'summary.csv'
+    
+    def flush(self) -> None:
+        '''
+        Write all intermediate out in csv form
+        '''
+        summary_file = open(os.path.join(self.log_dir, self.summary_file_name), 'w')
+        summary_writer = csv.writer(summary_file)
+        for tag in self.log_data:
+            for (value, step) in self.log_data[tag]:
+                summary_writer.writerow([tag, value, step])
+        summary_file.close()
+
+
+    def scalar_summary(self, tag: str, value: float, step: int):
+        """Log a scalar variable."""
+        if tag not in self.log_data:
+            self.log_data[tag] = []
+        self.log_data[tag].append(
+            (value, step)
+        )
+        summary = tf.Summary(value=[tf.Summary.Value(tag=tag, simple_value=value)])
+        self.writer.add_summary(summary, step)
