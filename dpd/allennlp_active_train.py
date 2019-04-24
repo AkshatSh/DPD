@@ -7,6 +7,7 @@ from typing import (
 
 import os
 import argparse
+import logging
 
 import torch
 from torch import optim
@@ -33,6 +34,8 @@ from dpd.utils import (
 from dpd.models import build_model
 from dpd.oracles import Oracle, GoldOracle
 from dpd.heuristics import RandomHeuristic
+
+ORACLE_SAMPLES = [10] #, 40, 50]
 
 # type definitions
 
@@ -110,16 +113,71 @@ def log_train_metrics(
     logger: Logger,
     metrics: MetricsType,
     step: int,
+    prefix='al'
 ):
-    logger.scalar_summary(tag='al/valid/average_f1', value=metrics['best_validation_a_f1'], step=step)
-    logger.scalar_summary(tag='al/valid/span_f1', value=metrics['best_validation_f1-measure-overall'], step=step)
-    logger.scalar_summary(tag='al/valid/tag_f1', value=metrics['best_validation_f1'], step=step)
-    logger.scalar_summary(tag='al/valid/accuracy', value=metrics['best_validation_accuracy'], step=step)
-    logger.scalar_summary(tag='al/train/average_f1', value=metrics['training_a_f1'], step=step)
-    logger.scalar_summary(tag='al/train/span_f1', value=metrics['trainig_f1-measure-overall'], step=step)
-    logger.scalar_summary(tag='al/train/tag_f1', value=metrics['training_f1'], step=step)
-    logger.scalar_summary(tag='al/train/accuracy', value=metrics['training_accuracy'], step=step)
+    def log_special_metrics(metric_name: str, metric_val: object) -> List[Tuple[str, int]]:
+        if type(metric_val) == int or type(metric_val) == float:
+            return [(metric_name, metric_val)]
+        elif type(metric_val) == list:
+            res = []
+            for metric_val_item in metric_val:
+                class_label = metric_val_item['class']
+                for metric_n, metric_v in metric_val_item.items():
+                    if metric_n == 'class':
+                        # skip class names
+                        continue
+                    res.append(
+                        (
+                            f'{metric_name}_{class_label}_{metric_n}',
+                            metric_v,
+                        )
+                    )
+            return res
+        else:
+            logging.warning(f'Unknown metric type: {type(metric_val)} for ({metric_name}, {metric_val})')
+            return []
 
+    # logger.scalar_summary(tag='al/valid/average_f1', value=metrics['best_validation_a_f1'], step=step)
+    # logger.scalar_summary(tag='al/valid/span_f1', value=metrics['best_validation_f1-measure-overall'], step=step)
+    # logger.scalar_summary(tag='al/valid/tag_f1', value=metrics['best_validation_f1'], step=step)
+    # logger.scalar_summary(tag='al/valid/accuracy', value=metrics['best_validation_accuracy'], step=step)
+    # logger.scalar_summary(tag='al/train/average_f1', value=metrics['training_a_f1'], step=step)
+    # logger.scalar_summary(tag='al/train/span_f1', value=metrics['training_f1-measure-overall'], step=step)
+    # logger.scalar_summary(tag='al/train/tag_f1', value=metrics['training_f1'], step=step)
+    # logger.scalar_summary(tag='al/train/accuracy', value=metrics['training_accuracy'], step=step)
+
+    metric_list = []
+    for metric, val in metrics.items():
+        metric_name = metric
+        set_name = 'train'
+        if metric.startswith('best_validation'):
+            set_name = 'valid'
+            metric_name = metric[len('best_validation_'):]
+        elif metric.startswith('training'):
+            set_name = 'train'
+            metric_name = metric[len('training_'):]
+        else:
+            # ignore any other metric types
+            continue
+        
+        if metric_name.startswith('_'):
+            # ignore hidden
+            metric_name = metric_name[1:]
+        
+        full_metric_name = f'{prefix}/{set_name}/{metric_name}'
+        
+        metric_list.extend(
+            filter(
+                lambda x: x is not None,
+                log_special_metrics(
+                    metric_name=full_metric_name,
+                    metric_val=val,
+                ),
+            ),
+        )
+
+    for metric_name, metric_val in metric_list:
+        logger.scalar_summary(tag=metric_name, value=metric_val, step=step)
 
 def active_train(
     model: Model,
@@ -156,8 +214,7 @@ def active_train(
         },
     )
 
-    oracle_samples = [1, 5, 10, 25, 50, 100, 200, 400, 400]
-    for i, sample_size in enumerate(oracle_samples):
+    for i, sample_size in enumerate(ORACLE_SAMPLES):
         # select new points from distribution
         distribution = heuristic.evaluate(unlabeled_dataset)
         new_points = []
@@ -200,9 +257,10 @@ def active_train(
             device=device,
         )
 
-        log_train_metrics(logger, metrics)
+        log_train_metrics(logger, metrics, step=len(train_data))
 
         print(f'Finished experiment on training set size: {len(train_data)}')
+    logger.flush()
 
 def get_args() -> argparse.ArgumentParser:
     '''
@@ -289,10 +347,12 @@ def main():
 
     valid_bio.parse_file()
 
+    valid_bio.data = valid_bio.data[:10]
+
     vocab = construct_vocab([train_bio, valid_bio])
 
     unlabeled_corpus = UnlabeledBIODataset(
-        dataset_id=0,
+        dataset_id=train_bio.dataset_id,
         bio_data=train_bio,
     )
 
