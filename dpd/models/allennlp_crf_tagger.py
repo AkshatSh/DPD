@@ -124,7 +124,6 @@ class CrfTagger(Model):
 
         self.metrics = {
                 "accuracy": CategoricalAccuracy(),
-                "accuracy3": CategoricalAccuracy(top_k=3)
         }
         self.calculate_span_f1 = calculate_span_f1
         if calculate_span_f1:
@@ -245,8 +244,18 @@ class CrfTagger(Model):
         metrics_to_return = {metric_name: metric.get_metric(reset) for
                              metric_name, metric in self.metrics.items()}
     
-        metrics_to_return.update({'f1': self._tag_f1_metric.get_metric(reset)['f1']})
-        metrics_to_return.update({'a_f1': self._average_f1_metric.get_metric(reset)['Af1']})
+        tag_f1_metrics = self._tag_f1_metric.get_metric(reset)
+        average_f1_metrics = self._average_f1_metric.get_metric(reset)
+        metrics_to_return.update({'tag_f1': tag_f1_metrics['f1']})
+        metrics_to_return.update({'bio_tag_f1': average_f1_metrics['avg_f1']})
+
+        other_metrics = {}
+        other_metrics.update({f'tag_{m}': v for m, v in tag_f1_metrics.items() if m != 'f1'})
+        other_metrics.update({f'bio_tag_{m}': v for m, v in average_f1_metrics.items() if m != 'avg_f1'})
+
+        # ignore all other metrics with _ so they do not appear in tqdm
+        for metric, val in other_metrics.items():
+            metrics_to_return[f'_{metric}'] = val
 
         if self.calculate_span_f1:
             f1_dict = self._f1_metric.get_metric(reset=reset)
