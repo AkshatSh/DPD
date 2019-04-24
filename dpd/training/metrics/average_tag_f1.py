@@ -59,27 +59,31 @@ class AverageTagF1(Metric):
         Arecall : float
         Af1-measure : float
         """
-        precision_vals = []
-        recall_vals = []
-        f1_score = []
+        metric_values = []
         for cls_label, (cls_index, metric) in self._postiive_labels.items():
             precision, recall, f1_measure = metric.get_metric()
-            precision_vals.append(precision)
-            recall_vals.append(recall)
-            f1_score.append(f1_measure)
+
+            metric_values.append({
+                'class': cls_label,
+                'recall': recall,
+                'precision': precision,
+                'f1': f1_measure,
+            })
 
         if reset:
             self.reset()
         
-        def _get_average(values: List[float]) -> float:
-            if len(values) == 0:
+        def _get_average(values: List[Dict[str, float]], key: str) -> float:
+            metric_values = [v[key] for v in values]
+            if len(metric_values) == 0:
                 return 0.
-            return sum(values) / len(values)
+            return sum(metric_values) / len(metric_values)
 
         return {
-            'Aprecision' : _get_average(precision_vals),
-            'Arecall' : _get_average(recall_vals),
-            'Af1' : _get_average(f1_score),
+            'avg_precision' : _get_average(metric_values, 'precision'),
+            'avg_recall' : _get_average(metric_values, 'recall'),
+            'avg_f1' : _get_average(metric_values, 'f1'),
+            'class_metric_values': metric_values,
         }
 
     def reset(self):

@@ -79,7 +79,7 @@ class TestTagF1(unittest.TestCase):
         
         metric(predictions_tensor, gold_tensor)
         metric_dict = metric.get_metric()
-        precision, recall, f1 = metric_dict['Aprecision'], metric_dict['Arecall'], metric_dict['Af1']
+        precision, recall, f1 = metric_dict['avg_precision'], metric_dict['avg_recall'], metric_dict['avg_f1']
 
         print(precision, recall, f1)
 
