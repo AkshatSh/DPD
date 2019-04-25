@@ -8,7 +8,7 @@ from collections import Counter
 
 import os
 import torch
-import allennnlp
+import allennlp
 
 from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction, AnnotatedDataType
@@ -63,7 +63,23 @@ class KeywordMatchFunction(object):
             for w in negative_words:
                 self.keywords['neg'][w] += 1
     
-    def evaluate(self, unlabeled_corpus: UnlabeledBIODataset) -> AnnotatedData:
+    def convert_to_bio(self, sentence: List[str], predictions: List[str], class_tag: str) -> List[str]:
+        proc_pred = list(predictions) # create copy
+        for i, (w, p_i) in enumerate(zip(sentence, predictions)):
+            if i == 0:
+                if p_i == class_tag:
+                    proc_pred[i] = f'B-{class_tag}'
+                continue
+            
+            if p_i == class_tag:
+                prev_tag = predictions[i - 1]
+                if prev_tag == 'O':
+                    proc_pred[i] = f'B-{class_tag}'
+                else:
+                    proc_pred[i] = f'I-{class_tag}'
+        return proc_pred
+    
+    def evaluate(self, unlabeled_corpus: UnlabeledBIODataset) -> AnnotatedDataType:
         '''
         evalaute the keyword function on the unlabeled corpus
 
@@ -83,6 +99,6 @@ class KeywordMatchFunction(object):
                     annotations.append(self.binary_class)
                 else:
                     annotations.append('O')
-            data_entry['output'] = annotations
+            data_entry['output'] = self.convert_to_bio(sentence, annotations, self.binary_class)
             annotated_data.append(data_entry)
         return annotated_data
