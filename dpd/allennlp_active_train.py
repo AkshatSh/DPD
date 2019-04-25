@@ -189,6 +189,7 @@ def active_train(
     optimizer_type: str,
     optimizer_learning_rate: float,
     optimizer_weight_decay: float,
+    use_weak: bool,
     weak_weight: float,
     batch_size: int,
     patience: int,
@@ -243,7 +244,17 @@ def active_train(
         # remove unlabeled data points from corpus
         [unlabeled_dataset.remove(q) for q in query]
 
-        weak_data = build_weak_data(train_data, unlabeled_dataset, model, weight=weak_weight)
+        weak_data = []
+        if use_weak:
+            # builds a weak set to augment the training
+            # set
+            weak_data = build_weak_data(
+                train_data,
+                unlabeled_dataset,
+                model,
+                weight=weak_weight,
+            )
+
         model, metrics = train(
             model=model,
             binary_class=unlabeled_dataset.binary_class,
@@ -292,6 +303,7 @@ def get_args() -> argparse.ArgumentParser:
     parser.add_argument('--opt_weight_decay', type=float, default=1e-4, help='weight decay for optimizer')
 
     # weak data config
+    parser.add_argument('--use_weak', action='store_true', help='use the weak set during training')
     parser.add_argument('--weak_weight', type=float, default=1.0, help='the weight to give to the weak set during training')
 
     # training config
@@ -377,6 +389,7 @@ def main():
         optimizer_type=args.opt_type,
         optimizer_learning_rate=args.opt_lr,
         optimizer_weight_decay=args.opt_weight_decay,
+        use_weak=args.use_weak,
         weak_weight=args.weak_weight,
         batch_size=args.batch_size,
         patience=args.patience,
