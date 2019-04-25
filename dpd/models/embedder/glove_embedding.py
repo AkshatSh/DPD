@@ -4,13 +4,33 @@ from typing import (
     Dict,
 )
 
+from collections import Counter
 import numpy as np
+import torch
+import faiss
 
 class SimilarityAlgorithm(Enum):
     L2Distance = 1
     CosineSimilarity = 2
 
 class WordEmbeddingIndex(object):
+    INSTANCE = None
+
+    @classmethod
+    def instance(cls):
+        '''
+        maintain singleton object to conserve memory
+
+        all methods are reading, this should be multiprocessing safe
+        '''
+        if cls.instance == None:
+            cls.instance = WordEmbeddingIndex(
+                embedding_space=None,
+                embedding_space_dims=None,
+                similarity_algorithm=None,
+            )
+        return cls.instance
+
     '''
     Build a FAISS index for an EmbeddingSpaceType
     object
@@ -64,8 +84,6 @@ class WordEmbeddingIndex(object):
         
         if remove_first_row:
             first_row = indexes[:, 0]
-#             assert (self.index_np[embedding_indicies[0]] - self.index_np[first_row[0]]).sum() == 0
-#             assert (query_np[0] - self.index_np[first_row[0]]).sum() == 0
             similar_words_i = indexes[:, 0:]
         else:
             similar_words_i = indexes
@@ -191,8 +209,8 @@ class WordEmbeddingIndex(object):
             - ``index_to_word`` Dict[int, str]
                 maps each index to the associated word
         '''
-        word_to_index = {'UNK': 0}
-        index_to_word = {0: 'UNK'}
+        word_to_index: Dict[str, int] = {'UNK': 0}
+        index_to_word: Dict[int, str] = {0: 'UNK'}
         for word in embedding_space:
             word_to_index[word] = len(word_to_index)
             index_to_word[
