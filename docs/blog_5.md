@@ -30,34 +30,33 @@ One of my classmates, `Byran Hanner`, mentioned adding some form of metadata on 
 
 This was left out from the previous blog post, but the evaluation metric is a **Token** level F1 score instead of a span F1 score. The rationale here is that in the CADEC dataset, the spans can get a few tokens long, and if a single token is left out of the span, this is considered to be a false positive and can hurt the F1 score quite a bit. Instead we take a look at the token level F1 score. If you want to see the Sppan F1 score, I am happy to report that as well.
 
-## Other random updates
+- **Weighted Training and Keyword Matching**
 
-Since this is a continuation of another research project, part of the work this quarter is to port the entire modeling side to AllenNLP instead of the custom modules I have been writing. Just this week I was able to replicate some of my experiments (specifically the supervised ones) using AllenNLP instead of my custom modules. I will continue to work on this so everything will be built on top of AllenNLP, however if you look at the actual GitHub and notice some things are missing/incomplete this would be why. Most experiments have been done on my private research Repo, but should be migrated here soon.
+As mentioned in the [last blog post](blog_4.md), I would report the performance of building a noisy set based on `keyword matching`, using a 10 run average and plotting confidence intervals. The results are presented in the graph below:
+
+![weak weight keyword](figures/weak_weight_keyword.png)
+
+With relatively high weights (`1.0` and `0.1`) we notice our weighted training to be quite noisy depending on the random seed, and we notice the other weights (`0.01`, `0.001`, and `0`) perform relatively the same. Since we want to investigate how we can best build this noisy set, we continue our experiments with using a weight of `0.01`, as this is not so large that it impacts performance of our model drastically, and not so small that training ignores the weak set.
 
 ## Baseline Descriptions
 
 Here we evalaute our noisy set construction through the various heuristics described below:
 
 - Keyword Matching
-- Phrase Matching
 - GloVe kNN
 - GloVe Linear
     - Logistic Regression
     - SVM
 
-We can consider each of these heuristics to be applying a single labeling function to create our noisy set, where the goal of our project is to see how we can combine multiple labeling functions to create a stronger noisy set.
+We can consider each of these heuristics to be applying a single **weak function** to create our noisy set, where the goal of our final project is to see how we can combine multiple labeling functions to create a stronger noisy set.
 
 ### Keyword Matching
 
 As mentioned in the [previous blog post](blog_4.md) one of the baseline approaches, I took a look at was simple keyword matching. In particular, if we have our training data T, extract all the positively labeled words in T, and label them as positive in our noisy set and do some weighted training.
 
-### Phrase Matching
-
-This is a continuation of the above approach, however instead of looking at words we will look at phrases. In particular now  if `leg pain` was an entity `leg` and `pain` would be classified as positive in the keyword matching baseline, however in phrase matching only `leg pain` in that order will count as a match.
-
 ### GLOVE embedding space
 
-The limitations of the keyword and key phrase matching approaches is that they do no generalize to unseen words, which is a rather large limitation given our set of positively annotated words can be quite small.
+The limitations of the keyword matching approaches is that they do no generalize to unseen words, which is a rather large limitation given our set of positively annotated words can be quite small.
 
 We look to overcome this limitation by looking at expanding this set of positively annotated words by using an embedding space to augment this dictionary of positve words. In particular we take a look at using a `kNN` approach, then `logistic regression`, and finally `SVM`. Descriptions and rationale for each are listed in the associated sections below.
 
@@ -75,7 +74,7 @@ To overcome this instead we take all our positive words, and sample our negative
 
 Once our logisitc regression model is trained, we run the model over all the words in the glove embedding space, and conver this to a ranked list of similar words as `(word, prob)` where prob is the probability that the word belongs to the positive class.
 
-*This is all implemented using `Sklearn`*
+*This is all implemented using `Sklearn [2 Pedregosa et al. 2011]`*
 
 #### SVM
 
@@ -89,9 +88,38 @@ Similar to the approach above we attempt to the same algorithm except replacing 
 
 In this section we report the performance of the various baselines we tested.
 
+First we consider, what if we just used the heuristics above to label our entire valid set, and see what our reported performances are for each of these functions. In particular, given a randomly sampled training set of 50 instances, if we generated our weak functions based on the heuristics described in baselines, what would our performance be on the dev set.
+
+| **Weak Function**         | **Precision** | **Recall** | **F1**   |
+|-----------------------|-----------|--------|------|
+| Keyword Matching      | 0.33      | 0.47   | 0.39 |
+| kNN                   | 0.20      | 0.62   | 0.30 |
+| Logistic Regression   | 0.36      | 0.56   | 0.44 |
+| SVM: Linear Kernel    | 0.36      | 0.57   | 0.44 |
+| SVM: Quadratic Kernel | 0.36      | 0.55   | 0.44 |
+| SVM: RBF Kernel       | 0.36      | 0.57   | 0.44 |
+
+One thing to note here is that the linear functions seem to perform the best, with a rather small increase in precision but large increase in recall giving a better F1 score as compared to a keyword matching baseline. `kNN` seems to perform the worst, but has the highest recall, which makes sense since the `kNN` based approach will draw in random similar words as compared to the linear approachs (`lr` and `svm`), which specifically look to capture a concept.
+
+Now to run our active learning experiments, we simplify the number of heuristics we are testing to 3: Keyword Matching, `kNN`, and linear (`SVM Linear Kernel`), along side our baseline of using no heuristics and only training on the training data. We look at random samples of `[10, 50, 100]`. The results (average of 3 trials) are presented below. We train by weighted training, we give our gold set a training weight of `1.0` and our weak set a training weight of `0.01`.
+
+![active learning loop](figures/blog_5_al_with_no_weak.png)
+
+As compared to the earlier baseline experiments from the last blog post, we can see that our linear method (`SVM Linear`) is producing better results than relying on keyword matching or `kNN`, and at a dataset size of `50` and `100` is marginally performing better than our random baseline approach.
+
+These results also show, especially with regards to the table above, that the different functions are capturing different things (e.g. `kNN` has high recall and `linear` has a comparitive higher precision), this leads into our goal for the next advanced solution to look into some way of using multiple heuristics together.
+
+We can further analyze the affect of different weak functions by increasing the weight of the weak set to `0.1`, while this performs much worse, we can see that using a `linear` weak function performs better than the other weak functions.
+
+![active learning weight 0.1](figures/blog_5_al_0.1_weight.png)
+
+## Error Analysis
+
+In this section we analyze the performance of the weak functions descibed earlier, specifically by digging through the augmented dictionary.
+
 ### Augmented Dictionary Top 10 items
 
-We ran an experiment where we randomly sample 50 instances from our CADEC training set. We then get all the positvely labeled words from our dataset, and create a "dictionary". We then augment this dictionary through one of the various baseline implementations described above. The top 10 words in each augmented set (does not include words already positively labeled) is shown below.
+We ran an experiment where we randomly sample 50 instances from our CADEC training set. We then get all the positvely labeled words from our dataset, and create a "dictionary". We then augment this dictionary through one of the various baseline implementations described above. The top 10 words in each augmented set (does not include words already positively labeled) is shown below. We select the top 10, by soritng by the probability for the `SVM` and `Logistic Regression` based functions and by the number of positive neighbors in the `kNN` based function.
 
 | **kNN**      | **Logistic Regression** | **SVM: Linear** | **SVM: RBF**  | **SVM: Quadratic** |
 |-----------|---------------------|-------------|-----------|----------------|
@@ -106,11 +134,15 @@ We ran an experiment where we randomly sample 50 instances from our CADEC traini
 | worried   | lethargy            | slurred     | vomiting  | sore           |
 | lips      | blisters            | coughing    | aches     | aching         |
 
-Here we can see that using a linear model to predict similar words is working much better than kNN.
+Here we can see that our linear models are gathering terms more related to adverse drug reactions than `kNN` is.
 
-### Active Learning Graphs
+### Span F1
 
-## Error Analysis
+Another interesting thing is to evaluate the Span F1 metric. In contract to Token F1, Span F1 looks at the F1 if we only consider exact span matches. This will provide us more insight as to what is actually being learned. The results are presented in the graph below.
+
+![Span F1](figures/weak_function_span_f1.png)
+
+In particular, take a look at the `linear` weak function as compared to our benchmark of `no_weak`. Although the average improvement is mariginally it does show some improvement on the Span F1, which shows some promise.
 
 ## References
 
@@ -119,3 +151,7 @@ Here we can see that using a linear model to predict similar words is working mu
     - 2017 arxiv
     - [paper](https://arxiv.org/abs/1702.08734)
     - [github](https://github.com/facebookresearch/faiss)
+2. Scikit Learn
+    - Pedregosa, F. and Varoquaux, G. and Gramfort, A. and Michel, V. and Thirion, B. and Grisel, O. and Blondel, M. and Prettenhofer, P. and Weiss, R. and Dubourg, V. and Vanderplas, J. and Passos, A. and Cournapeau, D. and Brucher, M. and Perrot, M. and Duchesnay, E.
+    - 2011 Journal of Machine Learning Research
+    - [Github](https://github.com/scikit-learn/scikit-learn)

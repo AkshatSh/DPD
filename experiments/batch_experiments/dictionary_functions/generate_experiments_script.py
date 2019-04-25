@@ -10,7 +10,7 @@ import os
 import sys
 
 NUM_TRIALS = 3
-WEAK_WEIGHT = [0.1]
+WEAK_WEIGHT = [0.01]
 WEAK_FUNCTIONS = ['linear', 'knn', 'keyword']
 NUM_EPOCHS = 5
 
