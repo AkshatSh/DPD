@@ -34,6 +34,7 @@ from dpd.utils import (
 from dpd.models import build_model
 from dpd.oracles import Oracle, GoldOracle
 from dpd.heuristics import RandomHeuristic
+from dpd.weak_supervision import build_weak_data
 
 ORACLE_SAMPLES = [10] #, 40, 50]
 
@@ -188,6 +189,7 @@ def active_train(
     optimizer_type: str,
     optimizer_learning_rate: float,
     optimizer_weight_decay: float,
+    weak_weight: float,
     batch_size: int,
     patience: int,
     num_epochs: int,
@@ -241,11 +243,11 @@ def active_train(
         # remove unlabeled data points from corpus
         [unlabeled_dataset.remove(q) for q in query]
 
-        # TODO: build weak_set
+        weak_data = build_weak_data(train_data, unlabeled_dataset, model, weight=weak_weight)
         model, metrics = train(
             model=model,
             binary_class=unlabeled_dataset.binary_class,
-            train_data=train_data,
+            train_data=train_data + weak_data,
             valid_reader=valid_reader,
             vocab=vocab,
             optimizer_type=optimizer_type,
@@ -288,6 +290,9 @@ def get_args() -> argparse.ArgumentParser:
     parser.add_argument('--opt_type', type=str, default='SGD', help='the optimizer to use')
     parser.add_argument('--opt_lr', type=float, default=0.01, help='the learning rate for the optimizer')
     parser.add_argument('--opt_weight_decay', type=float, default=1e-4, help='weight decay for optimizer')
+
+    # weak data config
+    parser.add_argument('--weak_weight', type=float, default=1.0, help='the weight to give to the weak set during training')
 
     # training config
     parser.add_argument('--num_epochs', type=int, default=5, help='the number of epochs to run each iteration')
@@ -374,6 +379,7 @@ def main():
         optimizer_type=args.opt_type,
         optimizer_learning_rate=args.opt_lr,
         optimizer_weight_decay=args.opt_weight_decay,
+        weak_weight=args.weak_weight,
         batch_size=args.batch_size,
         patience=args.patience,
         num_epochs=args.num_epochs,

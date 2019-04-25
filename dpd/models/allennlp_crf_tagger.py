@@ -148,8 +148,10 @@ class CrfTagger(Model):
                 tokens: Dict[str, torch.LongTensor],
                 tags: torch.LongTensor = None,
                 metadata: List[Dict[str, Any]] = None,
+                weight: torch.Tensor = None,
                 # pylint: disable=unused-argument
-                **kwargs) -> Dict[str, torch.Tensor]:
+                **kwargs,
+        ) -> Dict[str, torch.Tensor]:
         # pylint: disable=arguments-differ
         """
         Parameters
@@ -206,6 +208,10 @@ class CrfTagger(Model):
             # Add negative log-likelihood as loss
             log_likelihood = self.crf(logits, tags, mask)
             output["loss"] = -log_likelihood
+
+            # incorporate weighted training
+            if weight is not None:
+                output['loss'] += weight
 
             # Represent viterbi tags as "class probabilities" that we can
             # feed into the metrics

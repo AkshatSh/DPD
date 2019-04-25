@@ -71,6 +71,7 @@ class ELMoCrfTagger(Model):
         model_out = self.model(
             tokens=sentence,
             tags=labels,
+            weight=weight,
         )
 
         return model_out
