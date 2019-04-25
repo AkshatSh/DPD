@@ -1,17 +1,18 @@
 #!/bin/bash
 
 # create virtual env
-DIR_ENV="./env"
+# DIR_ENV="./env"
 
-if [ ! -d "$DIR_ENV" ]; then
-  echo "Creating virtual environment ..."
-  python3 -m venv env
-  # source env/bin/activate
-  pip install -r deps/requirements.txt
-else
-  echo "Using existing virtual environment .. "
-  # source env/bin/activate
-fi
+# if [ ! -d "$DIR_ENV" ]; then
+#   echo "Creating virtual environment ..."
+#   python3 -m venv env
+#   # source env/bin/activate
+#   pip install -r deps/requirements.txt
+# else
+#   echo "Using existing virtual environment .. "
+#   # source env/bin/activate
+# fi
+pip install -r deps/requirements.txt
 
 # update spacy corpi
 echo "Downloading spaCy en..."
