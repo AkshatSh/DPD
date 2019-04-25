@@ -17,7 +17,9 @@ install:
   - conda update -q conda
   # We do this conditionally because it saves us some downloading if the
   # version is the same.
-  - conda create -q --name dpd --file deps/conda_requirements.txt python=$TRAVIS_PYTHON_VERSION
+  - conda create -q --name dpd python=$TRAVIS_PYTHON_VERSION
+  - conda install faiss-cpu=1.5.1 -c pytorch --use-local
+  - pip install -r deps/requirements.txt
 
   # update spacy corpi
   - python -m spacy download en
