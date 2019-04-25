@@ -12,7 +12,6 @@ install:
 
   # update spacy corpi
   - python -m spacy download en
-  echo "Finished spaCy en"
 
   # setup NLTK corpi
   - python scripts/setup_nltk.py
