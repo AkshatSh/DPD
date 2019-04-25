@@ -27,7 +27,7 @@ if [ ! -d "$GLOVE_DIR" ]; then
     echo "zip found, skipping download..."
   fi
   mkdir "glove.6B"
-  mv "glove.6b/glove.6B.zip"
+  mv "glove.6B glove.6b/glove.6B.zip"
   cd "glove.6B"
   unzip glove.6B.zip
   rm -r glove.6B.zip
