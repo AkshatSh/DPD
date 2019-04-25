@@ -7,13 +7,14 @@ from torch.nn.modules.linear import Linear
 from allennlp.common.checks import check_dimensions_match, ConfigurationError
 from allennlp.data import Vocabulary
 from allennlp.modules import Seq2SeqEncoder, TimeDistributed, TextFieldEmbedder
-from allennlp.modules import ConditionalRandomField, FeedForward
+from allennlp.modules import FeedForward
 from allennlp.modules.conditional_random_field import allowed_transitions
 from allennlp.models.model import Model
 from allennlp.nn import InitializerApplicator, RegularizerApplicator
 import allennlp.nn.util as util
 from allennlp.training.metrics import CategoricalAccuracy, SpanBasedF1Measure
 from dpd.training.metrics import TagF1, AverageTagF1
+from dpd.models import WeightedCRF
 
 class CrfTagger(Model):
     """
@@ -117,7 +118,7 @@ class CrfTagger(Model):
             constraints = None
 
         self.include_start_end_transitions = include_start_end_transitions
-        self.crf = ConditionalRandomField(
+        self.crf = WeightedCRF(
                 self.num_tags, constraints,
                 include_start_end_transitions=include_start_end_transitions
         )
@@ -206,12 +207,8 @@ class CrfTagger(Model):
 
         if tags is not None:
             # Add negative log-likelihood as loss
-            log_likelihood = self.crf(logits, tags, mask)
+            log_likelihood = self.crf(logits, tags, mask, weight=weight)
             output["loss"] = -log_likelihood
-
-            # incorporate weighted training
-            if weight is not None:
-                output['loss'] *= weight.item()
 
             # Represent viterbi tags as "class probabilities" that we can
             # feed into the metrics

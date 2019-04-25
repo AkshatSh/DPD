@@ -4,7 +4,7 @@ from typing import (
 
 from allennlp.models import Model
 from allennlp.data.vocabulary import Vocabulary
-
+from .weighted_crf import WeightedCRF
 from .allennlp_crf import ELMoCrfTagger
 
 def build_model(
