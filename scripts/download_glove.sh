@@ -15,12 +15,12 @@ fi
 # check if glove data exists
 # if not download glove data
 GLOVE_DIR="$EXPERIMENT_DATA_DIR/glove.6B"
-GLOVE_ZIP="$EXPERIMENT_DATA_DIR/glove.6B.zip"
 if [ ! -d "$GLOVE_DIR" ]; then
   echo "No glove data dir found, downloading..."
   cd "experiments"
   cd "data"
-  if [ ! - d "./glove.6B.zip" ]; then
+  GLOVE_ZIP_NAME="./glove.6B.zip"
+  if [ ! - d "$GLOVE_ZIP_NAME" ]; then
     echo "No zip found, downloading zip..."
     wget http://nlp.stanford.edu/data/glove.6B.zip
   else
