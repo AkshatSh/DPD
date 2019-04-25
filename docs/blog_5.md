@@ -138,7 +138,7 @@ Here we can see that our linear models are gathering terms more related to adver
 
 ### Span F1
 
-Another interesting thing is to evaluate the Span F1 metric. In contract to Token F1, Span F1 looks at the F1 if we only consider exact span matches. This will provide us more insight as to what is actually being learned. The results are presented in the graph below.
+Another interesting thing is to evaluate the Span F1 metric. In constrast to Token F1, Span F1 looks at the F1 if we only consider exact span matches. This will provide us more insight as to what is actually being learned. The results are presented in the graph below.
 
 ![Span F1](figures/weak_function_span_f1.png)
 
