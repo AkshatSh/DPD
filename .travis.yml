@@ -9,7 +9,7 @@ install:
   # We do this conditionally because it saves us some downloading if the
   # version is the same.
   - bash scripts/setup.sh
-  - source env/bin/activate
+  # - source env/bin/activate
 script:
   # - python -m unittest discover (no need to run twice)
   - python -m unittest discover
