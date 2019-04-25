@@ -6,10 +6,20 @@ from typing import (
 )
 
 import torch
+from overrides import overrides
 import allennlp
 from allennlp.modules import ConditionalRandomField
 
 class WeightedCRF(ConditionalRandomField):
+    '''
+    A weighted Conditional Random Field implementation
+
+    It allows weighting at the input level by specifying a weight tensor of size (batch_size,)
+
+    The equivalent would be multiplying the forward backward loss for each instance by the appropriate
+    weight in the weight tensor
+    '''
+    @overrides
     def forward(
         self,
         inputs: torch.Tensor,
