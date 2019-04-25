@@ -191,6 +191,7 @@ def active_train(
     optimizer_weight_decay: float,
     use_weak: bool,
     weak_weight: float,
+    weak_function: str,
     batch_size: int,
     patience: int,
     num_epochs: int,
@@ -253,6 +254,7 @@ def active_train(
                 unlabeled_dataset,
                 model,
                 weight=weak_weight,
+                function_type=weak_function,
             )
 
         model, metrics = train(
@@ -305,6 +307,7 @@ def get_args() -> argparse.ArgumentParser:
     # weak data config
     parser.add_argument('--use_weak', action='store_true', help='use the weak set during training')
     parser.add_argument('--weak_weight', type=float, default=1.0, help='the weight to give to the weak set during training')
+    parser.add_argument('--weak_function', type=str, default='linear', help='the type of weak function to use')
 
     # training config
     parser.add_argument('--num_epochs', type=int, default=5, help='the number of epochs to run each iteration')
@@ -391,6 +394,7 @@ def main():
         optimizer_weight_decay=args.opt_weight_decay,
         use_weak=args.use_weak,
         weak_weight=args.weak_weight,
+        weak_function=args.weak_function,
         batch_size=args.batch_size,
         patience=args.patience,
         num_epochs=args.num_epochs,

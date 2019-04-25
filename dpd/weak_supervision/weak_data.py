@@ -4,12 +4,17 @@ from typing import (
     Tuple,
 )
 
+import logging
+
 from allennlp.models import Model
 
 from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction
 from dpd.weak_supervision.dictionary_functions import (
     KeywordMatchFunction,
+    GlovekNNFunction,
+    GloveLinearFunction,
+    DICTIONARY_FUNCTION_IMPL,
 )
 
 EntryDataType = Dict[str, object]
@@ -20,6 +25,7 @@ def build_weak_data(
     unlabeled_corpus: UnlabeledBIODataset,
     model: Model,
     weight: float = 1.0,
+    function_type: str = 'linear',
 ) -> DatasetType:
     '''
     This constructs a weak dataset
@@ -32,11 +38,17 @@ def build_weak_data(
             the unlabeled corpus to run these heuristics on
         - ``model`` Model
             the model that can be used to label this corpus
+        - ``weight`` float
+            the weight to give each instance during training
+        - ``function_type`` str
+            the type of weak function to use
     output:
         ``DatasetType``
             the weak dataset that can be used along side training
     '''
-    function: WeakFunction = KeywordMatchFunction(unlabeled_corpus.binary_class)
+    function: WeakFunction = DICTIONARY_FUNCTION_IMPL[function_type](unlabeled_corpus.binary_class)
+    print(f'using weak function: {function}')
+    logging.info(f'using weak function: {function}')
     function.train(train_data)
     annotated_corpus = function.evaluate(unlabeled_corpus)
     for item in annotated_corpus:

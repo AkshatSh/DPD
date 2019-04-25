@@ -43,6 +43,9 @@ class KeywordMatchFunction(object):
         }
 
         self.binary_class = binary_class
+    
+    def set_keywords(self, keywords: Dict[str, Counter]):
+        self.keywords = keywords
 
     def train(self, train_data: AnnotatedDataType):
         '''
@@ -102,3 +105,6 @@ class KeywordMatchFunction(object):
             data_entry['output'] = self.convert_to_bio(sentence, annotations, self.binary_class)
             annotated_data.append(data_entry)
         return annotated_data
+
+    def __str__(self):
+        return f'KeywordMatchingFunction'

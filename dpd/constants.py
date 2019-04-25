@@ -43,3 +43,9 @@ DEFAULT_GLOVE_DIM = 300
 class SimilarityAlgorithm(Enum):
     L2Distance = 1
     CosineSimilarity = 2
+
+class DictionaryFunctionLinear(Enum):
+    LOGISTIC_REGRESSION = 1
+    SVM_LINEAR = 2
+    SVM_RBF = 3
+    SVM_QUADRATIC = 4

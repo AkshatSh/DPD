@@ -10,13 +10,47 @@ import allennlp
 
 from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction, AnnotatedDataType
+from dpd.models.embedder import GloVeWordEmbeddingIndex
+from dpd.weak_supervision.dictionary_functions.utils import build_gold_dictionary
+from dpd.weak_supervision.dictionary_functions import KeywordMatchFunction
 
 class GlovekNNFunction(object):
-    def __init__(self):
-        pass
+    def __init__(
+        self,
+        binary_class: str,
+        k: int = 5,
+    ):
+        self.word_embedding_index = GloVeWordEmbeddingIndex.instance()
+        self.similar_words: Dict[str, Counter] = {}
+        self.similar_phrases: Dict[str, Counter] = {}
+        self.k = k
+        self.keywords_func: KeywordMatchFunction = None 
+        self.binary_class = binary_class
 
     def train(self, train_data: AnnotatedDataType):
-        raise NotImplementedError()
+        self.word_counter, self.phrase_counter = build_gold_dictionary(train_data, self.binary_class)
+        self.similar_words = self.word_embedding_index.find_similar_words(
+            list(self.word_counter['pos'].keys()),
+            k=self.k,
+        )
+
+        # self.similar_phrases = self.word_embedding_index.find_similar_phrases(
+        #     list(self.phrase_counter.keys()),
+        #     k=self.k,
+        # )
+
+        self.keywords = {
+            'pos': self.similar_words + self.word_counter['pos'],
+            # 'neg': self.similar_words['neg'] + self.word_counter['neg'],
+        }
+
+        self.keywords_func = KeywordMatchFunction(self.binary_class)
+        self.keywords_func.set_keywords(self.keywords)
+
     
     def evaluate(self, unlabeled_corpus: UnlabeledBIODataset) -> AnnotatedDataType:
-        raise NotImplementedError()
+        return self.keywords_func.evaluate(unlabeled_corpus)
+    
+    def __str__(self):
+        return f'GloVekNNFunction'
+
