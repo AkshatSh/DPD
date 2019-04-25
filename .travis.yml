@@ -8,7 +8,7 @@ install:
   - pwd
   # We do this conditionally because it saves us some downloading if the
   # version is the same.
-  - pip install -r deps/requirements.txt
+  - conda create --name dpd --file deps/conda_requirements.txt
 
   # update spacy corpi
   - python -m spacy download en
