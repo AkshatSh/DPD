@@ -12,7 +12,16 @@ The aim of this project is to figure out: how can we augment our training data t
 
 ```bash
 
+$ conda create --name dpd --file deps/conda_requirements.txt
+# Setting up conda env
+
 $ bash scripts/setup.sh
 # Setting up ...
+
+$ pip freeze > deps/requirements.txt
+# Save pip state
+
+$ conda list --export | deps/conda_requirements.txt
+# save conda env state
 
 ```
