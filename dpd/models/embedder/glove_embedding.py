@@ -9,12 +9,19 @@ import numpy as np
 import torch
 import faiss
 
-class SimilarityAlgorithm(Enum):
-    L2Distance = 1
-    CosineSimilarity = 2
+from dpd.constants import (
+    DEFAULT_GLOVE_DIM,
+    SimilarityAlgorithm,
+)
 
-class WordEmbeddingIndex(object):
-    INSTANCE = None
+from .glove_utils import (
+    load_glove,
+    EmbeddingSpaceType,
+    EmbeddingType,
+)
+
+class GloVeWordEmbeddingIndex(object):
+    _INSTANCE = None
 
     @classmethod
     def instance(cls):
@@ -23,13 +30,14 @@ class WordEmbeddingIndex(object):
 
         all methods are reading, this should be multiprocessing safe
         '''
-        if cls.instance == None:
-            cls.instance = WordEmbeddingIndex(
-                embedding_space=None,
-                embedding_space_dims=None,
-                similarity_algorithm=None,
+        if cls._INSTANCE is None:
+            cls._INSTANCE = cls(
+                embedding_space=load_glove(DEFAULT_GLOVE_DIM),
+                embedding_space_dims=DEFAULT_GLOVE_DIM,
+                similarity_algorithm=SimilarityAlgorithm.CosineSimilarity,
             )
-        return cls.instance
+
+        return cls._INSTANCE
 
     '''
     Build a FAISS index for an EmbeddingSpaceType
@@ -48,7 +56,7 @@ class WordEmbeddingIndex(object):
         self.embedding_space_dims = embedding_space_dims
         self.similarity_algorithm = SimilarityAlgorithm
         self.index_np, self.word_to_index, self.index_to_word = (
-            WordEmbeddingIndex.build_index(
+            GloVeWordEmbeddingIndex.build_index(
                 embedding_space,
                 embedding_space_dims,
             )

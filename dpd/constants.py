@@ -1,7 +1,9 @@
 import os
 import sys
+from enum import Enum
 import nltk
-from nltk.corpus import stopwords 
+from nltk.corpus import stopwords
+
 STOP_WORDS = set(stopwords.words('english'))
 
 # Special Tokens 
@@ -35,3 +37,9 @@ def _construct_glove_files(dims: int) -> str:
 # access glove files by GLOVE_FILES[dims]
 # e.g. GLOVE_FILES[300] will return the glove file for 300 dimension GLOVE
 GLOVE_FILES = {d: _construct_glove_files(d) for d in GLOVE_DIMS}
+DEFAULT_GLOVE_DIM = 300
+
+# embedding space similarity algorithm
+class SimilarityAlgorithm(Enum):
+    L2Distance = 1
+    CosineSimilarity = 2
