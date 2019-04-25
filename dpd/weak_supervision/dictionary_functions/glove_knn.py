@@ -6,7 +6,7 @@ from typing import (
 
 import os
 import torch
-import allennnlp
+import allennlp
 
 from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction, AnnotatedDataType
@@ -18,5 +18,5 @@ class GlovekNNFunction(object):
     def train(self, train_data: AnnotatedDataType):
         raise NotImplementedError()
     
-    def evaluate(self, unlabeled_corpus: UnlabeledBIODataset) -> AnnotatedData:
+    def evaluate(self, unlabeled_corpus: UnlabeledBIODataset) -> AnnotatedDataType:
         raise NotImplementedError()

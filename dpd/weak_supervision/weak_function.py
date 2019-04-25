@@ -27,5 +27,5 @@ class WeakFunction(object):
     def train(self, train_data: AnnotatedDataType):
         raise NotImplementedError()
     
-    def evaluate(self, unlabeled_corpus: UnlabeledBIODataset) -> AnnotatedData:
+    def evaluate(self, unlabeled_corpus: UnlabeledBIODataset) -> AnnotatedDataType:
         raise NotImplementedError()
