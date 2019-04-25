@@ -211,7 +211,7 @@ class CrfTagger(Model):
 
             # incorporate weighted training
             if weight is not None:
-                output['loss'] += weight
+                output['loss'] *= weight.item()
 
             # Represent viterbi tags as "class probabilities" that we can
             # feed into the metrics
