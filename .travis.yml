@@ -8,7 +8,14 @@ install:
   - pwd
   # We do this conditionally because it saves us some downloading if the
   # version is the same.
-  - bash scripts/setup.sh
+  - pip install -r deps/requirements.txt
+
+  # update spacy corpi
+  - python -m spacy download en
+  echo "Finished spaCy en"
+
+  # setup NLTK corpi
+  - python scripts/setup_nltk.py
   # - source env/bin/activate
 script:
   # - python -m unittest discover (no need to run twice)
