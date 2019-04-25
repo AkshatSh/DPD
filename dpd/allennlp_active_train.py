@@ -36,7 +36,7 @@ from dpd.oracles import Oracle, GoldOracle
 from dpd.heuristics import RandomHeuristic
 from dpd.weak_supervision import build_weak_data
 
-ORACLE_SAMPLES = [10] #, 40, 50]
+ORACLE_SAMPLES = [10, 40, 50]
 
 # type definitions
 
@@ -351,8 +351,6 @@ def main():
     )
 
     valid_bio.parse_file()
-
-    valid_bio.data = valid_bio.data[:10]
 
     vocab = construct_vocab([train_bio, valid_bio])
 
