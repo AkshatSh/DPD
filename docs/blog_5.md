@@ -93,7 +93,7 @@ First we consider, what if we just used the heuristics above to label our entire
 | SVM: Quadratic Kernel | 0.36      | 0.55   | 0.44 |
 | SVM: RBF Kernel       | 0.36      | 0.57   | 0.44 |
 
-One thing to note here is that the linear functions seem to perform the best, with a rather small increase in precision but large increase in recall giving a better F1 score as compared to a keyword matching baseline. `kNN` seems to perform the worst, but has the highest recall, which makes sense since the `kNN` based approach will draw in random similar words as compared to the linear approachs (`lr` and `svm`), which specifically look to capture a concept.
+One thing to note here is that the linear functions seem to perform the best, with a rather small increase in precision but large increase in recall giving a better F1 score as compared to a keyword matching baseline. `kNN` seems to perform the worst, but has the highest recall, which makes sense since the `kNN` based approach will draw in random similar words as compared to the linear approachs (`logistic regression` and `svm`), which specifically look to capture a concept.
 
 Now to run our active learning experiments, we simplify the number of heuristics we are testing to 3: Keyword Matching, `kNN`, and linear (`SVM Linear Kernel`), along side our baseline of using no heuristics and only training on the training data. We look at random samples of `[10, 50, 100]`. The results (average of 3 trials) are presented below. We train by weighted training, we give our gold set a training weight of `1.0` and our weak set a training weight of `0.01`.
 
