@@ -2,7 +2,7 @@
 
 [Blog Main Page](README.md): has links to all the previous blog posts.
 
-## Something from the last blog post
+## Somethings from the last blog post
 
 There were somethings left unclear in the last blog post, so I wanted to address them here.
 
@@ -90,7 +90,7 @@ Similar to the approach above we attempt to the same algorithm except replacing 
 
 In this section we report the performance of the various baselines we tested.
 
-First we consider, what if we just used the heuristics above to label our entire valid set, and see what our reported performances are for each of these functions. In particular, given a randomly sampled training set of 50 instances, if we generated our weak functions based on the heuristics described in baselines, what would our performance be on the dev set. The table below shows the results average over 3 runs.
+First we consider, what if we just used the heuristics above to label our entire valid set, and see what our reported performances are for each of these functions. In particular, given a randomly sampled training set of 50 instances, if we generated our weak functions based on the heuristics described in baselines, what would our performance be on the dev set. The table below shows the results averaged over 3 runs.
 
 <!-- | **Weak Function**         | **Precision** | **Recall** | **F1**   |
 |-----------------------|-----------|--------|------|
