@@ -90,6 +90,8 @@ Similar to the approach above we attempt to the same algorithm except replacing 
 
 In this section we report the performance of the various baselines we tested.
 
+All the experiments are run on the CADEC dataset [3 Karimi et al. 2015], with the task of identifying *Adverse Drug Reactions* (`ADR`) in patient authored drug reviews.
+
 First we consider, what if we just used the heuristics above to label our entire valid set, and see what our reported performances are for each of these functions. In particular, given a randomly sampled training set of 50 instances, if we generated our weak functions based on the heuristics described in baselines, what would our performance be on the dev set. The table below shows the results averaged over 3 runs.
 
 <!-- | **Weak Function**         | **Precision** | **Recall** | **F1**   |
@@ -175,3 +177,7 @@ Now that we have experimented with a good set of single labeling functions, the 
     - Pedregosa, F. and Varoquaux, G. and Gramfort, A. and Michel, V. and Thirion, B. and Grisel, O. and Blondel, M. and Prettenhofer, P. and Weiss, R. and Dubourg, V. and Vanderplas, J. and Passos, A. and Cournapeau, D. and Brucher, M. and Perrot, M. and Duchesnay, E.
     - 2011 Journal of Machine Learning Research
     - [Github](https://github.com/scikit-learn/scikit-learn)
+3. Cadec: A corpus of adverse drug event annotation
+    - Sarvnaz Karimi and Alejandro Metke-Jimenez and Madonna Kemp and Chen Wang}
+    - 2015 Journal of biomedical informatics
+    - [Paper](https://www.ncbi.nlm.nih.gov/pubmed/25817970)
