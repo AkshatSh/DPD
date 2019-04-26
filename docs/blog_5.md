@@ -58,7 +58,7 @@ As mentioned in the [previous blog post](blog_4.md) one of the baseline approach
 
 The limitations of the keyword matching approaches is that they do no generalize to unseen words, which is a rather large limitation given our set of positively annotated words can be quite small.
 
-We look to overcome this limitation by looking at expanding this set of positively annotated words by using an embedding space to augment this dictionary of positve words. In particular we take a look at using a `kNN` approach, then `logistic regression`, and finally `SVM`. Descriptions and rationale for each are listed in the associated sections below.
+We look to overcome this limitation by looking at expanding this set of positively annotated words by using the GloVe embedding space [4 Pennington et al. 2014] to augment this dictionary of positve words. In particular we take a look at using a `kNN` approach, then `logistic regression`, and finally `SVM`. Descriptions and rationale for each are listed in the associated sections below.
 
 For our experiments, we use the pretrained GloVe embeddings trained on Wikipedia with a dimension (`d`) of `300`.
 
@@ -183,3 +183,8 @@ Now that we have experimented with a good set of single labeling functions, the 
     - Sarvnaz Karimi and Alejandro Metke-Jimenez and Madonna Kemp and Chen Wang}
     - 2015 Journal of biomedical informatics
     - [Paper](https://www.ncbi.nlm.nih.gov/pubmed/25817970)
+4. GloVe: Global Vectors for Word Representation
+    - Jeffrey Pennington and Richard Socher and Christopher D. Manning
+    - 2014 EMNLP
+    - [Paper](https://nlp.stanford.edu/pubs/glove.pdf)
+    - [Project Website](https://nlp.stanford.edu/projects/glove/)
