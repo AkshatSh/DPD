@@ -54,7 +54,7 @@ We convert each of these heuristics to **weak labeling functions** by using thes
 
 As mentioned in the [previous blog post](blog_4.md) one of the baseline approaches, I took a look at was simple keyword matching. In particular, if we have our training data T, extract all the positively labeled words in T, and label them as positive in our noisy set and do some weighted training.
 
-### GLOVE embedding space
+### GloVe embedding space
 
 The limitations of the keyword matching approaches is that they do no generalize to unseen words, which is a rather large limitation given our set of positively annotated words can be quite small.
 
@@ -64,7 +64,7 @@ For our experiments, we use the pretrained GloVe embeddings trained on Wikipedia
 
 #### kNN
 
-Using `FAISS` [1 Johnson et al. 2017], we index all the GLOVE word embeddings (with embedding dim `d`). Then we use our dictionary of positively labeled words to form a query which contains the embedding vectors for each of the words in the dictionary (shape `(num_words, d)`). We then search for the closest `k` vectors using `cosine similarity` as our similarity metric.
+Using `FAISS` [1 Johnson et al. 2017], we index all the GloVe word embeddings (with embedding dim `d`). Then we use our dictionary of positively labeled words to form a query which contains the embedding vectors for each of the words in the dictionary (shape `(num_words, d)`). We then search for the closest `k` vectors using `cosine similarity` as our similarity metric.
 
 The result we get back is `(num_words, k)` giving the `k` closest vectors for each word in the query. We then convert this to a ranked list where we represent our similar words as `(word, count)` where count is the number of times the word appears in our result matrix.
 
@@ -74,7 +74,7 @@ When analyzing the results of the `kNN` approach, we find that while most words 
 
 To overcome this instead we take all our positive words, and sample our negative words to create a training set. Where `w_i` has an embedding vector `e_i` and an associated label `l_i`, where `l_i = 1` if `w_i` is positive and `l_i = 0` if `w_i` is negative. We then create a training set where the input is `e_i` and the output is `l_i`, and train a logistic regression model.
 
-Once our logisitc regression model is trained, we run the model over all the words in the glove embedding space, and conver this to a ranked list of similar words as `(word, prob)` where prob is the probability that the word belongs to the positive class.
+Once our logisitc regression model is trained, we run the model over all the words in the GloVe embedding space, and conver this to a ranked list of similar words as `(word, prob)` where prob is the probability that the word belongs to the positive class.
 
 *This is all implemented using `Sklearn` [2 Pedregosa et al. 2011]*
 
