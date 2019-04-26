@@ -145,15 +145,15 @@ We ran an experiment where we randomly sample 50 instances from our CADEC traini
 | worried   | lethargy            | slurred     | vomiting  | sore           |
 | lips      | blisters            | coughing    | aches     | aching         |
 
-Here we can see that our linear models are gathering terms more related to adverse drug reactions than `kNN` is.
+Here we can see that our `linear` models are gathering terms more related to adverse drug reactions than `kNN` is.
 
 ### Span F1
 
-Another interesting thing is to evaluate the Span F1 metric. In constrast to Token F1, Span F1 looks at the F1 if we only consider exact span matches. This will provide us more insight as to what is actually being learned. The results are presented in the graph below.
+Another interesting thing is to evaluate the Span F1 metric. In constrast to Token F1, Span F1 looks at the F1 if we only consider exact span matches. This will provide us more insight as to how many of the spans are actually being predicted properly. The results are presented in the graph below.
 
 ![Span F1](figures/weak_function_span_f1.png)
 
-In particular, take a look at the `linear` weak function as compared to our benchmark of `no_weak`. Although the average improvement is mariginally it does show some improvement on the Span F1, which shows some promise.
+In particular, take a look at the `linear` weak function as compared to our benchmark of `no_weak`. Although the average improvement is mariginally it does show consistent improvement on the Span F1, which shows some promise.
 
 ## Next blog post
 
