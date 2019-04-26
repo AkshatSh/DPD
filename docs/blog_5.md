@@ -70,7 +70,7 @@ The result we get back is `(num_words, k)` giving the `k` closest vectors for ea
 
 #### Logistic Regression
 
-When analyzing the results of the `kNN` approach, we find that while most words are relevant, some of them are not. We suspect this is because the concept we want to capute (e.g. `Adverse Drug Reactions`) for our dataset may be similar in some dimensions and different in others, which could potentially cause the `kNN` approach to fail.
+When analyzing the results of the `kNN` approach, we find that while most words are relevant, some of them are not. We suspect this is because the concept we want to capture (e.g. `Adverse Drug Reactions`) for our dataset may be similar in some dimensions and different in others, which could potentially cause the `kNN` approach to fail.
 
 To overcome this instead we take all our positive words, and sample our negative words to create a training set. Where `w_i` has an embedding vector `e_i` and an associated label `l_i`, where `l_i = 1` if `w_i` is positive and `l_i = 0` if `w_i` is negative. We then create a training set where the input is `e_i` and the output is `l_i`, and train a logistic regression model.
 
@@ -124,7 +124,7 @@ As compared to the earlier baseline experiments from the last blog post, we can 
 
 These results also show, especially with regards to the table above, that the different functions are capturing different things (e.g. `kNN` has high recall and `linear` has a comparitive higher precision), this leads into our goal for the next advanced solution to look into some way of using multiple heuristics together.
 
-We can further analyze the affect of different weak functions by increasing the weight of the weak set (by a degree of magnitude) to `0.1`, while this performs much worse, we can see that using a `linear` weak function performs better than the other weak functions.
+We can further analyze the affect of different weak functions by increasing the weight of the weak set (by a degree of magnitude) to `0.1`, while this performs much worse, we can see that using a `linear` weak function performs better than the other weak functions. We suspect this is due to GloVe embeddings are built to produce linear dimensions of meaining [4 Pennington et al. 2014].
 
 ![active learning weight 0.1](figures/blog_5_al_0.1_weight.png)
 
@@ -149,7 +149,7 @@ We ran an experiment where we randomly sample 50 instances from our CADEC traini
 | worried   | lethargy            | slurred     | vomiting  | sore           |
 | lips      | blisters            | coughing    | aches     | aching         |
 
-Here we can see that our `linear` models are gathering terms more related to adverse drug reactions than `kNN` is.
+Here we can see that our `linear` models are gathering terms more related to adverse drug reactions than `kNN` is. As an example consider the sentence "I started experiencing some leg pain", here the ADR is `leg pain`, it looks like the `kNN` model treats this as identifying the reaction (`pain`) and the associated body part (`leg`), where as the linear models are more focused on the reactions, which is the intention of the task.
 
 ### Span F1
 
