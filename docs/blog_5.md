@@ -68,6 +68,8 @@ Using `FAISS` [1 Johnson et al. 2017], we index all the GloVe word embeddings (w
 
 The result we get back is `(num_words, k)` giving the `k` closest vectors for each word in the query. We then convert this to a ranked list where we represent our similar words as `(word, count)` where count is the number of times the word appears in our result matrix.
 
+For our experiments we use `k = 5`.
+
 #### Logistic Regression
 
 When analyzing the results of the `kNN` approach, we find that while most words are relevant, some of them are not. We suspect this is because the concept we want to capture (e.g. `Adverse Drug Reactions`) for our dataset may be similar in some dimensions and different in others, which could potentially cause the `kNN` approach to fail.
