@@ -124,7 +124,7 @@ As compared to the earlier baseline experiments from the last blog post, we can 
 
 These results also show, especially with regards to the table above, that the different functions are capturing different things (e.g. `kNN` has high recall and `linear` has a comparitive higher precision), this leads into our goal for the next advanced solution to look into some way of using multiple heuristics together.
 
-We can further analyze the affect of different weak functions by increasing the weight of the weak set (by a degree of magnitude) to `0.1`, while this performs much worse, we can see that using a `linear` weak function performs better than the other weak functions. We suspect this is due to GloVe embeddings are built to produce linear dimensions of meaining [4 Pennington et al. 2014].
+We can further analyze the affect of different weak functions by increasing the weight of the weak set (by a degree of magnitude) to `0.1`, while this performs much worse, we can see that using a `linear` weak function performs better than the other weak functions. We suspect this is due to GloVe embeddings being built to produce linear dimensions of meaining [4 Pennington et al. 2014].
 
 ![active learning weight 0.1](figures/blog_5_al_0.1_weight.png)
 
