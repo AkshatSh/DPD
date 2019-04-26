@@ -84,6 +84,8 @@ Similar to the approach above we attempt to the same algorithm except replacing 
 
 ## Performance Report
 
+*Note: in the graphs presented throughout this section, the y axis scale changes to better see the differences in the lines.*
+
 In this section we report the performance of the various baselines we tested.
 
 First we consider, what if we just used the heuristics above to label our entire valid set, and see what our reported performances are for each of these functions. In particular, given a randomly sampled training set of 50 instances, if we generated our weak functions based on the heuristics described in baselines, what would our performance be on the dev set. The table below shows the results average over 3 runs.
@@ -116,7 +118,7 @@ As compared to the earlier baseline experiments from the last blog post, we can 
 
 These results also show, especially with regards to the table above, that the different functions are capturing different things (e.g. `kNN` has high recall and `linear` has a comparitive higher precision), this leads into our goal for the next advanced solution to look into some way of using multiple heuristics together.
 
-We can further analyze the affect of different weak functions by increasing the weight of the weak set to `0.1`, while this performs much worse, we can see that using a `linear` weak function performs better than the other weak functions.
+We can further analyze the affect of different weak functions by increasing the weight of the weak set (by a degree of magnitude) to `0.1`, while this performs much worse, we can see that using a `linear` weak function performs better than the other weak functions.
 
 ![active learning weight 0.1](figures/blog_5_al_0.1_weight.png)
 
