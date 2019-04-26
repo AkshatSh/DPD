@@ -42,7 +42,7 @@ Here we evalaute our noisy set construction through the various heuristics descr
     - Logistic Regression
     - SVM
 
-We convert each of these heuristics to **weak labeling functions** by using these heuristics to predict sequence level labels (BIO). This naturally extends to the final project, where we evaluate how multiple functions can be combined together to create a stronger noisy set.
+We convert each of these heuristics to **weak labeling functions** by using these heuristics to predict sequence level labels (`BIO` encoding, where `B` and `I` are considered positive labels and `O` is considered a negative label). This naturally extends to the final project, where we evaluate how multiple functions can be combined together to create a stronger noisy set.
 
 ### Keyword Matching
 
