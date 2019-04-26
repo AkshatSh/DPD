@@ -1,5 +1,7 @@
 # More Baslines and Analysis!
 
+[Blog Main Page](README.md): has links to all the previous blog posts.
+
 ## Something from the last blog post
 
 There were somethings left unclear in the last blog post, so I wanted to address them here.
@@ -31,6 +33,8 @@ As mentioned in the [last blog post](blog_4.md), I would report the performance 
 ![weak weight keyword](figures/weak_weight_keyword.png)
 
 With relatively high weights (`1.0` and `0.1`) we notice our weighted training to be quite noisy depending on the random seed, and we notice the other weights (`0.01`, `0.001`, and `0`) perform relatively the same. Since we want to investigate how we can best build this noisy set, we continue our experiments with using a weight of `0.01`, as this is not so large that it impacts performance of our model drastically, and not so small that training ignores the weak set.
+
+*However, these experiments took a long time to run, since a model is retrained at each data point, to allow quicker iteration on prototypes, we reduce the number of trials to 3 and data points to just dataset sizes of `[10, 50, 100]`.*
 
 ## Baseline Descriptions
 
@@ -68,7 +72,7 @@ To overcome this instead we take all our positive words, and sample our negative
 
 Once our logisitc regression model is trained, we run the model over all the words in the glove embedding space, and conver this to a ranked list of similar words as `(word, prob)` where prob is the probability that the word belongs to the positive class.
 
-*This is all implemented using `Sklearn [2 Pedregosa et al. 2011]`*
+*This is all implemented using `Sklearn` [2 Pedregosa et al. 2011]*
 
 #### SVM
 
@@ -82,18 +86,27 @@ Similar to the approach above we attempt to the same algorithm except replacing 
 
 In this section we report the performance of the various baselines we tested.
 
-First we consider, what if we just used the heuristics above to label our entire valid set, and see what our reported performances are for each of these functions. In particular, given a randomly sampled training set of 50 instances, if we generated our weak functions based on the heuristics described in baselines, what would our performance be on the dev set.
+First we consider, what if we just used the heuristics above to label our entire valid set, and see what our reported performances are for each of these functions. In particular, given a randomly sampled training set of 50 instances, if we generated our weak functions based on the heuristics described in baselines, what would our performance be on the dev set. The table below shows the results average over 3 runs.
 
-| **Weak Function**         | **Precision** | **Recall** | **F1**   |
+<!-- | **Weak Function**         | **Precision** | **Recall** | **F1**   |
 |-----------------------|-----------|--------|------|
 | Keyword Matching      | 0.33      | 0.47   | 0.39 |
 | kNN                   | 0.20      | 0.62   | 0.30 |
 | Logistic Regression   | 0.36      | 0.56   | 0.44 |
 | SVM: Linear Kernel    | 0.36      | 0.57   | 0.44 |
 | SVM: Quadratic Kernel | 0.36      | 0.55   | 0.44 |
-| SVM: RBF Kernel       | 0.36      | 0.57   | 0.44 |
+| SVM: RBF Kernel       | 0.36      | 0.57   | 0.44 | -->
 
-One thing to note here is that the linear functions seem to perform the best, with a rather small increase in precision but large increase in recall giving a better F1 score as compared to a keyword matching baseline. `kNN` seems to perform the worst, but has the highest recall, which makes sense since the `kNN` based approach will draw in random similar words as compared to the linear approachs (`logistic regression` and `svm`), which specifically look to capture a concept.
+| **Weak Function**         | **Precision** | **Recall** | **F1**   |
+|-----------------------|-----------|--------|------|
+| Keyword Matching      | 0.40      | 0.46   | 0.43 |
+| kNN                   | 0.28      | 0.55   | 0.37 |
+| Logistic Regression   | 0.43      | 0.54   | 0.48 |
+| SVM: Linear Kernel    | 0.43      | 0.55   | 0.48 |
+| SVM: Quadratic Kernel | 0.41      | 0.47   | 0.44 |
+| SVM: RBF Kernel       | 0.43      | 0.55   | 0.48 |
+
+One thing to note here is that the linear functions seem to perform the best, with a rather small increase in precision but large increase in recall giving a better F1 score as compared to a keyword matching baseline. `kNN` seems to perform the worst, but has comparable recall, which makes sense since the `kNN` based approach will draw in random similar words as compared to the linear approachs (`logistic regression` and `svm`), which specifically look to capture a concept.
 
 Now to run our active learning experiments, we simplify the number of heuristics we are testing to 3: Keyword Matching, `kNN`, and linear (`SVM Linear Kernel`), along side our baseline of using no heuristics and only training on the training data. We look at random samples of `[10, 50, 100]`. The results (average of 3 trials) are presented below. We train by weighted training, we give our gold set a training weight of `1.0` and our weak set a training weight of `0.01`.
 
