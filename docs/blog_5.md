@@ -60,6 +60,8 @@ The limitations of the keyword matching approaches is that they do no generalize
 
 We look to overcome this limitation by looking at expanding this set of positively annotated words by using an embedding space to augment this dictionary of positve words. In particular we take a look at using a `kNN` approach, then `logistic regression`, and finally `SVM`. Descriptions and rationale for each are listed in the associated sections below.
 
+For our experiments, we use the pretrained GloVe embeddings trained on Wikipedia with a dimension (`d`) of `300`.
+
 #### kNN
 
 Using `FAISS` [1 Johnson et al. 2017], we index all the GLOVE word embeddings (with embedding dim `d`). Then we use our dictionary of positively labeled words to form a query which contains the embedding vectors for each of the words in the dictionary (shape `(num_words, d)`). We then search for the closest `k` vectors using `cosine similarity` as our similarity metric.
