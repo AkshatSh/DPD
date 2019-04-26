@@ -22,8 +22,10 @@ CONLL2003_VALID = os.path.join(CONLL2003_DIR, 'valid.txt')
 
 # CADEC Dataset Paths
 CADEC_DIR = os.path.join(os.path.dirname(__file__), '..', 'data', 'cadec')
-CADEC_TRAIN = os.path.join(CADEC_DIR, 'cadec_train_post_conll.txt')
-CADEC_VALID = os.path.join(CADEC_DIR, 'cadec_valid_post_conll.txt')
+CADEC_TRAIN_ORIGINAL = os.path.join(CADEC_DIR, 'cadec_train_post_conll.txt')
+CADEC_TEST = os.path.join(CADEC_DIR, 'cadec_valid_post_conll.txt')
+CADEC_VALID = os.path.join(CADEC_DIR, 'cadec_valid_final_post_conll.txt')
+CADEC_TRAIN = os.path.join(CADEC_DIR, 'cadec_train_final_post_conll.txt')
 
 # GLOVE constants
 GLOVE_DIMS = [50, 100, 200, 300]

@@ -35,126 +35,7 @@ from dpd.constants import (
 )
 
 from dpd.models.embedder.ner_elmo import NERElmoTokenEmbedder
-
-class LstmTagger(Model):
-    def __init__(
-        self,
-        word_embeddings: TextFieldEmbedder,
-        encoder: Seq2SeqEncoder,
-        vocab: Vocabulary,
-    ) -> None:
-        super().__init__(vocab)
-        self.word_embeddings = word_embeddings
-        self.encoder = encoder
-        self.hidden2tag = torch.nn.Linear(in_features=encoder.get_output_dim(),
-                                          out_features=vocab.get_vocab_size('labels'))
-        self.accuracy = CategoricalAccuracy()
-        # self._f1_metric = TagF1(
-        #     vocab=vocab,
-        #     class_labels=['B-PER', 'I-PER']
-        # )
-
-        self._span_f1 = SpanBasedF1Measure(
-            vocab,
-            tag_namespace="labels",
-            label_encoding="BIO",
-        )
-
-        # self._negative_f1_metric = TagF1(
-        #     vocab=vocab,
-        #     class_labels=['O'],
-        # )
-
-        self._verbose_metrics = False
-
-    def forward(
-        self,
-        sentence: Dict[str, torch.Tensor],
-        # dataset_id: torch.Tensor,
-        labels: torch.Tensor = None,
-        # entry_id: torch.Tensor = None,
-        # weight: torch.Tensor = None,
-    ) -> Dict[str, torch.Tensor]:
-        mask = get_text_field_mask(sentence)
-        embeddings = self.word_embeddings(sentence)
-        encoder_out = self.encoder(embeddings, mask)
-        tag_logits = self.hidden2tag(encoder_out)
-        output = {"tag_logits": tag_logits}
-        if labels is not None:
-            accuracy_args = (tag_logits, labels, mask)
-            self.accuracy(tag_logits, labels, mask)
-            # self._f1_metric(*accuracy_args)
-            self._span_f1(tag_logits, labels, mask)
-            output["loss"] = sequence_cross_entropy_with_logits(tag_logits, labels, mask)
-
-        return output
-
-    def get_metrics(self, reset: bool = False) -> Dict[str, float]:
-        metrics_to_return = {
-            "accuracy": self.accuracy.get_metric(reset),
-        }
-
-        # f1_dict = self._f1_metric.get_metric(reset=reset)
-        # metrics_to_return.update(f1_dict)
-
-        span_f1_dict = self._span_f1.get_metric(reset=reset)
-        if self._verbose_metrics:
-            metrics_to_return.update(span_f1_dict)
-        else:
-            metrics_to_return.update({
-                x: y for x, y in span_f1_dict.items() if
-                "overall" in x
-            })
-
-        return metrics_to_return
-
-class CrfLstmTagger(Model):
-    def __init__(
-        self,
-        word_embeddings: TextFieldEmbedder,
-        encoder: Seq2SeqEncoder,
-        vocab: Vocabulary,
-    ) -> None:
-        super().__init__(vocab)
-        self.model = CrfTagger(
-            vocab,
-            word_embeddings,
-            lstm,
-            label_encoding='BIO',
-            calculate_span_f1=True,
-            # constrain_crf_decoding=True,
-            verbose_metrics=False,
-        )
-
-        # self._tag_f1_metric = TagF1(
-        #     vocab=vocab,
-        #     class_labels=['B-ADR', 'I-ADR']
-        # )
-    
-    def forward(
-        self,
-        sentence: Dict[str, torch.Tensor],
-        dataset_id: torch.Tensor,
-        weight: torch.Tensor,
-        labels: torch.Tensor = None,
-        entry_id: torch.Tensor = None,
-    ) -> Dict[str, torch.Tensor]:
-        model_out = self.model(
-            tokens=sentence,
-            tags=labels,
-        )
-
-        # if labels is not None:
-        #     tag_logits = model_out['logits']
-        #     mask = model_out['mask']
-        #     self._tag_f1_metric(tag_logits, labels, mask)
-
-        return model_out
-    
-    def get_metrics(self, reset: bool = False) -> Dict[str, float]:
-        metrics = self.model.get_metrics(reset)
-        # metrics.update(self._tag_f1_metric.get_metric(reset))
-        return metrics
+from dpd.models import build_model
 
 
 def setup_reader(d_id: int, file_name: str, binary_class: str) -> DatasetReader:
@@ -193,10 +74,11 @@ word_embeddings = BasicTextFieldEmbedder({"tokens": elmo_embedder})
 
 lstm = PytorchSeq2SeqWrapper(torch.nn.LSTM(EMBEDDING_DIM, HIDDEN_DIM, bidirectional=True, batch_first=True))
 
-# model = LstmTagger(word_embeddings, lstm, vocab)
-
-model = CrfLstmTagger(
-    word_embeddings, lstm, vocab
+model = build_model(
+    model_type='ELMo_bilstm_crf',
+    vocab=vocab,
+    hidden_dim=HIDDEN_DIM,
+    class_labels=['B-ADR', 'I-ADR'],
 )
 
 if torch.cuda.is_available():

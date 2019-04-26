@@ -138,15 +138,6 @@ def log_train_metrics(
             logging.warning(f'Unknown metric type: {type(metric_val)} for ({metric_name}, {metric_val})')
             return []
 
-    # logger.scalar_summary(tag='al/valid/average_f1', value=metrics['best_validation_a_f1'], step=step)
-    # logger.scalar_summary(tag='al/valid/span_f1', value=metrics['best_validation_f1-measure-overall'], step=step)
-    # logger.scalar_summary(tag='al/valid/tag_f1', value=metrics['best_validation_f1'], step=step)
-    # logger.scalar_summary(tag='al/valid/accuracy', value=metrics['best_validation_accuracy'], step=step)
-    # logger.scalar_summary(tag='al/train/average_f1', value=metrics['training_a_f1'], step=step)
-    # logger.scalar_summary(tag='al/train/span_f1', value=metrics['training_f1-measure-overall'], step=step)
-    # logger.scalar_summary(tag='al/train/tag_f1', value=metrics['training_f1'], step=step)
-    # logger.scalar_summary(tag='al/train/accuracy', value=metrics['training_accuracy'], step=step)
-
     metric_list = []
     for metric, val in metrics.items():
         metric_name = metric
@@ -180,6 +171,173 @@ def log_train_metrics(
     for metric_name, metric_val in metric_list:
         logger.scalar_summary(tag=metric_name, value=metric_val, step=step)
 
+def active_train_fine_tune_iteration(
+    heuristic: RandomHeuristic,
+    unlabeled_dataset: UnlabeledBIODataset,
+    sample_size: int,
+    labeled_indexes: List[int],
+    oracle: Oracle,
+    train_data: DatasetType,
+    valid_reader: DatasetReader,
+    vocab: Vocabulary,
+    model: Model,
+    optimizer_type: str,
+    optimizer_learning_rate: float,
+    optimizer_weight_decay: float,
+    use_weak: bool,
+    weak_weight: float,
+    weak_function: str,
+    batch_size: int,
+    patience: int,
+    num_epochs: int,
+    device: str,
+) -> Tuple[Model, Dict[str, object]]:
+    # select new points from distribution
+    distribution = heuristic.evaluate(unlabeled_dataset)
+    new_points = []
+    sample_size = min(sample_size, len(distribution) - 1)
+    new_points = torch.multinomial(distribution, sample_size)
+    new_points = new_points[:sample_size]
+
+    # use new points to augment train_dataset
+    # remove points from unlabaled corpus
+    query = [
+        (
+            unlabeled_dataset[ind]['id'],
+            unlabeled_dataset[ind]['input'],
+        ) for ind in new_points
+    ]
+
+    labeled_indexes.extend(
+        ind for (ind, _) in query
+    )
+
+    oracle_labels = [oracle.get_query(q) for q in query]
+    train_data.extend(oracle_labels)
+
+    # remove unlabeled data points from corpus
+    [unlabeled_dataset.remove(q) for q in query]
+
+    weak_data = []
+    if use_weak:
+        # builds a weak set to augment the training
+        # set
+        weak_data = build_weak_data(
+            train_data,
+            unlabeled_dataset,
+            model,
+            weight=weak_weight,
+            function_type=weak_function,
+        )
+
+        model, _ = train(
+            model=model,
+            binary_class=unlabeled_dataset.binary_class,
+            train_data=weak_data,
+            valid_reader=valid_reader,
+            vocab=vocab,
+            optimizer_type=optimizer_type,
+            optimizer_learning_rate=optimizer_learning_rate,
+            optimizer_weight_decay=optimizer_weight_decay,
+            batch_size=batch_size,
+            patience=patience,
+            num_epochs=num_epochs,
+            device=device,
+        )
+
+    model, metrics = train(
+        model=model,
+        binary_class=unlabeled_dataset.binary_class,
+        train_data=train_data,
+        valid_reader=valid_reader,
+        vocab=vocab,
+        optimizer_type=optimizer_type,
+        optimizer_learning_rate=optimizer_learning_rate,
+        optimizer_weight_decay=optimizer_weight_decay,
+        batch_size=batch_size,
+        patience=patience,
+        num_epochs=num_epochs,
+        device=device,
+    )
+
+    return model, metrics
+
+def active_train_iteration(
+    heuristic: RandomHeuristic,
+    unlabeled_dataset: UnlabeledBIODataset,
+    sample_size: int,
+    labeled_indexes: List[int],
+    oracle: Oracle,
+    train_data: DatasetType,
+    valid_reader: DatasetReader,
+    vocab: Vocabulary,
+    model: Model,
+    optimizer_type: str,
+    optimizer_learning_rate: float,
+    optimizer_weight_decay: float,
+    use_weak: bool,
+    weak_weight: float,
+    weak_function: str,
+    batch_size: int,
+    patience: int,
+    num_epochs: int,
+    device: str,
+) -> Tuple[Model, Dict[str, object]]:
+    # select new points from distribution
+    distribution = heuristic.evaluate(unlabeled_dataset)
+    new_points = []
+    sample_size = min(sample_size, len(distribution) - 1)
+    new_points = torch.multinomial(distribution, sample_size)
+    new_points = new_points[:sample_size]
+
+    # use new points to augment train_dataset
+    # remove points from unlabaled corpus
+    query = [
+        (
+            unlabeled_dataset[ind]['id'],
+            unlabeled_dataset[ind]['input'],
+        ) for ind in new_points
+    ]
+
+    labeled_indexes.extend(
+        ind for (ind, _) in query
+    )
+
+    oracle_labels = [oracle.get_query(q) for q in query]
+    train_data.extend(oracle_labels)
+
+    # remove unlabeled data points from corpus
+    [unlabeled_dataset.remove(q) for q in query]
+
+    weak_data = []
+    if use_weak:
+        # builds a weak set to augment the training
+        # set
+        weak_data = build_weak_data(
+            train_data,
+            unlabeled_dataset,
+            model,
+            weight=weak_weight,
+            function_type=weak_function,
+        )
+
+    model, metrics = train(
+        model=model,
+        binary_class=unlabeled_dataset.binary_class,
+        train_data=train_data + weak_data,
+        valid_reader=valid_reader,
+        vocab=vocab,
+        optimizer_type=optimizer_type,
+        optimizer_learning_rate=optimizer_learning_rate,
+        optimizer_weight_decay=optimizer_weight_decay,
+        batch_size=batch_size,
+        patience=patience,
+        num_epochs=num_epochs,
+        device=device,
+    )
+
+    return model, metrics
+
 def active_train(
     model: Model,
     unlabeled_dataset: UnlabeledBIODataset,
@@ -190,6 +348,7 @@ def active_train(
     optimizer_learning_rate: float,
     optimizer_weight_decay: float,
     use_weak: bool,
+    weak_fine_tune: bool,
     weak_weight: float,
     weak_function: str,
     batch_size: int,
@@ -219,58 +378,32 @@ def active_train(
     )
 
     for i, sample_size in enumerate(ORACLE_SAMPLES):
-        # select new points from distribution
-        distribution = heuristic.evaluate(unlabeled_dataset)
-        new_points = []
-        sample_size = min(sample_size, len(distribution) - 1)
-        new_points = torch.multinomial(distribution, sample_size)
-        new_points = new_points[:sample_size]
-
-        # use new points to augment train_dataset
-        # remove points from unlabaled corpus
-        query = [
-            (
-                unlabeled_dataset[ind]['id'],
-                unlabeled_dataset[ind]['input'],
-            ) for ind in new_points
-        ]
-
-        labeled_indexes.extend(
-            ind for (ind, _) in query
-        )
-
-        oracle_labels = [oracle.get_query(q) for q in query]
-        train_data.extend(oracle_labels)
-
-        # remove unlabeled data points from corpus
-        [unlabeled_dataset.remove(q) for q in query]
-
-        weak_data = []
-        if use_weak:
-            # builds a weak set to augment the training
-            # set
-            weak_data = build_weak_data(
-                train_data,
-                unlabeled_dataset,
-                model,
-                weight=weak_weight,
-                function_type=weak_function,
-            )
-
-        model, metrics = train(
-            model=model,
-            binary_class=unlabeled_dataset.binary_class,
-            train_data=train_data + weak_data,
+        active_iteration_kwargs = dict(
+            heuristic=heuristic,
+            unlabeled_dataset=unlabeled_dataset,
+            sample_size=sample_size,
+            labeled_indexes=labeled_indexes,
+            oracle=oracle,
+            train_data=train_data,
             valid_reader=valid_reader,
+            model=model,
             vocab=vocab,
             optimizer_type=optimizer_type,
             optimizer_learning_rate=optimizer_learning_rate,
             optimizer_weight_decay=optimizer_weight_decay,
+            use_weak=use_weak,
+            weak_weight=weak_weight,
+            weak_function=weak_function,
             batch_size=batch_size,
             patience=patience,
             num_epochs=num_epochs,
             device=device,
         )
+
+        if weak_fine_tune:
+            model, metrics = active_train_fine_tune_iteration(**active_iteration_kwargs)
+        else:
+            model, metrics = active_train_iteration(**active_iteration_kwargs)
 
         log_train_metrics(logger, metrics, step=len(train_data))
 
@@ -306,6 +439,7 @@ def get_args() -> argparse.ArgumentParser:
 
     # weak data config
     parser.add_argument('--use_weak', action='store_true', help='use the weak set during training')
+    parser.add_argument('--use_weak_fine_tune', action='store_true', help='use the weak fine tuning approach')
     parser.add_argument('--weak_weight', type=float, default=1.0, help='the weight to give to the weak set during training')
     parser.add_argument('--weak_function', type=str, default='linear', help='the type of weak function to use')
 
@@ -393,6 +527,7 @@ def main():
         optimizer_learning_rate=args.opt_lr,
         optimizer_weight_decay=args.opt_weight_decay,
         use_weak=args.use_weak,
+        weak_fine_tune=args.use_weak_fine_tune,
         weak_weight=args.weak_weight,
         weak_function=args.weak_function,
         batch_size=args.batch_size,
