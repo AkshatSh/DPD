@@ -48,6 +48,8 @@ Here we evalaute our noisy set construction through the various heuristics descr
 
 We convert each of these heuristics to **weak labeling functions** by using these heuristics to predict sequence level labels (`BIO` encoding, where `B` and `I` are considered positive labels and `O` is considered a negative label). This naturally extends to the final project, where we evaluate how multiple functions can be combined together to create a stronger noisy set.
 
+*Note: I do not explain the model hyper parameters / training here, but it is all mentioned in detail in my [previous blog post](blog_4.md), TL:DR; the model trained is an ELMo -> BiLSTM -> CRF tagger with ELMo Frozen, the model is trained by mixing the gold (true annotations) and the noisy (noisy annotations on unlabeled data) and weighting them differently to vary the influence of the noisy set.*
+
 ### Keyword Matching
 
 As mentioned in the [previous blog post](blog_4.md) one of the baseline approaches, I took a look at was simple keyword matching. In particular, if we have our training data T, extract all the positively labeled words in T, and label them as positive in our noisy set and do some weighted training.
