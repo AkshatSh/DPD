@@ -16,12 +16,6 @@ The purpose of the dataset size being the number of gold instances is simply to 
 
 For the purpose of this project, I will use already labeled datasets and simulate an active learning environment, by creating an unlabeled corpus by simply removing those labels and allowing an annotator object to just provide those labels to the system when requested. This also gives a good abstraction to experiment with noisy annotators (what if only 90% of the time the annotation was correct), if we chose to go down that route.
 
-- **The use of structural information**
-
-A part of the labeling functions is to provide labels to spans of text. However, a part of this problem is *what spans of text should we consider candidates?* Well, we could look at all n-grams with n up to 6 or 7, however this could get quite computationally expensive. My intention was to use the structural information like POS tags and parse trees to prune the set of potentially spans to look at to some feature based candidate extractor. I note it was pointed out that these taggers can be noisy especially on user authored text like the CADEC dataset would be, however the hope is that since this dataset is intended to be noisy and we are just trying to prune candidates, this won't be too bad. However, this is part of the reason I will also take a look at the CoNLL 2003 task for NER, since identifying mentions of people in text, should be rather trivial as compared to drug reactions, since most mentions of people should be `nouns`.
-
-Another interesting point made to me during my presentation was instead of just pruning candidates with this structual information, maybe use it in some way for vector composition on the contextual embeddings, and this approach could help with creating phrase embeddings as well.
-
 - **Metadata**
 
 One of my classmates, `Byran Hanner`, mentioned adding some form of metadata on top of text features. It would be really interesting to see how features outside of text could help in generating this noisy set. However, I want the system to be as general as possible, and am not quite sure what assumptions I could make on the availability on metadata, maybe some generic knowledge base such as Freebase or DBpedia could help in this. While it may not be something I can focus on given we only have 6-7 weeks left, it is definetly something on my list of things to explore.
@@ -48,7 +42,7 @@ Here we evalaute our noisy set construction through the various heuristics descr
     - Logistic Regression
     - SVM
 
-We can consider each of these heuristics to be applying a single **weak function** to create our noisy set, where the goal of our final project is to see how we can combine multiple labeling functions to create a stronger noisy set.
+We convert each of these heuristics to **weak labeling functions** by using these heuristics to predict sequence level labels (BIO). This naturally extends to the final project, where we evaluate how multiple functions can be combined together to create a stronger noisy set.
 
 ### Keyword Matching
 
@@ -143,6 +137,15 @@ Another interesting thing is to evaluate the Span F1 metric. In constrast to Tok
 ![Span F1](figures/weak_function_span_f1.png)
 
 In particular, take a look at the `linear` weak function as compared to our benchmark of `no_weak`. Although the average improvement is mariginally it does show some improvement on the Span F1, which shows some promise.
+
+## Next blog post
+
+Now that we have experimented with a good set of single labeling functions, the next thing to do is look at more advanced solutions, and I have 3 directions in mind that can be worked on in parallel.
+
+1. Use Snorkel to use multiple labeling functions at once, and use it to generate a weak set
+2. Replace GloVe with a contextual embedding space (ELMo or BERT)
+3. Weighted training might not be appropriate it may be better to experiment with tune the model on the noisy set, and then "fine tune" it on the gold set
+
 
 ## References
 
