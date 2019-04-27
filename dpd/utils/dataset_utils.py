@@ -12,8 +12,10 @@ from dpd.constants import (
     STOP_WORDS,
     CONLL2003_TRAIN,
     CONLL2003_VALID,
+    CONLL2003_TEST,
     CADEC_TRAIN,
     CADEC_VALID,
+    CADEC_TEST,
 )
 
 def get_dataset_files(dataset: str) -> Tuple[str, str]:
@@ -27,9 +29,9 @@ def get_dataset_files(dataset: str) -> Tuple[str, str]:
             the train file and valid file
     '''
     if dataset == 'CONLL':
-        return CONLL2003_TRAIN, CONLL2003_VALID
+        return CONLL2003_TRAIN, CONLL2003_VALID, CONLL2003_TEST
     elif dataset == 'CADEC':
-        return CADEC_TRAIN, CADEC_VALID
+        return CADEC_TRAIN, CADEC_VALID, CADEC_TEST
     else:
         raise Exception(f'Unknown dataset: {dataset}')
 
