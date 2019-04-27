@@ -10,7 +10,12 @@ import sys
 
 import dpd
 from dpd.dataset import BIODataset
-from dpd.constants import CADEC_TRAIN_ORIGINAL, CADEC_TRAIN, CADEC_VALID
+from dpd.constants import (
+    CADEC_TRAIN,
+    CADEC_VALID,
+    CADEC_VALID_ORIGINAL,
+    CADEC_TEST,
+)
 
 def serialize_split(data: List[object], file_name: str):
     with open(file_name, 'w') as f:
@@ -28,11 +33,11 @@ def create_split(dataset: BIODataset, ratio: float):
     return first_data, second_data
 
 def main():
-    dataset = BIODataset(dataset_id=0, file_name=CADEC_TRAIN_ORIGINAL)
+    dataset = BIODataset(dataset_id=0, file_name=CADEC_VALID_ORIGINAL)
     dataset.parse_file()
-    train_data, valid_data = create_split(dataset, 0.8)
-    serialize_split(train_data, CADEC_TRAIN)
+    valid_data, test_data = create_split(dataset, 0.5)
     serialize_split(valid_data, CADEC_VALID)
+    serialize_split(test_data, CADEC_TEST)
 
 
 if __name__ == "__main__":
