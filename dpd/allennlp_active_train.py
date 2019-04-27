@@ -427,6 +427,7 @@ def get_args() -> argparse.ArgumentParser:
     # dataset parameters
     parser.add_argument('--dataset', type=str, default='CADEC', help='the dataset to use {CONLL, CADEC}')
     parser.add_argument('--binary_class', type=str, default='ADR', help='the binary class to use for the dataset')
+    parser.add_argument('--test', action='store_true', help='use the test set for evaluation')
 
     # hyper parameters
     parser.add_argument('--model_type', type=str, default='ELMo_bilstm_crf', help='the model type to use')
@@ -481,7 +482,7 @@ def main():
 
     device = 'cuda' if torch.cuda.is_available() and args.cuda else 'cpu'
 
-    train_file, valid_file = get_dataset_files(dataset=args.dataset)
+    train_file, valid_file, test_file = get_dataset_files(dataset=args.dataset)
 
     class_labels: List[str] = construct_f1_class_labels(args.binary_class)
 
@@ -493,9 +494,11 @@ def main():
 
     train_bio.parse_file()
 
+    if args.test:
+        print('using test set')
     valid_bio = BIODataset(
         dataset_id=1,
-        file_name=valid_file,
+        file_name=valid_file if not args.test else test_file,
         binary_class=args.binary_class,
     )
 
