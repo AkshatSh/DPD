@@ -20,7 +20,7 @@ def generate_experiment_commands() -> List[str]:
     for trial in range(NUM_TRIALS):
         for weak_weight in WEAK_WEIGHT:
             for weak_function in WEAK_FUNCTIONS:
-                model_name = f'{weak_weight}/{weak_function}/trial_{trial}'
+                model_name = f'fine_tune/{weak_weight}/{weak_function}/trial_{trial}'
                 command = f'python dpd/allennlp_active_train.py --weak_function {weak_function} --num_epochs {NUM_EPOCHS} --weak_weight {weak_weight} --model_name {model_name} --use_weak --cuda --use_weak_fine_tune'
                 commands.append(command)
     return commands
