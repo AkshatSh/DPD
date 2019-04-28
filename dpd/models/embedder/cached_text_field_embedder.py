@@ -35,7 +35,7 @@ class CachedDataset(object):
         self.sid_to_end: Dict[int, int] = {}
         self.embedded_dataset: Optional[np.ndarray] = None
         self.is_continous: bool = False
-    
+
     def cache_entry(
         self,
         s_id: int,
@@ -50,7 +50,7 @@ class CachedDataset(object):
         self.embedded_dataset = torch.cat(self.embedded_dataset, dim=1).cpu().deatch().numpy()
         self.embedding_dataset_list = None
         self.is_continous = True
-    
+
     def _ready(self):
         if not self.is_continous:
             raise Exception(f'Cached dataset needs to be continous for retrieval')
@@ -67,7 +67,7 @@ class CachedDataset(object):
 
         tensor = torch.Tensor(self.embedded_dataset[start:end])
         return tensor
-    
+
     def numpy(self):
         self._ready()
 
@@ -78,7 +78,7 @@ class CachedDataset(object):
             pass
         else:
             raise Exception(f'Unknown type for embedded dataset {type(self.embedded_dataset)}')
-    
+
     def tensor(self, device: str):
         self._ready()
 
@@ -104,7 +104,7 @@ class CachedDataset(object):
             pass
         cached_dataset.contious()
         return cached_dataset
-        
+
 
 class CachedTextFieldEmbedder(nn.Module):
     '''
