@@ -15,6 +15,7 @@ from torch import nn
 import numpy as np
 from overrides import overrides
 import logging
+from overrides import overrides
 
 from allennlp.common import Params
 from allennlp.common.checks import ConfigurationError
@@ -22,6 +23,7 @@ from allennlp.data import Vocabulary, DatasetReader, Instance
 from allennlp.modules.text_field_embedders.text_field_embedder import TextFieldEmbedder
 from allennlp.modules.time_distributed import TimeDistributed
 from allennlp.modules.token_embedders.token_embedder import TokenEmbedder
+from allennlp.nn.util import get_text_field_mask
 
 class CachedDataset(object):
     def __init__(
@@ -29,36 +31,27 @@ class CachedDataset(object):
         dataset_id: int,
     ):
         self.dataset_id = dataset_id
-        self.embedding_dataset_list: Optional[List[torch.Tensor]] = []
         self.index_to_sid: Dict[int, int] = {}
         self.sid_to_start: Dict[int, int] = {}
         self.sid_to_end: Dict[int, int] = {}
         self.embedded_dataset: Optional[np.ndarray] = None
-        self.is_continous: bool = False
 
     def cache_entry(
         self,
         s_id: int,
         embedding_tensor: torch.Tensor,
     ):
-        index = len(self.embedding_dataset)
-        self.embedding_dataset_list.append(embedding_tensor.cpu().detach())
-        self.sid_to_index[s_id] = index
+        index = len(self.embedded_dataset) if self.embedded_dataset is not None else 0
+        embedding_tensor = embedding_tensor.detach().cpu()
+        if self.embedded_dataset is None:
+            self.embedded_dataset = embedding_tensor
+        else:
+            self.embedded_dataset = torch.cat((self.embedded_dataset, embedding_tensor), dim=0)
+        self.sid_to_start[s_id] = index
         self.index_to_sid[index] = s_id
-
-    def continous(self):
-        self.embedded_dataset = torch.cat(self.embedded_dataset, dim=1).cpu().deatch().numpy()
-        self.embedding_dataset_list = None
-        self.is_continous = True
-
-    def _ready(self):
-        if not self.is_continous:
-            raise Exception(f'Cached dataset needs to be continous for retrieval')
-
+        self.sid_to_end[s_id] = len(self.embedded_dataset)
     
     def get_embedding(self, s_id: int) -> Optional[torch.Tensor]:
-        self._ready()
-        
         if s_id not in self.sid_to_start:
             return None
         
@@ -69,8 +62,6 @@ class CachedDataset(object):
         return tensor
 
     def numpy(self):
-        self._ready()
-
         if type(self.embedded_dataset) == torch.Tensor:
             self.embedded_dataset = self.embedded_dataset.cpu().deatch().numpy()
         elif type(self.embedded_dataset) == np.ndarray:
@@ -80,8 +71,6 @@ class CachedDataset(object):
             raise Exception(f'Unknown type for embedded dataset {type(self.embedded_dataset)}')
 
     def tensor(self, device: str):
-        self._ready()
-
         if type(self.embedded_dataset) == torch.Tensor:
             # already tensor
             pass
@@ -89,20 +78,25 @@ class CachedDataset(object):
             self.embedded_dataset = torch.Tensor(self.embedded_dataset).to(device)
         else:
             raise Exception(f'Unknown type for embedded dataset {type(self.embedded_dataset)}')
+    
+    @overrides
+    def __str__(self) -> str:
+        return f'CachedDataset({self.embedded_dataset.shape})'
 
     @classmethod
     def cache_dataset(
         cls,
         dataset_id: int,
         dataset: Iterator[Instance],
-        embedding_function: Callable[Instance, torch.Tensor],
+        embedding_function: Callable[[Instance], torch.Tensor],
     ):
         cached_dataset = cls(dataset_id=dataset_id)
         for instance in dataset:
             # cache the instance
             # with the embedding function
-            pass
-        cached_dataset.contious()
+            s_id = instance.fields['entry_id'].as_tensor(padding_lengths=None).item()
+            e_t = embedding_function(instance)
+            cached_dataset.cache_entry(s_id=s_id, embedding_tensor=e_t)
         return cached_dataset
 
 
@@ -131,10 +125,11 @@ class CachedTextFieldEmbedder(nn.Module):
     
     def forward(
         self,
-        input_tensor: torch.Tensor, # (batch_size, input_dim)
+        sentence: Dict[str, torch.Tensor], # (batch_size, seq_len)
         sentence_ids: Optional[torch.Tensor] = None, # (batch_size, 1)
-        dataset_ids: Optional[torch.Tensor] = None,
+        dataset_ids: Optional[torch.Tensor] = None, # (batch_size, 1)
         use_cache: bool = True,
+        padding_val: float = 0.,
     ) -> torch.Tensor:
         '''
         forward cached, forwards the text field embedder, but tries to retrieve from the
@@ -144,22 +139,41 @@ class CachedTextFieldEmbedder(nn.Module):
 
         to disable cache set ``use_cache`` to false
         '''
-        pass
-    
+        mask = get_text_field_mask(sentence)
+        embedding_tensor: torch.Tensor = None
+        if not use_cache or sentence_ids is None or dataset_ids[0].item() not in self.cached_datasets:
+            return self.text_field_embedder(sentence)
+        else:
+            input_tensor = sentence['tokens']
+            output_tensor: torch.Tensor = torch.zeros((input_tensor.shape) + (self.get_output_dim(),)).to(input_tensor.device)
+            for i, (s_id, d_id, input_tensor) in enumerate(zip(sentence_ids, dataset_ids, input_tensor)):
+                d_id: int = d_id.item()
+                s_id: int = s_id.item()
+                et: torch.Tensor = self.cached_datasets[d_id].get_embedding(s_id)
+                output_tensor[i, :len(et)] = et
+            return output_tensor
+
     def cache(
         self,
         dataset_id: int,
         dataset: Iterator[Instance],
+        vocab: Vocabulary,
     ) -> bool:
         '''
         takes the input ``dataset`` and caches the entire thing to stop retrieval
 
         returns success
         '''
+        def _ef(inst: Instance, vocab: Vocabulary):
+            inst.fields['sentence'].index(vocab)
+            return self.text_field_embedder(
+                inst.fields['sentence'].as_tensor(padding_lengths=inst.fields['sentence'].get_padding_lengths())
+            )
         try:
             self.cached_datasets[dataset_id] = CachedDataset.cache_dataset(
                 dataset_id=dataset_id,
                 dataset=dataset,
+                embedding_function=lambda inst: _ef(inst, vocab),
             )
         except Exception as e:
             if self.silent_error:
