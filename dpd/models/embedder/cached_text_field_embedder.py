@@ -124,6 +124,9 @@ class CachedTextFieldEmbedder(nn.Module):
         # maps dataset id to a cached instance of the dataset
         self.cached_datasets: Dict[int, CachedDataset] = {}
     
+    def get_output_dim(self) -> int:
+        return self.text_field_embedder.get_output_dim()
+    
     def forward(
         self,
         input_tensor: torch.Tensor, # (batch_size, input_dim)
