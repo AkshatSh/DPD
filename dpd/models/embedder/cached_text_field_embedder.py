@@ -117,12 +117,14 @@ class CachedTextFieldEmbedder(nn.Module):
     def __init__(
         self,
         text_field_embedder: TextFieldEmbedder,
+        silent_error: bool = False,
     ):
         super(CachedTextFieldEmbedder, self).__init__()
         self.text_field_embedder = text_field_embedder
 
         # maps dataset id to a cached instance of the dataset
         self.cached_datasets: Dict[int, CachedDataset] = {}
+        self.silent_error = silent_error
     
     def get_output_dim(self) -> int:
         return self.text_field_embedder.get_output_dim()
@@ -146,10 +148,24 @@ class CachedTextFieldEmbedder(nn.Module):
     
     def cache(
         self,
+        dataset_id: int,
         dataset: Iterator[Instance],
     ) -> bool:
         '''
         takes the input ``dataset`` and caches the entire thing to stop retrieval
+
+        returns success
         '''
-        pass
+        try:
+            self.cached_datasets[dataset_id] = CachedDataset.cache_dataset(
+                dataset_id=dataset_id,
+                dataset=dataset,
+            )
+        except Exception as e:
+            if self.silent_error:
+                return False
+            else:
+                raise e
+
+        return True
     
