@@ -97,7 +97,7 @@ class CachecTextFieldEmbedderTest(unittest.TestCase):
             et = cd.get_embedding(s_id)
             assert et.shape == (len(sent), CachecTextFieldEmbedderTest.EMBEDDING_DIM)
     
-    def test_cache_forward(self):
+    def test_cache_forward(self, batch_size: int = 1):
         bio_dataset = CachecTextFieldEmbedderTest.create_fake_data()
         reader = BIODatasetReader(
             bio_dataset=bio_dataset,
@@ -120,7 +120,7 @@ class CachecTextFieldEmbedderTest(unittest.TestCase):
             vocab=vocab,
         )
 
-        iterator = BucketIterator(batch_size=1, sorting_keys=[("sentence", "num_tokens")])
+        iterator = BucketIterator(batch_size=batch_size, sorting_keys=[("sentence", "num_tokens")])
         iterator.index_with(vocab)
         train_generator = iterator(instances, num_epochs=CachecTextFieldEmbedderTest.NUM_EPOCHS, shuffle=False)
         for inst in train_generator:
@@ -141,44 +141,4 @@ class CachecTextFieldEmbedderTest(unittest.TestCase):
             assert cached_result.shape == non_cached_result.shape
     
     def test_cache_forward_minibatch(self):
-        bio_dataset = CachecTextFieldEmbedderTest.create_fake_data()
-        reader = BIODatasetReader(
-            bio_dataset=bio_dataset,
-        )
-
-        instances = reader.read('fake_file.txt')
-        vocab = Vocabulary.from_instances(instances)
-        token_embedding = Embedding(
-            num_embeddings=vocab.get_vocab_size('tokens'),
-            embedding_dim=CachecTextFieldEmbedderTest.EMBEDDING_DIM,
-        )
-        word_embeddings = BasicTextFieldEmbedder({"tokens": token_embedding})
-        cached_embedder = CachedTextFieldEmbedder(
-            text_field_embedder=word_embeddings,
-        )
-
-        cached_embedder.cache(
-            dataset_id=bio_dataset.dataset_id,
-            dataset=instances,
-            vocab=vocab,
-        )
-
-        iterator = BucketIterator(batch_size=CachecTextFieldEmbedderTest.MINIBATCH_SIZE, sorting_keys=[("sentence", "num_tokens")])
-        iterator.index_with(vocab)
-        train_generator = iterator(instances, num_epochs=CachecTextFieldEmbedderTest.NUM_EPOCHS, shuffle=False)
-        for inst in train_generator:
-            cached_result = cached_embedder.forward(
-                sentence=inst['sentence'],
-                sentence_ids=inst['entry_id'],
-                dataset_ids=inst['dataset_id'],
-                use_cache=True,
-            )
-            
-            non_cached_result = cached_embedder.forward(
-                sentence=inst['sentence'],
-                sentence_ids=inst['entry_id'],
-                dataset_ids=inst['dataset_id'],
-                use_cache=False,
-            )
-
-            assert cached_result.shape == non_cached_result.shape
+        self.test_cache_forward(batch_size=CachecTextFieldEmbedderTest.MINIBATCH_SIZE)

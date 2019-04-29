@@ -16,6 +16,8 @@ import numpy as np
 from overrides import overrides
 import logging
 from overrides import overrides
+import h5py
+from tqdm import tqdm
 
 from allennlp.common import Params
 from allennlp.common.checks import ConfigurationError
@@ -79,6 +81,9 @@ class CachedDataset(object):
         else:
             raise Exception(f'Unknown type for embedded dataset {type(self.embedded_dataset)}')
     
+    def get_embeddings(self):
+        return self.embedded_dataset
+    
     @overrides
     def __str__(self) -> str:
         return f'CachedDataset({self.embedded_dataset.shape})'
@@ -91,7 +96,7 @@ class CachedDataset(object):
         embedding_function: Callable[[Instance], torch.Tensor],
     ):
         cached_dataset = cls(dataset_id=dataset_id)
-        for instance in dataset:
+        for instance in tqdm(dataset):
             # cache the instance
             # with the embedding function
             s_id = instance.fields['entry_id'].as_tensor(padding_lengths=None).item()
@@ -182,4 +187,5 @@ class CachedTextFieldEmbedder(nn.Module):
                 raise e
 
         return True
+
     
