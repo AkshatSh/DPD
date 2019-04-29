@@ -111,3 +111,6 @@ data
 
 # ignore log fils
 logs/
+
+# ignore large saved files
+.saved/
