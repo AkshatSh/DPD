@@ -101,13 +101,11 @@ class CachedDataset(object):
         dataset_id: int,
         dataset: Iterator[Instance],
         embedding_function: Callable[[Instance], torch.Tensor],
-        cuda_device: int,
     ):
         cached_dataset = cls(dataset_id=dataset_id)
         for instance in tqdm(dataset):
             # cache the instance
             # with the embedding function
-            instance.cuda(cuda_device)
             s_id = instance.fields['entry_id'].as_tensor(padding_lengths=None).item()
             e_t = embedding_function(instance)
             cached_dataset.cache_entry(s_id=s_id, embedding_tensor=e_t)
@@ -195,7 +193,6 @@ class CachedTextFieldEmbedder(nn.Module):
                 dataset_id=dataset_id,
                 dataset=dataset,
                 embedding_function=lambda inst: _ef(inst, vocab),
-                device=cuda_device,
             )
         except Exception as e:
             if self.silent_error:
