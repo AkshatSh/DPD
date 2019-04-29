@@ -11,6 +11,7 @@ import os
 import sys
 import h5py
 import numpy as np
+import pickle
 
 from .saving_utils import (
     load_h5_dict,
@@ -90,4 +91,45 @@ class H5SaveFile(SaveFile):
         save_h5_np(data=item, h5f=self.file, dataset_name=key)
 
     def close(self):
+        self.file.close()
+
+class PickleSaveFile(SaveFile):
+    def __init__(
+        self,
+        file_name: str,
+    ):
+        self.file_name = file_name
+        self.data: Dict[str, Union[Dict[int, int], np.ndarray]] = {}
+        self.file = open(self.file_name, 'wb')
+        if os.path.exists(self.file_name):
+            self.data = pickle.load(self.file)
+    
+    def load_dict(
+        self,
+        key: str,
+    ) -> Dict[int, int]:
+        return self.data[key]
+    
+    def load_np(
+        self,
+        key: str,
+    ) -> np.ndarray:
+        return self.data[key]
+    
+    def save_dict(
+        self,
+        item: Dict[int, int],
+        key: str,
+    ):
+        self.data[key] = item
+    
+    def save_np(
+        self,
+        item: np.ndarray,
+        key: str,
+    ):
+        self.data[key] = item
+
+    def close(self):
+        pickle.dump(self.data, self.file)
         self.file.close()
