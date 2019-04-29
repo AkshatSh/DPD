@@ -20,6 +20,7 @@ from allennlp.nn.util import get_text_field_mask
 
 # local imports
 from dpd.constants import CADEC_NER_ELMo
+from dpd.utils import H5SaveFile
 from .allennlp_crf_tagger import CrfTagger
 from .embedder import NERElmoTokenEmbedder, CachedTextFieldEmbedder
 
@@ -46,6 +47,8 @@ class ELMoCrfTagger(Model):
             self.word_embeddings = CachedTextFieldEmbedder(
                 text_field_embedder=self.word_embeddings,
             )
+
+            self.word_embeddings.load(save_file=H5SaveFile(CADEC_NER_ELMo))
 
         self.seq2seq_model = PytorchSeq2SeqWrapper(
             torch.nn.LSTM(
