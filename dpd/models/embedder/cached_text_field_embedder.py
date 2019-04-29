@@ -28,6 +28,8 @@ from allennlp.modules.time_distributed import TimeDistributed
 from allennlp.modules.token_embedders.token_embedder import TokenEmbedder
 from allennlp.nn.util import get_text_field_mask, move_to_device
 
+from dpd.utils import SaveFile
+
 class CachedDataset(object):
     def __init__(
         self,
@@ -90,6 +92,18 @@ class CachedDataset(object):
     
     def get_embeddings(self):
         return self.embedded_dataset
+    
+    def save(self, key: str, save_file: SaveFile):
+        save_file.save_dict(item=self.index_to_sid, key=f'{key}/index_to_sid')
+        save_file.save_dict(item=self.sid_to_start, key=f'{key}/sid_to_start')
+        save_file.save_dict(item=self.sid_to_end, key=f'{key}/sid_to_end')
+        save_file.save_np(item=self.embedded_dataset, key=f'{key}/embedded_dataset')
+    
+    def load(self, key: str, save_file: SaveFile):
+        self.index_to_sid = save_file.load_dict(key=f'{key}/index_to_sid')
+        self.sid_to_start = save_file.load_dict(key=f'{key}/sid_to_start')
+        self.sid_to_end = save_file.load_dict(key=f'{key}/sid_to_end')
+        self.embedded_dataset = save_file.load_np(key=f'{key}/embedded_dataset')
     
     @overrides
     def __str__(self) -> str:
@@ -201,5 +215,19 @@ class CachedTextFieldEmbedder(nn.Module):
                 raise e
 
         return True
-
     
+    def save(
+        self,
+        save_fle: SaveFile,
+    ):
+        for i, (d_id, cached_dataset) in enumerate(self.cached_datasets.items()):
+            key = f'cached_dataset_{d_id}'
+            cached_dataset.save(key=key, save_file=save_file)
+    
+    def load(
+        self,
+        save_file: SaveFile,
+    ):
+        for i, (d_id, cached_dataset) in enumerate(self.cached_datasets.items()):
+            key = f'cached_dataset_{d_id}'
+            cached_dataset.load(key=key, save_file=save_file)

@@ -451,6 +451,7 @@ def get_args() -> argparse.ArgumentParser:
 
     # system config
     parser.add_argument('--cuda', action='store_true', help='use CUDA if available')
+    parser.add_argument('--cached', action='store_true', help='rely on cached embeddings if possible')
 
     # Parser data loader options
     return parser
@@ -516,6 +517,7 @@ def main():
         vocab=vocab,
         hidden_dim=args.hidden_dim,
         class_labels=class_labels,
+        cached=args.cached,
     )
 
     oracle = GoldOracle(train_bio)

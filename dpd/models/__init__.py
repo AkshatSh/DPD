@@ -12,12 +12,14 @@ def build_model(
     vocab: Vocabulary,
     hidden_dim: int,
     class_labels: List[str],
+    cached: bool,
 ) -> Model:
     if model_type == 'ELMo_bilstm_crf':
         return ELMoCrfTagger(
             vocab=vocab,
             hidden_dim=hidden_dim,
             class_labels=class_labels,
+            cached=cached,
         )
     else:
         raise Exception(f'Unknown model type {model_type}')

@@ -19,8 +19,9 @@ from allennlp.nn.util import get_text_field_mask
 
 
 # local imports
+from dpd.constants import CADEC_NER_ELMo
 from .allennlp_crf_tagger import CrfTagger
-from .embedder.ner_elmo import NERElmoTokenEmbedder
+from .embedder import NERElmoTokenEmbedder, CachedTextFieldEmbedder
 
 
 '''
@@ -32,6 +33,7 @@ class ELMoCrfTagger(Model):
         vocab: Vocabulary,
         hidden_dim: int,
         class_labels: List[str],
+        cached: bool,
     ) -> None:
         super().__init__(vocab)
         elmo_embedder = NERElmoTokenEmbedder()
@@ -39,6 +41,11 @@ class ELMoCrfTagger(Model):
         self.word_embeddings = BasicTextFieldEmbedder(
             {"tokens": elmo_embedder},
         )
+
+        if cached:
+            self.word_embeddings = CachedTextFieldEmbedder(
+                text_field_embedder=self.word_embeddings,
+            )
 
         self.seq2seq_model = PytorchSeq2SeqWrapper(
             torch.nn.LSTM(

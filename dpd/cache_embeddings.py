@@ -26,7 +26,7 @@ from allennlp.modules.token_embedders import ElmoTokenEmbedder
 
 import dpd
 from dpd.dataset import BIODataset, BIODatasetReader
-from dpd.utils import get_dataset_files
+from dpd.utils import get_dataset_files, SaveFile
 from dpd.models.embedder import NERElmoTokenEmbedder, CachedTextFieldEmbedder
 from dpd.constants import (
     ELMO_OPTIONS_FILE,
@@ -127,10 +127,12 @@ def main():
         cuda_device=cuda_device,
     )
 
-    save_file = get_save_file(embedder_type=args.embedder, dataset_type=args.dataset)
+    save_file_name = get_save_file(embedder_type=args.embedder, dataset_type=args.dataset)
 
-    with open(save_file, 'wb') as f:
-        pickle.dump(cached_embedder, f)
+    save_file = SaveFile(file_name=save_file_name)
+
+    cached_embedder.save(save_file=save_file)
+    save_file.close()
 
 
 if __name__ == "__main__":
