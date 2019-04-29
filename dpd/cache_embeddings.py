@@ -98,7 +98,6 @@ def main():
     valid_bio = BIODataset(
         dataset_id=1,
         file_name=valid_file,
-        binary_class=args.binary_class,
     )
     valid_bio.parse_file()
 

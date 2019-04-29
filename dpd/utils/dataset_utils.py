@@ -28,9 +28,10 @@ def get_dataset_files(dataset: str) -> Tuple[str, str]:
         ``Tuple[str, str]``
             the train file and valid file
     '''
-    if dataset == 'CONLL':
+    dataset = dataset.lower()
+    if dataset == 'conll':
         return CONLL2003_TRAIN, CONLL2003_VALID, CONLL2003_TEST
-    elif dataset == 'CADEC':
+    elif dataset == 'cadec':
         return CADEC_TRAIN, CADEC_VALID, CADEC_TEST
     else:
         raise Exception(f'Unknown dataset: {dataset}')
