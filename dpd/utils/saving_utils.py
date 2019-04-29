@@ -15,7 +15,7 @@ def save_h5_dict(input_dict: Dict[int, int], h5f: h5py.File, dataset_name: str):
     dict_np = np.zeros((len(input_dict), 2), dtype=int)
     for i, (inp, val) in enumerate(input_dict.items()):
         dict_np[i] = (inp, val)
-    save_h5_np(dict_np, dataset_name)
+    save_h5_np(dict_np, h5f, dataset_name)
 
 def load_h5_dict(h5f: h5py.File, dataset_name: str) -> Dict[int, int]:
     dict_np = load_h5_np(h5f, dataset_name)
