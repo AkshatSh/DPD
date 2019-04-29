@@ -26,7 +26,7 @@ from allennlp.data import Vocabulary, DatasetReader, Instance
 from allennlp.modules.text_field_embedders.text_field_embedder import TextFieldEmbedder
 from allennlp.modules.time_distributed import TimeDistributed
 from allennlp.modules.token_embedders.token_embedder import TokenEmbedder
-from allennlp.nn.util import get_text_field_mask
+from allennlp.nn.util import get_text_field_mask, move_to_device
 
 class CachedDataset(object):
     def __init__(
@@ -101,11 +101,13 @@ class CachedDataset(object):
         dataset_id: int,
         dataset: Iterator[Instance],
         embedding_function: Callable[[Instance], torch.Tensor],
+        cuda_device: int,
     ):
         cached_dataset = cls(dataset_id=dataset_id)
         for instance in tqdm(dataset):
             # cache the instance
             # with the embedding function
+            instance.cuda(cuda_device)
             s_id = instance.fields['entry_id'].as_tensor(padding_lengths=None).item()
             e_t = embedding_function(instance)
             cached_dataset.cache_entry(s_id=s_id, embedding_tensor=e_t)
@@ -170,6 +172,7 @@ class CachedTextFieldEmbedder(nn.Module):
         dataset_id: int,
         dataset: Iterator[Instance],
         vocab: Vocabulary,
+        cuda_device: int = -1,
     ) -> bool:
         '''
         takes the input ``dataset`` and caches the entire thing to stop retrieval
@@ -182,6 +185,7 @@ class CachedTextFieldEmbedder(nn.Module):
             # adds batch dimension
             input_tensor = copy.deepcopy(inst.fields['sentence'].as_tensor(padding_lengths=pl))
             input_tensor['tokens'] = input_tensor['tokens'].unsqueeze(0)
+            input_tensor = move_to_device(input_tensor, cuda_device)
 
             return self.text_field_embedder(
                 input_tensor,
@@ -191,6 +195,7 @@ class CachedTextFieldEmbedder(nn.Module):
                 dataset_id=dataset_id,
                 dataset=dataset,
                 embedding_function=lambda inst: _ef(inst, vocab),
+                device=cuda_device,
             )
         except Exception as e:
             if self.silent_error:

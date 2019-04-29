@@ -107,16 +107,24 @@ def main():
         text_field_embedder=embedder,
     )
 
+    if args.cuda:
+        cuda_device = 0
+        cached_embedder = cached_embedder.cuda(cuda_device)
+    else:
+        cuda_device = -1
+
     cached_embedder.cache(
         dataset_id=train_bio.dataset_id,
         dataset=train_data,
         vocab=vocab,
+        cuda_device=cuda_device,
     )
 
     cached_embedder.cache(
         dataset_id=valid_bio.dataset_id,
         dataset=valid_data,
         vocab=vocab,
+        cuda_device=cuda_device,
     )
 
     save_file = get_save_file(embedder_type=args.embedder, dataset_type=args.dataset)
