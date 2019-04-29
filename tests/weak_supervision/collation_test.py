@@ -10,15 +10,16 @@ import unittest
 from dpd.dataset import BIODataset, UnlabeledBIODataset
 from dpd.weak_supervision.collator import Collator, UnionCollator, IntersectionCollator
 
-def create_entry(input: List[str], output: List[str]) -> Dict[str, List[str]]:
+def create_entry(input: List[str], output: List[str], in_id: int) -> Dict[str, List[str]]:
     assert len(input) == len(output)
     return {
         'input': input,
         'output': output,
+        'id': in_id,
+        'weight': 1.0,
     }
 
 class CollatorTest(unittest.TestCase):
-
     @classmethod
     def sample_data(cls):
         return [
@@ -26,30 +27,36 @@ class CollatorTest(unittest.TestCase):
                 create_entry(
                     input=['This', 'is', 'a', 'sentence'],
                     output=['O', 'O', 'O', 'Tag'],
+                    in_id=1,
                 ),
                 create_entry(
                     input=['This', 'is', 'a', 'word'],
                     output=['O', 'Tag', 'O', 'O'],
+                    in_id=2,
                 ),
             ],
             [
                 create_entry(
                     input=['This', 'is', 'a', 'sentence'],
                     output=['O', 'Tag', 'O', 'Tag'],
+                    in_id=1,
                 ),
                 create_entry(
                     input=['This', 'is', 'a', 'word'],
                     output=['O', 'O', 'O', 'O'],
+                    in_id=2,
                 ),
             ],
             [
                 create_entry(
                     input=['This', 'is', 'a', 'sentence'],
                     output=['O', 'O', 'Tag', 'Tag'],
+                    in_id=1,
                 ),
                 create_entry(
                     input=['This', 'is', 'a', 'word'],
                     output=['Tag', 'O', 'O', 'O'],
+                    in_id=2,
                 ),
             ],
         ]
@@ -66,10 +73,12 @@ class CollatorTest(unittest.TestCase):
             {
                 'input': ['This', 'is', 'a', 'sentence'],
                 'output': ['O', 'Tag', 'Tag', 'Tag'],
+                'id': 1,
             },
             {
                 'input': ['This', 'is', 'a', 'word'],
                 'output': ['Tag', 'Tag', 'O', 'O'],
+                'id': 2,
             },
         ]
         
@@ -81,10 +90,12 @@ class CollatorTest(unittest.TestCase):
             {
                 'input': ['This', 'is', 'a', 'sentence'],
                 'output': ['O', 'O', 'O', 'Tag'],
+                'id': 1,
             },
             {
                 'input': ['This', 'is', 'a', 'word'],
                 'output': ['O', 'O', 'O', 'O'],
+                'id': 2,
             },
         ]
         assert intersect_collation == expected_result

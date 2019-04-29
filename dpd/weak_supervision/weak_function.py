@@ -11,8 +11,10 @@ import allennlp
 from dpd.dataset import UnlabeledBIODataset
 
 
-AnnotationType = Dict[str, object]
-AnnotatedDataType = List[AnnotationType]
+from .types import (
+    AnnotatedDataType,
+    AnnotationType,
+)
 
 class WeakFunction(object):
     '''

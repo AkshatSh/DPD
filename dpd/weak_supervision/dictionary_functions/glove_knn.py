@@ -54,3 +54,5 @@ class GlovekNNFunction(object):
     def __str__(self):
         return f'GloVekNNFunction'
 
+    def __repr__(self):
+        return self.__str__()

@@ -108,3 +108,6 @@ class GloveLinearFunction(object):
             linear_type = "SVM_RBF"
 
         return f'GloVeLinearFunction({linear_type})'
+    
+    def __repr__(self):
+        return self.__str__()

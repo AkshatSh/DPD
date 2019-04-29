@@ -48,7 +48,7 @@ class Collator(object):
 
             # gather one of the inputs
             coll_output = self._collate_fn(outputs)
-            new_entry = {'input': inputs[0], 'output': coll_output}
+            new_entry = {'input': inputs[0], 'output': coll_output, 'id': ann_inst[0]['id']}
             output.append(new_entry)
         return output
     

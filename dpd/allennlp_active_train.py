@@ -187,7 +187,8 @@ def active_train_fine_tune_iteration(
     optimizer_weight_decay: float,
     use_weak: bool,
     weak_weight: float,
-    weak_function: str,
+    weak_function: List[str],
+    weak_collator: str,
     batch_size: int,
     patience: int,
     num_epochs: int,
@@ -228,7 +229,8 @@ def active_train_fine_tune_iteration(
             unlabeled_dataset,
             model,
             weight=weak_weight,
-            function_type=weak_function,
+            function_types=weak_function,
+            collator_type=weak_collator,
         )
 
         model, _ = train(
@@ -278,7 +280,8 @@ def active_train_iteration(
     optimizer_weight_decay: float,
     use_weak: bool,
     weak_weight: float,
-    weak_function: str,
+    weak_function: List[str],
+    weak_collator: str,
     batch_size: int,
     patience: int,
     num_epochs: int,
@@ -319,7 +322,8 @@ def active_train_iteration(
             unlabeled_dataset,
             model,
             weight=weak_weight,
-            function_type=weak_function,
+            function_types=weak_function,
+            collator_type=weak_collator,
         )
 
     model, metrics = train(
@@ -351,7 +355,8 @@ def active_train(
     use_weak: bool,
     weak_fine_tune: bool,
     weak_weight: float,
-    weak_function: str,
+    weak_function: List[str],
+    weak_collator: str,
     batch_size: int,
     patience: int,
     num_epochs: int,
@@ -395,6 +400,7 @@ def active_train(
             use_weak=use_weak,
             weak_weight=weak_weight,
             weak_function=weak_function,
+            weak_collator=weak_collator,
             batch_size=batch_size,
             patience=patience,
             num_epochs=num_epochs,
@@ -443,7 +449,8 @@ def get_args() -> argparse.ArgumentParser:
     parser.add_argument('--use_weak', action='store_true', help='use the weak set during training')
     parser.add_argument('--use_weak_fine_tune', action='store_true', help='use the weak fine tuning approach')
     parser.add_argument('--weak_weight', type=float, default=1.0, help='the weight to give to the weak set during training')
-    parser.add_argument('--weak_function', type=str, default='linear', help='the type of weak function to use')
+    parser.add_argument('--weak_function', nargs='+', default=['linear'], help='a list of the type of weak function to use')
+    parser.add_argument('--weak_collator', type=str, default='union', help='the type of collator to use for the weak set')
 
     # training config
     parser.add_argument('--num_epochs', type=int, default=5, help='the number of epochs to run each iteration')
@@ -536,6 +543,7 @@ def main():
         weak_fine_tune=args.use_weak_fine_tune,
         weak_weight=args.weak_weight,
         weak_function=args.weak_function,
+        weak_collator=args.weak_collator,
         batch_size=args.batch_size,
         patience=args.patience,
         num_epochs=args.num_epochs,

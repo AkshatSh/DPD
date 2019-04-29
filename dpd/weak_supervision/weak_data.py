@@ -2,6 +2,7 @@ from typing import (
     List,
     Dict,
     Tuple,
+    Union,
 )
 
 import logging
@@ -9,7 +10,7 @@ import logging
 from allennlp.models import Model
 
 from dpd.dataset import UnlabeledBIODataset
-from dpd.weak_supervision import WeakFunction
+from dpd.weak_supervision import WeakFunction, BIOConverter
 from dpd.weak_supervision.dictionary_functions import (
     KeywordMatchFunction,
     GlovekNNFunction,
@@ -17,15 +18,22 @@ from dpd.weak_supervision.dictionary_functions import (
     DICTIONARY_FUNCTION_IMPL,
 )
 
-EntryDataType = Dict[str, object]
-DatasetType = List[EntryDataType]
+from dpd.weak_supervision.collator import (
+    COLLATOR_IMPLEMENTATION,
+)
+
+from dpd.weak_supervision.types import (
+    EntryDataType,
+    DatasetType,
+)
 
 def build_weak_data(
     train_data: DatasetType,
     unlabeled_corpus: UnlabeledBIODataset,
     model: Model,
     weight: float = 1.0,
-    function_type: str = 'linear',
+    function_types: List[str] = ['linear'],
+    collator_type: str = 'union',
 ) -> DatasetType:
     '''
     This constructs a weak dataset
@@ -46,11 +54,18 @@ def build_weak_data(
         ``DatasetType``
             the weak dataset that can be used along side training
     '''
-    function: WeakFunction = DICTIONARY_FUNCTION_IMPL[function_type](unlabeled_corpus.binary_class)
-    print(f'using weak function: {function}')
-    logging.info(f'using weak function: {function}')
-    function.train(train_data)
-    annotated_corpus = function.evaluate(unlabeled_corpus)
-    for item in annotated_corpus:
+    functions: List[WeakFunction] = [DICTIONARY_FUNCTION_IMPL[f](unlabeled_corpus.binary_class) for f in function_types]
+    collator = COLLATOR_IMPLEMENTATION[collator_type](positive_label=unlabeled_corpus.binary_class)
+    bio_converter = BIOConverter(binary_class=unlabeled_corpus.binary_class)
+    print(f'using weak functions: {functions}')
+    logging.info(f'using weak functions: {functions}')
+    annotated_corpi = []
+    for function in functions:
+        function.train(train_data)
+        annotated_corpus = function.evaluate(unlabeled_corpus)
+        annotated_corpi.append(annotated_corpus)
+    fin_annotated_corpus = collator.collate(annotated_corpi)
+    bio_corpus = bio_converter.convert(fin_annotated_corpus)
+    for i, item in enumerate(bio_corpus):
         item['weight'] = weight
-    return annotated_corpus
+    return bio_corpus
