@@ -34,6 +34,9 @@ from dpd.constants import (
     CADEC_ELMo,
     CADEC_BERT,
     CADEC_NER_ELMo,
+    CONLL_BERT,
+    CONLL_ELMo,
+    CONLL_NER_ELMo,
 )
 
 def get_args() -> argparse.ArgumentParser:
@@ -60,6 +63,17 @@ def get_save_file(embedder_type: str, dataset_type: str) -> str:
             return CADEC_NER_ELMo
         elif embedder_type == 'elmo':
             return CADEC_ELMo
+        elif embedder_type == 'bert':
+            return CADEC_BERT
+        else:
+            raise Exception(f'Unknown embedder type: {embedder_type}')
+    elif dataset_type == 'conll':
+        if embedder_type == 'ner_elmo':
+            return CONLL_NER_ELMo
+        elif embedder_type == 'elmo':
+            return CONLL_ELMo
+        elif embedder_type == 'bert':
+            return CONLL_BERT
         else:
             raise Exception(f'Unknown embedder type: {embedder_type}')
     else:

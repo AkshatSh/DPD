@@ -60,7 +60,9 @@ SAVE_DIR = os.path.join(os.path.dirname(__file__), '..', '.saved')
 CADEC_ELMo = os.path.join(SAVE_DIR, 'cadec_elmo.tmp')
 CADEC_NER_ELMo = os.path.join(SAVE_DIR, 'cadec_ner_elmo.tmp')
 CADEC_BERT = os.path.join(SAVE_DIR, 'cadec_bert.tmp')
-
+CONLL_NER_ELMo = os.path.join(SAVE_DIR, 'conll_ner_elmo.tmp')
+CONLL_ELMo = os.path.join(SAVE_DIR, 'conll_elmo.tmp')
+CONLL_BERT = os.path.join(SAVE_DIR, 'conll_bert.tmp')
 
 # ELMo constants
 ELMO_OPTIONS_FILE = 'https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x1024_128_2048cnn_1xhighway/elmo_2x1024_128_2048cnn_1xhighway_options.json'
