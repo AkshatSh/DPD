@@ -26,7 +26,7 @@ from allennlp.modules.token_embedders import ElmoTokenEmbedder
 
 import dpd
 from dpd.dataset import BIODataset, BIODatasetReader
-from dpd.utils import get_dataset_files, SaveFile
+from dpd.utils import get_dataset_files, SaveFile, H5SaveFile
 from dpd.models.embedder import NERElmoTokenEmbedder, CachedTextFieldEmbedder
 from dpd.constants import (
     ELMO_OPTIONS_FILE,
@@ -129,7 +129,7 @@ def main():
 
     save_file_name = get_save_file(embedder_type=args.embedder, dataset_type=args.dataset)
 
-    save_file = SaveFile(file_name=save_file_name)
+    save_file = H5SaveFile(file_name=save_file_name)
 
     cached_embedder.save(save_file=save_file)
     save_file.close()
