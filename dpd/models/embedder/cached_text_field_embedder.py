@@ -18,6 +18,7 @@ import logging
 from overrides import overrides
 import h5py
 from tqdm import tqdm
+import copy
 
 from allennlp.common import Params
 from allennlp.common.checks import ConfigurationError
@@ -45,6 +46,12 @@ class CachedDataset(object):
     ):
         index = len(self.embedded_dataset) if self.embedded_dataset is not None else 0
         embedding_tensor = embedding_tensor.detach().cpu()
+
+        if len(embedding_tensor.shape) == 3:
+            # make sure batch size is 1
+            assert len(embedding_tensor) == 1
+            embedding_tensor = embedding_tensor[0]
+
         if self.embedded_dataset is None:
             self.embedded_dataset = embedding_tensor
         else:
@@ -171,8 +178,13 @@ class CachedTextFieldEmbedder(nn.Module):
         '''
         def _ef(inst: Instance, vocab: Vocabulary):
             inst.fields['sentence'].index(vocab)
+            pl = inst.fields['sentence'].get_padding_lengths()
+            # adds batch dimension
+            input_tensor = copy.deepcopy(inst.fields['sentence'].as_tensor(padding_lengths=pl))
+            input_tensor['tokens'] = input_tensor['tokens'].unsqueeze(0)
+
             return self.text_field_embedder(
-                inst.fields['sentence'].as_tensor(padding_lengths=inst.fields['sentence'].get_padding_lengths())
+                input_tensor,
             )
         try:
             self.cached_datasets[dataset_id] = CachedDataset.cache_dataset(

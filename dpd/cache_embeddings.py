@@ -65,24 +65,6 @@ def get_save_file(embedder_type: str, dataset_type: str) -> str:
     else:
         raise Exception(f'Unknown dataset type: {dataset_type}')
 
-def construct_vocab(datasets: List[BIODataset], token_indexer: TokenIndexer) -> Vocabulary:
-    readers = [BIODatasetReader(
-        bio_dataset=bio_dataset,
-        token_indexers={
-            'tokens': TokenIndexer,
-        },
-    ) for bio_dataset in datasets]
-
-    allennlp_datasets = [r.read('tmp.txt') for r in readers]
-
-    result = allennlp_datasets[0]
-    for i in range(1, len(allennlp_datasets)):
-        result += allennlp_datasets[i]
-
-    vocab = Vocabulary.from_instances(result)
-
-    return readers, vocab
-
 def main():
     args = get_args().parse_args()
     device = 'cuda' if torch.cuda.is_available() and args.cuda else 'cpu'
@@ -95,13 +77,31 @@ def main():
     )
     train_bio.parse_file()
 
+    train_reader = BIODatasetReader(
+        bio_dataset=train_bio,
+        token_indexers={
+            'tokens': token_indexer,
+        },
+    )
+
+    train_data = train_reader.read('temp.txt')
+
     valid_bio = BIODataset(
         dataset_id=1,
         file_name=valid_file,
     )
     valid_bio.parse_file()
 
-    (train_dataset, valid_dataset), vocab = construct_vocab([train_bio, valid_bio], token_indexer=token_indexer)
+    valid_reader = BIODatasetReader(
+        bio_dataset=valid_bio,
+        token_indexers={
+            'tokens': token_indexer,
+        },
+    )
+
+    valid_data = valid_reader.read('temp.txt')
+
+    vocab = Vocabulary.from_instances(train_data + valid_data)
     embedder = BasicTextFieldEmbedder({"tokens": token_embedder})
     cached_embedder = CachedTextFieldEmbedder(
         text_field_embedder=embedder,
@@ -109,13 +109,13 @@ def main():
 
     cached_embedder.cache(
         dataset_id=train_bio.dataset_id,
-        dataset=train_dataset,
+        dataset=train_data,
         vocab=vocab,
     )
 
     cached_embedder.cache(
         dataset_id=valid_bio.dataset_id,
-        dataset=valid_dataset,
+        dataset=valid_data,
         vocab=vocab,
     )
 
