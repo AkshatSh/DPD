@@ -1,0 +1,90 @@
+from typing import (
+    List,
+    Tuple,
+    Dict,
+    Optional,
+)
+
+import unittest
+
+from dpd.dataset import BIODataset, UnlabeledBIODataset
+from dpd.weak_supervision.collator import Collator, UnionCollator, IntersectionCollator
+
+def create_entry(input: List[str], output: List[str]) -> Dict[str, List[str]]:
+    assert len(input) == len(output)
+    return {
+        'input': input,
+        'output': output,
+    }
+
+class CollatorTest(unittest.TestCase):
+
+    @classmethod
+    def sample_data(cls):
+        return [
+            [
+                create_entry(
+                    input=['This', 'is', 'a', 'sentence'],
+                    output=['O', 'O', 'O', 'Tag'],
+                ),
+                create_entry(
+                    input=['This', 'is', 'a', 'word'],
+                    output=['O', 'Tag', 'O', 'O'],
+                ),
+            ],
+            [
+                create_entry(
+                    input=['This', 'is', 'a', 'sentence'],
+                    output=['O', 'Tag', 'O', 'Tag'],
+                ),
+                create_entry(
+                    input=['This', 'is', 'a', 'word'],
+                    output=['O', 'O', 'O', 'O'],
+                ),
+            ],
+            [
+                create_entry(
+                    input=['This', 'is', 'a', 'sentence'],
+                    output=['O', 'O', 'Tag', 'Tag'],
+                ),
+                create_entry(
+                    input=['This', 'is', 'a', 'word'],
+                    output=['Tag', 'O', 'O', 'O'],
+                ),
+            ],
+        ]
+    
+    @classmethod
+    def _test_collator(cls, collator_construct):
+        sample_data = cls.sample_data()
+        collator = collator_construct(positive_label='Tag')
+        return collator.collate(sample_data, should_verify=True)
+
+    def test_union(self):
+        union_collation = CollatorTest._test_collator(collator_construct=UnionCollator)
+        expected_result = [
+            {
+                'input': ['This', 'is', 'a', 'sentence'],
+                'output': ['O', 'Tag', 'Tag', 'Tag'],
+            },
+            {
+                'input': ['This', 'is', 'a', 'word'],
+                'output': ['Tag', 'Tag', 'O', 'O'],
+            },
+        ]
+        
+        assert union_collation == expected_result
+    
+    def test_intersect(self):
+        intersect_collation = CollatorTest._test_collator(collator_construct=IntersectionCollator)
+        expected_result = [
+            {
+                'input': ['This', 'is', 'a', 'sentence'],
+                'output': ['O', 'O', 'O', 'Tag'],
+            },
+            {
+                'input': ['This', 'is', 'a', 'word'],
+                'output': ['O', 'O', 'O', 'O'],
+            },
+        ]
+        assert intersect_collation == expected_result
