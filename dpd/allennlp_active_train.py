@@ -521,11 +521,6 @@ def main():
         cached=args.cached,
     )
 
-    if args.cached:
-        # set up loading caches for train and valid datasets
-        model.word_embeddings.setup_cache(dataset_id=train_bio.dataset_id)
-        model.word_embeddings.setup_cache(dataset_id=valid_bio.dataset_id)
-
     oracle = GoldOracle(train_bio)
 
     active_train(

@@ -23,6 +23,7 @@ def main():
     ce = CachedTextFieldEmbedder(text_field_embedder=None)
     ce.setup_cache(dataset_id=0)
     ce.setup_cache(dataset_id=1)
+    ce.load(save_file)
 
     print(ce.cached_datasets[0])
 

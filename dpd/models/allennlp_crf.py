@@ -50,6 +50,9 @@ class ELMoCrfTagger(Model):
                 text_field_embedder=self.word_embeddings,
             )
 
+            self.word_embeddings.setup_cache(dataset_id=0)
+            self.word_embeddings.setup_cache(dataset_id=1)
+
             self.word_embeddings.load(save_file=H5SaveFile(CADEC_NER_ELMo))
 
         self.seq2seq_model = PytorchSeq2SeqWrapper(
