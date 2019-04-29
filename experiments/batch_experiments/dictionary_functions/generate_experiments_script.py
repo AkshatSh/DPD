@@ -10,7 +10,7 @@ import os
 import sys
 import argparse
 
-NUM_TRIALS = 3
+NUM_TRIALS = 5
 WEAK_WEIGHT = [0.01]
 WEAK_FUNCTIONS = ['linear', 'knn', 'keyword']
 NUM_EPOCHS = 5
@@ -20,8 +20,8 @@ def generate_experiment_commands() -> List[str]:
     for trial in range(NUM_TRIALS):
         for weak_weight in WEAK_WEIGHT:
             for weak_function in WEAK_FUNCTIONS:
-                model_name = f'fine_tune/{weak_weight}/{weak_function}/trial_{trial}'
-                command = f'python dpd/allennlp_active_train.py --weak_function {weak_function} --num_epochs {NUM_EPOCHS} --weak_weight {weak_weight} --model_name {model_name} --use_weak --cuda --use_weak_fine_tune'
+                model_name = f'cached/fine_tune/{weak_weight}/{weak_function}/trial_{trial}'
+                command = f'python dpd/allennlp_active_train.py --weak_function {weak_function} --num_epochs {NUM_EPOCHS} --weak_weight {weak_weight} --model_name {model_name} --use_weak --cuda --use_weak_fine_tune --cache'
                 commands.append(command)
     return commands
 
