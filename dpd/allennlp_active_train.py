@@ -18,6 +18,7 @@ from allennlp.data import DatasetReader
 from allennlp.data.token_indexers.elmo_indexer import ELMoTokenCharactersIndexer
 from allennlp.data.iterators import BucketIterator
 from allennlp.training.trainer import Trainer
+from allennlp.data.token_indexers import PretrainedBertIndexer
 
 from dpd.dataset import (
     ActiveBIODataset,
@@ -519,6 +520,11 @@ def main():
         class_labels=class_labels,
         cached=args.cached,
     )
+
+    if args.cached:
+        # set up loading caches for train and valid datasets
+        model.word_embeddings.setup_cache(dataset_id=train_bio.dataset_id)
+        model.word_embeddings.setup_cache(dataset_id=valid_bio.dataset_id)
 
     oracle = GoldOracle(train_bio)
 
