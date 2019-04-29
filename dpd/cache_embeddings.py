@@ -40,6 +40,7 @@ def get_args() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description='Script to cache different embeddings for datasets')
     parser.add_argument('--embedder', type=str, default='ner_elmo', help='the embedder to cache')
     parser.add_argument('--dataset', type=str, default='cadec', help='the dataset to cache')
+    return parser
 
 def get_embedder_info(embedder_type: str) -> Tuple[TokenEmbedder, TokenIndexer, str]:
     embedder_type = embedder_type.lower()
