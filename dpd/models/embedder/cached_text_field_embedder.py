@@ -218,7 +218,7 @@ class CachedTextFieldEmbedder(nn.Module):
     
     def save(
         self,
-        save_fle: SaveFile,
+        save_file: SaveFile,
     ):
         for i, (d_id, cached_dataset) in enumerate(self.cached_datasets.items()):
             key = f'cached_dataset_{d_id}'
