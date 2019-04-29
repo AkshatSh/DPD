@@ -5,7 +5,7 @@ from typing import (
 from allennlp.models import Model
 from allennlp.data.vocabulary import Vocabulary
 from .weighted_crf import WeightedCRF
-from .allennlp_crf import ELMoCrfTagger
+from .allennlp_crf import ELMoCrfTagger, BERTCrfTagger
 
 def build_model(
     model_type: str,
@@ -16,6 +16,13 @@ def build_model(
 ) -> Model:
     if model_type == 'ELMo_bilstm_crf':
         return ELMoCrfTagger(
+            vocab=vocab,
+            hidden_dim=hidden_dim,
+            class_labels=class_labels,
+            cached=cached,
+        )
+    elif model_type == 'BERT_bilstm_crf':
+        return BERTCrfTagger(
             vocab=vocab,
             hidden_dim=hidden_dim,
             class_labels=class_labels,

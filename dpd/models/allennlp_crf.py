@@ -16,10 +16,12 @@ from allennlp.modules.text_field_embedders import TextFieldEmbedder, BasicTextFi
 from allennlp.modules.token_embedders import Embedding
 from allennlp.modules.seq2seq_encoders import Seq2SeqEncoder, PytorchSeq2SeqWrapper
 from allennlp.nn.util import get_text_field_mask
+from allennlp.modules.token_embedders.bert_token_embedder import PretrainedBertEmbedder
+from allennlp.data.token_indexers import PretrainedBertIndexer
 
 
 # local imports
-from dpd.constants import CADEC_NER_ELMo
+from dpd.constants import CADEC_NER_ELMo, CADEC_BERT
 from dpd.utils import H5SaveFile
 from .allennlp_crf_tagger import CrfTagger
 from .embedder import NERElmoTokenEmbedder, CachedTextFieldEmbedder
@@ -53,6 +55,72 @@ class ELMoCrfTagger(Model):
         self.seq2seq_model = PytorchSeq2SeqWrapper(
             torch.nn.LSTM(
                 elmo_embedder.get_output_dim(),
+                hidden_dim,
+                bidirectional=True,
+                batch_first=True,
+            ),
+        )
+
+        self.model = CrfTagger(
+            vocab,
+            self.word_embeddings,
+            self.seq2seq_model,
+            label_encoding='BIO',
+            calculate_span_f1=True,
+            # constrain_crf_decoding=True,
+            verbose_metrics=False,
+            class_labels=class_labels,
+        )
+    
+    def forward(
+        self,
+        sentence: Dict[str, torch.Tensor],
+        dataset_id: torch.Tensor,
+        weight: torch.Tensor,
+        labels: torch.Tensor = None,
+        entry_id: torch.Tensor = None,
+    ) -> Dict[str, torch.Tensor]:
+        model_out = self.model(
+            tokens=sentence,
+            tags=labels,
+            weight=weight,
+        )
+
+        return model_out
+    
+    def get_metrics(self, reset: bool = False) -> Dict[str, float]:
+        metrics = self.model.get_metrics(reset)
+        return metrics
+
+class BERTCrfTagger(Model):
+    def __init__(
+        self,
+        vocab: Vocabulary,
+        hidden_dim: int,
+        class_labels: List[str],
+        cached: bool,
+    ) -> None:
+        super().__init__(vocab)
+        self.vocab = vocab
+        bert_embedder = PretrainedBertEmbedder(
+                pretrained_model="bert-base-uncased",
+                top_layer_only=True, # conserve memory
+        )
+
+        self.word_embeddings = BasicTextFieldEmbedder(
+            {"tokens": bert_embedder},
+            allow_unmatched_tokens=True,
+        )
+
+        if cached:
+            self.word_embeddings = CachedTextFieldEmbedder(
+                text_field_embedder=self.word_embeddings,
+            )
+            self.word_embeddings.load(save_file=H5SaveFile(CADEC_BERT))
+
+        self.seq2seq_model = PytorchSeq2SeqWrapper(
+            torch.nn.LSTM(
+                bert_embedder.get_output_dim(),
                 hidden_dim,
                 bidirectional=True,
                 batch_first=True,

@@ -4,6 +4,7 @@ from typing import (
     Dict,
     Optional,
     Iterator,
+    Any,
 )
 
 import os
@@ -23,6 +24,9 @@ from allennlp.data.token_indexers import TokenIndexer
 from allennlp.data import Instance
 from allennlp.data.token_indexers.elmo_indexer import ELMoTokenCharactersIndexer
 from allennlp.modules.token_embedders import ElmoTokenEmbedder
+from allennlp.modules.text_field_embedders import BasicTextFieldEmbedder
+from allennlp.modules.token_embedders.bert_token_embedder import PretrainedBertEmbedder
+from allennlp.data.token_indexers import PretrainedBertIndexer
 
 import dpd
 from dpd.dataset import BIODataset, BIODatasetReader
@@ -46,12 +50,25 @@ def get_args() -> argparse.ArgumentParser:
     parser.add_argument('--cuda', action='store_true', help='whether to use GPU if possible')
     return parser
 
-def get_embedder_info(embedder_type: str) -> Tuple[TokenEmbedder, TokenIndexer, str]:
+def get_embedder_info(embedder_type: str) -> Tuple[TokenEmbedder, TokenIndexer, str, Dict[str, Any]]:
     embedder_type = embedder_type.lower()
+    text_field_embedder_kwargs: Dict[str, Any] = {}
     if embedder_type == 'ner_elmo':
-        return NERElmoTokenEmbedder(), ELMoTokenCharactersIndexer()
+        return NERElmoTokenEmbedder(), ELMoTokenCharactersIndexer(), text_field_embedder_kwargs
     elif embedder_type == 'elmo':
-        return ElmoTokenEmbedder(ELMO_OPTIONS_FILE, ELMO_WEIGHT_FILE), ELMoTokenCharactersIndexer()
+        return ElmoTokenEmbedder(ELMO_OPTIONS_FILE, ELMO_WEIGHT_FILE), ELMoTokenCharactersIndexer(), text_field_embedder_kwargs
+    elif embedder_type == 'bert':
+        bert_embedder = PretrainedBertEmbedder(
+                pretrained_model="bert-base-uncased",
+                top_layer_only=True, # conserve memory
+        )
+        token_indexer = PretrainedBertIndexer(
+            pretrained_model="bert-base-uncased",
+            max_pieces=512, # max pieces allowed for positional embeddings
+            do_lowercase=True,
+        )
+        text_field_embedder_kwargs['allow_unmatched_keys'] = True
+        return bert_embedder, token_indexer, text_field_embedder_kwargs
     else:
         raise Exception(f'Unknown embedder type: {embedder_type}')
     
@@ -83,7 +100,7 @@ def main():
     args = get_args().parse_args()
     device = 'cuda' if torch.cuda.is_available() and args.cuda else 'cpu'
     train_file, valid_file, test_file = get_dataset_files(dataset=args.dataset)
-    token_embedder, token_indexer = get_embedder_info(args.embedder)
+    token_embedder, token_indexer, text_field_embedder_kwargs = get_embedder_info(args.embedder)
 
     train_bio = BIODataset(
         dataset_id=0,
@@ -116,7 +133,7 @@ def main():
     valid_data = valid_reader.read('temp.txt')
 
     vocab = Vocabulary.from_instances(train_data + valid_data)
-    embedder = BasicTextFieldEmbedder({"tokens": token_embedder})
+    embedder = BasicTextFieldEmbedder({"tokens": token_embedder}, **text_field_embedder_kwargs)
     cached_embedder = CachedTextFieldEmbedder(
         text_field_embedder=embedder,
     )
