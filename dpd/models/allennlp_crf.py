@@ -73,6 +73,7 @@ class ELMoCrfTagger(Model):
             # constrain_crf_decoding=True,
             verbose_metrics=False,
             class_labels=class_labels,
+            cached_embeddings=cached,
         )
     
     def forward(
@@ -87,6 +88,8 @@ class ELMoCrfTagger(Model):
             tokens=sentence,
             tags=labels,
             weight=weight,
+            dataset_id=dataset_id,
+            entry_id=entry_id,
         )
 
         return model_out

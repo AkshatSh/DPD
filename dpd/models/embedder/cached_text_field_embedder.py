@@ -168,12 +168,10 @@ class CachedTextFieldEmbedder(nn.Module):
         mask = get_text_field_mask(sentence)
         embedding_tensor: torch.Tensor = None
         if not use_cache or sentence_ids is None or dataset_ids[0].item() not in self.cached_datasets:
-            print('no cache')
             return self.text_field_embedder(sentence)
         else:
-            print('yes cache')
             input_tensor = sentence['tokens']
-            output_tensor: torch.Tensor = torch.zeros((input_tensor.shape) + (self.get_output_dim(),)).to(input_tensor.device)
+            output_tensor: torch.Tensor = torch.zeros(input_tensor.shape[:2] + (self.get_output_dim(),)).to(input_tensor.device)
             for i, (s_id, d_id, input_tensor) in enumerate(zip(sentence_ids, dataset_ids, input_tensor)):
                 d_id: int = d_id.item()
                 s_id: int = s_id.item()

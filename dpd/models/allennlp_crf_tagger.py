@@ -78,8 +78,10 @@ class CrfTagger(Model):
         verbose_metrics: bool = False,
         initializer: InitializerApplicator = InitializerApplicator(),
         regularizer: Optional[RegularizerApplicator] = None,
+        cached_embeddings: Optional[bool] = None,
     ) -> None:
         super().__init__(vocab, regularizer)
+        self.cached_embeddings = cached_embeddings
 
         self.label_namespace = label_namespace
         self.text_field_embedder = text_field_embedder
@@ -147,6 +149,8 @@ class CrfTagger(Model):
     @overrides
     def forward(self,  # type: ignore
                 tokens: Dict[str, torch.LongTensor],
+                entry_id: Optional[torch.LongTensor] = None,
+                dataset_id: Optional[torch.LongTensor] = None,
                 tags: torch.LongTensor = None,
                 metadata: List[Dict[str, Any]] = None,
                 weight: torch.Tensor = None,
@@ -183,7 +187,14 @@ class CrfTagger(Model):
         loss : ``torch.FloatTensor``, optional
             A scalar loss to be optimised. Only computed if gold label ``tags`` are provided.
         """
-        embedded_text_input = self.text_field_embedder(tokens)
+        if not self.cached_embeddings:
+            embedded_text_input = self.text_field_embedder(tokens)
+        else:
+            embedded_text_input = self.text_field_embedder(
+                tokens,
+                sentence_ids=entry_id,
+                dataset_ids=dataset_id,
+            )
         mask = util.get_text_field_mask(tokens)
 
         if self.dropout:
