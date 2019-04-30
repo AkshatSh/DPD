@@ -18,7 +18,7 @@ from ..types import (
     AnnotationType,
 )
 
-class SnorkelCollator(Collator):
+class SnorkeMeTalCollator(Collator):
     def __init__(
         self,
         positive_label: str,
