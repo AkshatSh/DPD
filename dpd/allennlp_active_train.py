@@ -189,6 +189,7 @@ def active_train_fine_tune_iteration(
     weak_weight: float,
     weak_function: List[str],
     weak_collator: str,
+    sample_strategy: str,
     batch_size: int,
     patience: int,
     num_epochs: int,
@@ -198,7 +199,12 @@ def active_train_fine_tune_iteration(
     distribution = heuristic.evaluate(unlabeled_dataset)
     new_points = []
     sample_size = min(sample_size, len(distribution) - 1)
-    new_points = torch.multinomial(distribution, sample_size)
+    if sample_strategy == 'sample':
+        new_points = torch.multinomial(distribution, sample_size)
+    elif sample_strategy == 'top_k':
+        new_points = distribution
+    else:
+        raise Exception(f'Unknown sampling strategry: {sample_strategy}')
     new_points = new_points[:sample_size]
 
     # use new points to augment train_dataset
@@ -282,6 +288,7 @@ def active_train_iteration(
     weak_weight: float,
     weak_function: List[str],
     weak_collator: str,
+    sample_strategy: str,
     batch_size: int,
     patience: int,
     num_epochs: int,
@@ -291,7 +298,12 @@ def active_train_iteration(
     distribution = heuristic.evaluate(unlabeled_dataset)
     new_points = []
     sample_size = min(sample_size, len(distribution) - 1)
-    new_points = torch.multinomial(distribution, sample_size)
+    if sample_strategy == 'sample':
+        new_points = torch.multinomial(distribution, sample_size)
+    elif sample_strategy == 'top_k':
+        new_points = distribution
+    else:
+        raise Exception(f'Unknown sampling strategry: {sample_strategy}')
     new_points = new_points[:sample_size]
 
     # use new points to augment train_dataset
@@ -357,6 +369,7 @@ def active_train(
     weak_weight: float,
     weak_function: List[str],
     weak_collator: str,
+    sample_strategy: str,
     batch_size: int,
     patience: int,
     num_epochs: int,
@@ -401,6 +414,7 @@ def active_train(
             weak_weight=weak_weight,
             weak_function=weak_function,
             weak_collator=weak_collator,
+            sample_strategy=sample_strategy,
             batch_size=batch_size,
             patience=patience,
             num_epochs=num_epochs,
@@ -430,6 +444,7 @@ def get_args() -> argparse.ArgumentParser:
     # Active Learning Pipeline Parameters
     parser.add_argument('--log_dir', type=str, default='logs/', help='the directory to log into')
     parser.add_argument('--model_name', type=str, default='active_learning_model', help='the name to give the model')
+    parser.add_argument('--sample_strategy', type=str, default='sample', help='the method to sample the next points from')
 
     # dataset parameters
     parser.add_argument('--dataset', type=str, default='CADEC', help='the dataset to use {CONLL, CADEC}')
@@ -544,6 +559,7 @@ def main():
         weak_weight=args.weak_weight,
         weak_function=args.weak_function,
         weak_collator=args.weak_collator,
+        sample_strategy=args.sample_strategy,
         batch_size=args.batch_size,
         patience=args.patience,
         num_epochs=args.num_epochs,
