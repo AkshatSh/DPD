@@ -202,7 +202,11 @@ def active_train_fine_tune_iteration(
     if sample_strategy == 'sample':
         new_points = torch.multinomial(distribution, sample_size)
     elif sample_strategy == 'top_k':
-        new_points = distribution
+        new_points = sorted(
+            range(len(distribution)), 
+            reverse=True,
+            key=lambda ind: distribution[ind]
+        )
     else:
         raise Exception(f'Unknown sampling strategry: {sample_strategy}')
     new_points = new_points[:sample_size]
@@ -295,17 +299,26 @@ def active_train_iteration(
     device: str,
 ) -> Tuple[Model, Dict[str, object]]:
     # select new points from distribution
+    # distribution contains score for each index
     distribution = heuristic.evaluate(unlabeled_dataset)
     new_points = []
+
+    # sample the sample size from the distribution
     sample_size = min(sample_size, len(distribution) - 1)
     if sample_strategy == 'sample':
         new_points = torch.multinomial(distribution, sample_size)
     elif sample_strategy == 'top_k':
-        new_points = distribution
+        new_points = sorted(
+            range(len(distribution)), 
+            reverse=True,
+            key=lambda ind: distribution[ind]
+        )
     else:
         raise Exception(f'Unknown sampling strategry: {sample_strategy}')
     new_points = new_points[:sample_size]
 
+    # new points now contains list of indexes in the unlabeled
+    # corpus to annotate
     # use new points to augment train_dataset
     # remove points from unlabaled corpus
     query = [
