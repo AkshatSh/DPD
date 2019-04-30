@@ -18,6 +18,8 @@ from ..types import (
     AnnotationType,
 )
 
+from .collator import Collator
+
 class SnorkeMeTalCollator(Collator):
     def __init__(
         self,
