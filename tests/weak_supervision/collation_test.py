@@ -6,9 +6,10 @@ from typing import (
 )
 
 import unittest
+import numpy as np
 
 from dpd.dataset import BIODataset, UnlabeledBIODataset
-from dpd.weak_supervision.collator import Collator, UnionCollator, IntersectionCollator
+from dpd.weak_supervision.collator import Collator, UnionCollator, IntersectionCollator, SnorkeMeTalCollator
 
 def create_entry(input: List[str], output: List[str], in_id: int) -> Dict[str, List[str]]:
     assert len(input) == len(output)
@@ -62,9 +63,9 @@ class CollatorTest(unittest.TestCase):
         ]
     
     @classmethod
-    def _test_collator(cls, collator_construct):
+    def _test_collator(cls, collator_construct, **kwargs):
         sample_data = cls.sample_data()
-        collator = collator_construct(positive_label='Tag')
+        collator = collator_construct(positive_label='Tag', **kwargs)
         return collator.collate(sample_data, should_verify=True)
 
     def test_union(self):
@@ -99,3 +100,19 @@ class CollatorTest(unittest.TestCase):
             },
         ]
         assert intersect_collation == expected_result
+
+    def test_snorkel_collator(self):
+        snorkel_collation = CollatorTest._test_collator(collator_construct=SnorkeMeTalCollator, seed=123)
+        expected_result = [
+            {
+                'id': 1,
+                'input': ['This', 'is', 'a', 'sentence'],
+                'output': ['O', 'Tag', 'O', 'Tag'],
+            },
+            {
+                'id': 2,
+                'input': ['This', 'is', 'a', 'word'],
+                'output': ['O', 'Tag', 'O', 'O'],
+            },
+        ]
+        assert snorkel_collation == expected_result
