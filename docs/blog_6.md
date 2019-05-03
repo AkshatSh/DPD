@@ -63,7 +63,7 @@ In this approach, we a machine learning system called Snorkel [3. Ratner et al. 
 
 ## Experiment Results
 
-Below we graph the `Token F1` and the `Span F1` scores, for the 3 collation methods described above and a `no_weak` baseline, that uses no weak set. We collate the `keyword matching`, `kNN`, and `linear` weak functions described in the [previous blog post](blog_5.md). The training method we use is `fine_tune`.
+Below we graph the `Token F1` and the `Span F1` scores, for the 3 collation methods described above and a `no_weak` baseline, that uses no weak set. We collate the `keyword matching`, `kNN`, and `linear` weak functions described in the [previous blog post](blog_5.md). The training method we use is `fine_tune`. The results are averaged over 5 runs.
 
 ![collation exp](figures/collation_fine_tune.png)
 
