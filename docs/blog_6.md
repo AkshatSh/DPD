@@ -10,7 +10,7 @@ I've decided I will use the begginging of each blog posts to give quick generic 
 
 A part of my comments on canvas was: `Was "craming" a typo  in the SVM: RBF column? Or is this a messy dataset that contains many misspellings?`
 
-This dataset was collected by scraping posts from [Ask a Patient](AskAPatient.com), so these posts often contain misspellings and extraneous punctuation, which is part of what makes this dataset challenging. More about this dataset can be found in the [paper](https://www.ncbi.nlm.nih.gov/pubmed/25817970) [1. Karimi et al. 2015].
+This dataset was collected by scraping posts from [Ask a Patient](https://www.askapatient.com/), so these posts often contain misspellings and extraneous punctuation, which is part of what makes this dataset challenging. More about this dataset can be found in the [paper](https://www.ncbi.nlm.nih.gov/pubmed/25817970) [1. Karimi et al. 2015].
 
 ### Some issues...
 
