@@ -19,7 +19,7 @@ from dpd.weak_supervision import WeakFunction, AnnotatedDataType
 from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.utils import TensorList
 
-from .utils import get_label_index, construct_train_data
+from .utils import get_label_index, construct_train_data, NEGATIVE_LABEL
 
 class CWRLinear(WeakFunction):
     @classmethod
@@ -84,6 +84,11 @@ class CWRLinear(WeakFunction):
         )
 
         return x_train, y_train
+    
+    def get_label(self, index: int) -> str:
+        if index == 0:
+            return NEGATIVE_LABEL
+        return self.positive_label
 
     def train(self, train_data: AnnotatedDataType, dataset_id: int = 0):
         '''
@@ -95,7 +100,6 @@ class CWRLinear(WeakFunction):
         train the function on the specified training data
         '''
         x_train, y_train = self._prepare_train_data(train_data=train_data, dataset_id=dataset_id, shuffle=True)
-        print(f'x_train: {x_train.shape}, y_train: {y_train.shape}')
         self.linear_model.fit(x_train, y_train)
 
     
@@ -110,6 +114,24 @@ class CWRLinear(WeakFunction):
             - annotations from applying this labeling function
         '''
         annotated_data = []
+        for entry in unlabeled_corpus:
+            s_id, sentence = entry['id'], entry['input']
+            cwr_embeddings: torch.Tensor = self.embedder.get_embedding(
+                sentence_id=s_id,
+                dataset_id=unlabeled_corpus.dataset_id,
+            )
+
+            # (sentence_len, 1)
+            labels: np.ndarray = self.linear_model.predict(cwr_embeddings)
+            # (sentence_len, 2)
+            probs: np.ndarray = self.linear_model.predict_proba(cwr_embeddings)
+            predicted_labels: List[str] = [self.get_label(li) for li in labels]
+            annotated_data.append({
+                'id': s_id,
+                'input': sentence,
+                'output': predicted_labels,
+            })
+
         return annotated_data
 
     def __str__(self):

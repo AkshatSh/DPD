@@ -96,5 +96,5 @@ class CWRFuncTest(unittest.TestCase):
                 linear_type='svm_linear',
             )
             cwr_linear.train(dataset, dataset_id=dataset.dataset_id)
+            annotations = cwr_linear.evaluate(dataset)
         CWRFuncTest._exec_test(_test)
-    
