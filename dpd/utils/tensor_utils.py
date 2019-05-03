@@ -57,7 +57,7 @@ class TensorList(object):
         self.device = device
         self.tensor_list.to(device)
 
-    def add(
+    def append(
         self,
         tensor: TensorType,
     ):
@@ -70,7 +70,7 @@ class TensorList(object):
     ):
         tensor_list = [get_tensor(t).to(self.device) for t in tensor_list]
         tensor_list = TensorList.create_tensor_from_list(tensor_list)
-        self.add(tensor=tensor_list)
+        self.append(tensor=tensor_list)
 
     def to(self, device: str):
         self.tensor_list.to(device)

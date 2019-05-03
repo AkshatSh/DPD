@@ -40,7 +40,7 @@ class TensorListTest(unittest.TestCase):
         assert len(tl) == 3
         assert tl.shape == (3, TENSOR_EMBEDDING_DIM)
     
-    def test_add(self):
+    def test_append(self):
         tl = TensorList(tensor_list=[
             torch.zeros(1,TENSOR_EMBEDDING_DIM),
             torch.zeros(1,TENSOR_EMBEDDING_DIM),
@@ -48,7 +48,7 @@ class TensorListTest(unittest.TestCase):
         ])
         assert len(tl) == 3
         assert tl.shape == (3, TENSOR_EMBEDDING_DIM)
-        tl.add(np.zeros((1, TENSOR_EMBEDDING_DIM)))
+        tl.append(np.zeros((1, TENSOR_EMBEDDING_DIM)))
         assert len(tl) == 4
         assert tl.shape == (4, TENSOR_EMBEDDING_DIM)
     
