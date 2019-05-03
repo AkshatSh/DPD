@@ -108,6 +108,10 @@ class CachedDataset(object):
     @overrides
     def __str__(self) -> str:
         return f'CachedDataset({self.embedded_dataset.shape})'
+    
+    @overrides
+    def __repr__(self) -> str:
+        return self.__str__()
 
     @classmethod
     def cache_dataset(
