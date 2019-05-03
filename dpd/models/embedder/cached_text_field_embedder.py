@@ -151,7 +151,7 @@ class CachedTextFieldEmbedder(nn.Module):
     
     def forward(
         self,
-        sentence: Dict[str, torch.Tensor], # (batch_size, seq_len)
+        sentence: Optional[Dict[str, torch.Tensor]] = None, # (batch_size, seq_len)
         sentence_ids: Optional[torch.Tensor] = None, # (batch_size, 1)
         dataset_ids: Optional[torch.Tensor] = None, # (batch_size, 1)
         use_cache: bool = True,
@@ -165,6 +165,8 @@ class CachedTextFieldEmbedder(nn.Module):
 
         to disable cache set ``use_cache`` to false
         '''
+        # either forward sentences or pull cached sentence_ids and dataset_ids
+        assert sentence is not None or (sentence_ids is not None and dataset_ids is not None)
         mask = get_text_field_mask(sentence)
         embedding_tensor: torch.Tensor = None
         if not use_cache or sentence_ids is None or dataset_ids[0].item() not in self.cached_datasets:
