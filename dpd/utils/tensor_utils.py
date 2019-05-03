@@ -95,3 +95,9 @@ class TensorList(object):
     
     def __get_item__(self, idx: int) -> torch.Tensor:
         return self.tensor_list[idx]
+    
+    def __str__(self) -> str:
+        return f'TensorList({self.shape})'
+    
+    def __repr__(self) -> str:
+        return self.__str__()
