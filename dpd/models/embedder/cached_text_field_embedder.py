@@ -153,6 +153,13 @@ class CachedTextFieldEmbedder(nn.Module):
     def get_output_dim(self) -> int:
         return self.text_field_embedder.get_output_dim()
     
+    def get_embedding(
+        self,
+        sentence_id: int,
+        dataset_id: int,
+    ) -> torch.Tensor:
+        return self.cached_datasets[dataset_id].get_embedding(sentence_id)
+    
     def forward(
         self,
         sentence: Optional[Dict[str, torch.Tensor]] = None, # (batch_size, seq_len)
@@ -181,7 +188,7 @@ class CachedTextFieldEmbedder(nn.Module):
             for i, (s_id, d_id, input_tensor) in enumerate(zip(sentence_ids, dataset_ids, input_tensor)):
                 d_id: int = d_id.item()
                 s_id: int = s_id.item()
-                et: torch.Tensor = self.cached_datasets[d_id].get_embedding(s_id)
+                et: torch.Tensor = self.get_embedding(sentence_id=s_id, dataset_id=d_id)
                 output_tensor[i, :len(et)] = et
             return output_tensor
 
