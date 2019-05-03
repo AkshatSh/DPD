@@ -13,7 +13,6 @@ from dpd.weak_supervision.dictionary_functions import KeywordMatchFunction
 from dpd.weak_supervision import BIOConverter
 
 class KeywordFunctionTest(unittest.TestCase):
-
     @classmethod
     def create_entry(cls, sentence: List[str], labels: List[str], entry_id: int, weight: float) -> Dict[str, object]:
         assert len(sentence) == len(labels)
@@ -27,10 +26,10 @@ class KeywordFunctionTest(unittest.TestCase):
     @classmethod
     def create_fake_data(cls, binary_class: Optional[str] = None) -> BIODataset:
         data = [
-            KeywordFunctionTest.create_entry(['single'], ['B-Tag'], 0, 1.0),
-            KeywordFunctionTest.create_entry(['single', 'double'], ['B-Tag', 'I-Tag'], 1, 1.0),
-            KeywordFunctionTest.create_entry(['single', 'double', 'triple'], ['B-TTag', 'I-TTag', 'O'], 2, 1.0),
-            KeywordFunctionTest.create_entry(['no_label'], ['O'], 3, 1.0),
+            cls.create_entry(['single'], ['B-Tag'], 0, 1.0),
+            cls.create_entry(['single', 'double'], ['B-Tag', 'I-Tag'], 1, 1.0),
+            cls.create_entry(['single', 'double', 'triple'], ['B-TTag', 'I-TTag', 'O'], 2, 1.0),
+            cls.create_entry(['no_label'], ['O'], 3, 1.0),
         ]
 
         dataset = BIODataset(0, 'fake_file.txt', binary_class)
