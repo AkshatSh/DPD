@@ -30,12 +30,16 @@ from dpd.dataset import (
 from dpd.utils import (
     get_dataset_files,
     Logger,
+    construct_f1_class_labels,
 )
 
 from dpd.models import build_model
+from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.oracles import Oracle, GoldOracle
 from dpd.heuristics import RandomHeuristic
 from dpd.weak_supervision import build_weak_data
+from dpd.utils import get_all_embedders, log_train_metrics
+from dpd.args import get_active_args
 
 ORACLE_SAMPLES = [10, 40, 50]
 
@@ -111,67 +115,6 @@ def train(
 
     return model, metrics
 
-def log_train_metrics(
-    logger: Logger,
-    metrics: MetricsType,
-    step: int,
-    prefix='al'
-):
-    def log_special_metrics(metric_name: str, metric_val: object) -> List[Tuple[str, int]]:
-        if type(metric_val) == int or type(metric_val) == float:
-            return [(metric_name, metric_val)]
-        elif type(metric_val) == list:
-            res = []
-            for metric_val_item in metric_val:
-                class_label = metric_val_item['class']
-                for metric_n, metric_v in metric_val_item.items():
-                    if metric_n == 'class':
-                        # skip class names
-                        continue
-                    res.append(
-                        (
-                            f'{metric_name}_{class_label}_{metric_n}',
-                            metric_v,
-                        )
-                    )
-            return res
-        else:
-            logging.warning(f'Unknown metric type: {type(metric_val)} for ({metric_name}, {metric_val})')
-            return []
-
-    metric_list = []
-    for metric, val in metrics.items():
-        metric_name = metric
-        set_name = 'train'
-        if metric.startswith('best_validation'):
-            set_name = 'valid'
-            metric_name = metric[len('best_validation_'):]
-        elif metric.startswith('training'):
-            set_name = 'train'
-            metric_name = metric[len('training_'):]
-        else:
-            # ignore any other metric types
-            continue
-        
-        if metric_name.startswith('_'):
-            # ignore hidden
-            metric_name = metric_name[1:]
-        
-        full_metric_name = f'{prefix}/{set_name}/{metric_name}'
-        
-        metric_list.extend(
-            filter(
-                lambda x: x is not None,
-                log_special_metrics(
-                    metric_name=full_metric_name,
-                    metric_val=val,
-                ),
-            ),
-        )
-
-    for metric_name, metric_val in metric_list:
-        logger.scalar_summary(tag=metric_name, value=metric_val, step=step)
-
 def active_train_fine_tune_iteration(
     heuristic: RandomHeuristic,
     unlabeled_dataset: UnlabeledBIODataset,
@@ -182,6 +125,7 @@ def active_train_fine_tune_iteration(
     valid_reader: DatasetReader,
     vocab: Vocabulary,
     model: Model,
+    cached_text_field_embedders: List[CachedTextFieldEmbedder],
     optimizer_type: str,
     optimizer_learning_rate: float,
     optimizer_weight_decay: float,
@@ -241,6 +185,7 @@ def active_train_fine_tune_iteration(
             weight=weak_weight,
             function_types=weak_function,
             collator_type=weak_collator,
+            contextual_word_embeddings=cached_text_field_embedders,
         )
 
         model, _ = train(
@@ -285,6 +230,7 @@ def active_train_iteration(
     valid_reader: DatasetReader,
     vocab: Vocabulary,
     model: Model,
+    cached_text_field_embedders: List[CachedTextFieldEmbedder],
     optimizer_type: str,
     optimizer_learning_rate: float,
     optimizer_weight_decay: float,
@@ -349,6 +295,7 @@ def active_train_iteration(
             weight=weak_weight,
             function_types=weak_function,
             collator_type=weak_collator,
+            contextual_word_embeddings=cached_text_field_embedders,
         )
 
     model, metrics = train(
@@ -409,6 +356,8 @@ def active_train(
         },
     )
 
+    cached_text_field_embedders: List[CachedTextFieldEmbedder] = get_all_embedders()
+
     for i, sample_size in enumerate(ORACLE_SAMPLES):
         active_iteration_kwargs = dict(
             heuristic=heuristic,
@@ -419,6 +368,7 @@ def active_train(
             train_data=train_data,
             valid_reader=valid_reader,
             model=model,
+            cached_text_field_embedders=cached_text_field_embedders,
             vocab=vocab,
             optimizer_type=optimizer_type,
             optimizer_learning_rate=optimizer_learning_rate,
@@ -444,58 +394,6 @@ def active_train(
         print(f'Finished experiment on training set size: {len(train_data)}')
     logger.flush()
 
-def get_args() -> argparse.ArgumentParser:
-    '''
-    Create arg parse for active learning training containing options for
-        optimizer
-        hyper parameters
-        model saving
-        log directories
-    '''
-    parser = argparse.ArgumentParser(description='Build an active learning iterative pipeline')
-
-    # Active Learning Pipeline Parameters
-    parser.add_argument('--log_dir', type=str, default='logs/', help='the directory to log into')
-    parser.add_argument('--model_name', type=str, default='active_learning_model', help='the name to give the model')
-    parser.add_argument('--sample_strategy', type=str, default='sample', help='the method to sample the next points from')
-
-    # dataset parameters
-    parser.add_argument('--dataset', type=str, default='CADEC', help='the dataset to use {CONLL, CADEC}')
-    parser.add_argument('--binary_class', type=str, default='ADR', help='the binary class to use for the dataset')
-    parser.add_argument('--test', action='store_true', help='use the test set for evaluation')
-
-    # hyper parameters
-    parser.add_argument('--model_type', type=str, default='ELMo_bilstm_crf', help='the model type to use')
-    parser.add_argument('--hidden_dim', type=int, default=512, help='the hidden dimensions for the model')
-
-    # optimizer config
-    parser.add_argument('--opt_type', type=str, default='SGD', help='the optimizer to use')
-    parser.add_argument('--opt_lr', type=float, default=0.01, help='the learning rate for the optimizer')
-    parser.add_argument('--opt_weight_decay', type=float, default=1e-4, help='weight decay for optimizer')
-
-    # weak data config
-    parser.add_argument('--use_weak', action='store_true', help='use the weak set during training')
-    parser.add_argument('--use_weak_fine_tune', action='store_true', help='use the weak fine tuning approach')
-    parser.add_argument('--weak_weight', type=float, default=1.0, help='the weight to give to the weak set during training')
-    parser.add_argument('--weak_function', nargs='+', default=['linear'], help='a list of the type of weak function to use')
-    parser.add_argument('--weak_collator', type=str, default='union', help='the type of collator to use for the weak set')
-
-    # training config
-    parser.add_argument('--num_epochs', type=int, default=5, help='the number of epochs to run each iteration')
-    parser.add_argument('--batch_size', type=int, default=1, help='batch size of training')
-    parser.add_argument('--patience', type=int, default=5, help='patience parameter for training')
-
-    # system config
-    parser.add_argument('--cuda', action='store_true', help='use CUDA if available')
-    parser.add_argument('--cached', action='store_true', help='rely on cached embeddings if possible')
-
-    # Parser data loader options
-    return parser
-
-def construct_f1_class_labels(class_label: str) -> List[str]:
-    prefix = ['B', 'I']
-    return [f'{p}-{class_label}' for p in prefix]
-
 def construct_vocab(datasets: List[BIODataset]) -> Vocabulary:
     readers = [BIODatasetReader(
         bio_dataset=bio_dataset,
@@ -515,7 +413,7 @@ def construct_vocab(datasets: List[BIODataset]) -> Vocabulary:
     return vocab
 
 def main():
-    args = get_args().parse_args()
+    args = get_active_args().parse_args()
 
     device = 'cuda' if torch.cuda.is_available() and args.cuda else 'cpu'
 
