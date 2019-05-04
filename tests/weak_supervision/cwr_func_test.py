@@ -86,7 +86,7 @@ class CWRFuncTest(unittest.TestCase):
         if SHOULD_RUN:
             test()
 
-    def test_cwr(self):
+    def test_cwr_linear(self):
         def _test():
             dataset = CWRFuncTest.create_fake_data('Tag')
             embedder = CWRFuncTest.setup_embedder()
