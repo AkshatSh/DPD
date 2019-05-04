@@ -1,11 +1,15 @@
 from typing import (
     List,
     Tuple,
+    Dict,
 )
 
 import logging
 
 from .logger import Logger
+
+
+MetricsType = Dict[str, object]
 
 def log_train_metrics(
     logger: Logger,
