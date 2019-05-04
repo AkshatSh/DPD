@@ -18,6 +18,10 @@ from dpd.constants import (
     CADEC_TEST,
 )
 
+def construct_f1_class_labels(class_label: str) -> List[str]:
+    prefix = ['B', 'I']
+    return [f'{p}-{class_label}' for p in prefix]
+
 def get_dataset_files(dataset: str) -> Tuple[str, str]:
     '''
     returns train_file, valid_file in BIO encoding
