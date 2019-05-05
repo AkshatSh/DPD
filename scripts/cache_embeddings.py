@@ -66,6 +66,7 @@ def get_embedder_info(embedder_type: str) -> Tuple[TokenEmbedder, TokenIndexer, 
             pretrained_model="bert-base-uncased",
             max_pieces=512, # max pieces allowed for positional embeddings
             do_lowercase=True,
+            use_starting_offsets=True,
         )
         text_field_embedder_kwargs['allow_unmatched_keys'] = True
         return bert_embedder, token_indexer, text_field_embedder_kwargs
