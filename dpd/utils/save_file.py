@@ -100,9 +100,9 @@ class PickleSaveFile(SaveFile):
     ):
         self.file_name = file_name
         self.data: Dict[str, Union[Dict[Any, Any], np.ndarray]] = {}
-        self.file = open(self.file_name, 'wb')
         if os.path.exists(self.file_name):
             self.data = pickle.load(self.file)
+        self.file = open(self.file_name, 'wb')
     
     def load_dict(
         self,
