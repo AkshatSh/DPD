@@ -31,8 +31,8 @@ class CWRkNN(WeakFunction):
         self,
         positive_label: str,
         embedder: CachedTextFieldEmbedder,
-        resolve_mode: str,
-        k: int,
+        resolve_mode: str = 'weighted',
+        k: int = 10,
     ):
         self.positive_label = positive_label
         self.embedder = embedder
@@ -195,7 +195,7 @@ class CWRkNN(WeakFunction):
         return annotated_data
 
     def __str__(self):
-        return f'CWRLinear({self.embedder})'
+        return f'CWRkNN({self.embedder})'
     
     def __repr__(self):
         return self.__str__()
