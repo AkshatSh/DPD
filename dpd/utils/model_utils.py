@@ -52,6 +52,7 @@ def get_bert_embedder() -> CachedTextFieldEmbedder:
     bert_embedder = PretrainedBertEmbedder(
         pretrained_model="bert-base-uncased",
         top_layer_only=True, # conserve memory
+        max_pieces=1024, # max pieces allowed for positional embeddings
     )
 
     word_embeddings = BasicTextFieldEmbedder(
