@@ -1,1 +1,1 @@
-from .TSA_loss import TSALoss, TrainingScheduler, TrainingSchedulerType
+from .tsa_loss import TSALoss, TrainingScheduler, TrainingSchedulerType
