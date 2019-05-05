@@ -77,5 +77,5 @@ def get_cached_embedder(e_type: str) -> CachedTextFieldEmbedder:
 
 def get_all_embedders() -> List[CachedTextFieldEmbedder]:
     return [
-        get_cached_embedder(e_type) for e_type in ['ner_elmo']
+        get_cached_embedder(e_type) for e_type in ['bert', 'ner_elmo']
     ]
