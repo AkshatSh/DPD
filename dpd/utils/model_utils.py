@@ -55,9 +55,9 @@ def get_bert_embedder() -> CachedTextFieldEmbedder:
     )
 
     word_embeddings = BasicTextFieldEmbedder(
-        {"bert": bert_embedder},
+        {"tokens": bert_embedder},
         allow_unmatched_keys=True,
-        embedder_to_indexer_map={"bert": ["bert", "bert-offsets"]},
+        embedder_to_indexer_map={"tokens": ["tokens", "tokens-offsets"]},
     )
 
     return setup_embedder(

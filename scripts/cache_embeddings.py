@@ -70,7 +70,7 @@ def get_embedder_info(embedder_type: str) -> Tuple[TokenEmbedder, TokenIndexer, 
         )
         text_field_embedder_kwargs['allow_unmatched_keys'] = True
         text_field_embedder_kwargs['embedder_to_indexer_map'] = {
-            "tokens": ["bert", "bert-offsets"]
+            "tokens": ["tokens", "tokens-offsets"]
         }
 
         return bert_embedder, token_indexer, text_field_embedder_kwargs

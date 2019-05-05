@@ -209,7 +209,9 @@ class CachedTextFieldEmbedder(nn.Module):
             pl = inst.fields['sentence'].get_padding_lengths()
             # adds batch dimension
             input_tensor = copy.deepcopy(inst.fields['sentence'].as_tensor(padding_lengths=pl))
-            input_tensor['tokens'] = input_tensor['tokens'].unsqueeze(0)
+            for key in input_tensor:
+                # batch all tensors
+                input_tensor[key] = input_tensor[key].unsqueeze(0)
             input_tensor = move_to_device(input_tensor, cuda_device)
 
             return self.text_field_embedder(
