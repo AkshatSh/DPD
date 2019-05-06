@@ -47,3 +47,9 @@ class WordFeatureExtractor(FeatureExtractor):
         return [
             self.get_one_hot_encoding(w) for w in sentence
         ]
+    
+    def __str__(self):
+        return f'WordFeatureExtractor'
+    
+    def __repr__(self):
+        return self.__str__()

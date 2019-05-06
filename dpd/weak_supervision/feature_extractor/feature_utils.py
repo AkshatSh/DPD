@@ -62,3 +62,14 @@ class FeatureCollator:
     @classmethod
     def average(cls, features: List[torch.Tensor]) -> torch.Tensor:
         return cls.sum(features) / len(features)
+    
+    @classmethod
+    def get(cls, func: str):
+        if func == 'sum':
+            return cls.sum
+        elif func == 'average':
+            return cls.average
+        elif func == 'concat':
+            return cls.concat
+        else:
+            raise Exception(f'Unknown feature collator func: {func}')

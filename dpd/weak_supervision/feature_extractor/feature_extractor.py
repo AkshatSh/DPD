@@ -25,6 +25,7 @@ class FeatureExtractor(object):
         pass
     
     def get_features(
+        self,
         dataset_id: int,
         sentence_id: int,
         sentence: List[str],

@@ -186,6 +186,7 @@ def active_train_fine_tune_iteration(
             function_types=weak_function,
             collator_type=weak_collator,
             contextual_word_embeddings=cached_text_field_embedders,
+            vocab=vocab,
         )
 
         model, _ = train(
@@ -296,6 +297,7 @@ def active_train_iteration(
             function_types=weak_function,
             collator_type=weak_collator,
             contextual_word_embeddings=cached_text_field_embedders,
+            vocab=vocab,
         )
 
     model, metrics = train(
