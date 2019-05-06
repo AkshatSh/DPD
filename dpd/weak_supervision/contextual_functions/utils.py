@@ -3,10 +3,14 @@ from typing import (
     Tuple,
     Dict,
     Optional,
+    Callable,
+    Any,
 )
 
 import torch
 import numpy as np
+from allennlp.data import Instance
+from dpd.weak_supervision import AnnotatedDataType, AnnotationType
 from dpd.utils import TensorList
 
 
@@ -54,5 +58,36 @@ def construct_train_data(
         return x[idx].numpy(), y[idx].numpy()
     else:
         return train_data.numpy(), train_labels.numpy()
+
+def extract_features(
+    data: AnnotatedDataType,
+    dataset_id: int,
+    shuffle: bool,
+    feature_extractor: Callable[[AnnotationType], torch.Tensor],
+):
+    positive_set: TensorList = TensorList()
+    negative_set: TensorList = TensorList()
+    for entry in data:
+        tags: List[str] = entry['output']
+        features: torch.Tensor = feature_extractor(entry)
+        pos_idx, neg_idx = get_label_index(tags)
+
+        positive_set.append(features[pos_idx])
+        negative_set.append(features[neg_idx])
+
+    positive_set: np.ndarray = positive_set.numpy()
+    negative_set: np.ndarray = negative_set.numpy()
+    positive_labels: np.ndarray = np.zeros((len(positive_set),))
+    positive_labels.fill(1)
+    negative_labels: np.ndarray = np.zeros((len(negative_set)))
+    x_train, y_train = construct_train_data(
+        pos_data=positive_set,
+        neg_data=negative_set,
+        pos_labels=positive_labels,
+        neg_labels=negative_labels,
+        shuffle=shuffle,
+    )
+
+    return x_train, y_train
     
 

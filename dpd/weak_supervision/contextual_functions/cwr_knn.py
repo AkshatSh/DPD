@@ -17,11 +17,11 @@ from scipy import stats
 import faiss
 
 from dpd.dataset import UnlabeledBIODataset
-from dpd.weak_supervision import WeakFunction, AnnotatedDataType
+from dpd.weak_supervision import WeakFunction, AnnotatedDataType, AnnotationType
 from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.utils import TensorList
 
-from .utils import get_label_index, construct_train_data, NEGATIVE_LABEL
+from .utils import get_label_index, construct_train_data, extract_features, NEGATIVE_LABEL
 
 class CWRkNN(WeakFunction):
     '''
@@ -47,38 +47,23 @@ class CWRkNN(WeakFunction):
         dataset_id: int,
         shuffle: bool,
     ) -> Tuple[np.ndarray, np.ndarray]:
-        positive_set: TensorList = TensorList()
-        negative_set: TensorList = TensorList()
-        for entry in train_data:
-            s_id, sentence, tags = entry['id'], entry['input'], entry['output']
 
+        def _feature_extractor(entry: AnnotationType) -> torch.Tensor:
+            s_id, sentence = entry['id'], entry['input']
             cwr_embeddings: torch.Tensor = self.embedder.get_embedding(
                 sentence_id=s_id,
                 dataset_id=dataset_id,
             )
-            
             # assert shape is expected
             assert cwr_embeddings.shape == (len(sentence), self.embedder.get_output_dim())
+            return cwr_embeddings
 
-            pos_idx, neg_idx = get_label_index(tags)
-
-            positive_set.append(cwr_embeddings[pos_idx])
-            negative_set.append(cwr_embeddings[neg_idx])
- 
-        positive_set: np.ndarray = positive_set.numpy()
-        negative_set: np.ndarray = negative_set.numpy()
-        positive_labels: np.ndarray = np.zeros((len(positive_set),))
-        positive_labels.fill(1)
-        negative_labels: np.ndarray = np.zeros((len(negative_set)))
-        x_train, y_train = construct_train_data(
-            pos_data=positive_set,
-            neg_data=negative_set,
-            pos_labels=positive_labels,
-            neg_labels=negative_labels,
+        return extract_features(
+            data=train_data,
+            dataset_id=dataset_id,
             shuffle=shuffle,
+            feature_extractor=_feature_extractor,
         )
-
-        return x_train, y_train
     
     def get_label(self, index: int) -> str:
         if index == 0:
