@@ -18,8 +18,10 @@ from allennlp.data import Vocabulary
 
 from dpd.utils import TensorList
 from dpd.dataset import BIODataset, BIODatasetReader
-from dpd.weak_supervision.feature_extractor import SpaCyFeatureExtractor, WordFeatureExtractor
-from dpd.constants import SPACY_NLP
+from dpd.weak_supervision.feature_extractor import SpaCyFeatureExtractor, WordFeatureExtractor, GloVeFeatureExtractor
+from dpd.constants import SPACY_NLP, GLOVE_DIR
+
+GLOVE_ENABLED = os.path.exists(GLOVE_DIR)
 
 class FeatureExtractorTest(unittest.TestCase):
     COMPARISON_FEATURES = ['pos_', 'lemma_', 'text', 'tag_', 'dep_']
@@ -93,4 +95,17 @@ class FeatureExtractorTest(unittest.TestCase):
                 word_i = vocab.get_token_index(word)
                 assert feat.sum() == 1
                 assert feat.argmax() == word_i
-
+    
+    def test_glove_feature_extractor(self):
+        if not GLOVE_ENABLED:
+            return
+        dataset = FeatureExtractorTest.create_fake_data()
+        dataset_reader = BIODatasetReader(dataset)
+        instances = dataset_reader.read('fake.txt')
+        vocab = Vocabulary.from_instances(instances)
+        feature_extractor = GloVeFeatureExtractor()
+        for entry in dataset.data:
+            sentence = entry['input']
+            feats = feature_extractor.get_features(sentence_id=None, dataset_id=None, sentence=sentence)
+            for word, feat in zip(sentence, feats):
+                assert feat.shape == (1, 300)
