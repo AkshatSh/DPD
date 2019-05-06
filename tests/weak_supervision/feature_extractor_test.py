@@ -16,11 +16,12 @@ import nltk
 
 from allennlp.data import Vocabulary
 
+from dpd.utils import TensorList
 from dpd.dataset import BIODataset, BIODatasetReader
-from dpd.weak_supervision.feature_extractor import SpaCyFeatureExtractor
+from dpd.weak_supervision.feature_extractor import SpaCyFeatureExtractor, WordFeatureExtractor
 from dpd.constants import SPACY_NLP
 
-class SpaCyFeatureExtractorTest(unittest.TestCase):
+class FeatureExtractorTest(unittest.TestCase):
     COMPARISON_FEATURES = ['pos_', 'lemma_', 'text', 'tag_', 'dep_']
 
     @classmethod
@@ -60,7 +61,7 @@ class SpaCyFeatureExtractorTest(unittest.TestCase):
         return dataset
     
     def test_spacy_extractor(self):
-        dataset = SpaCyFeatureExtractorTest.create_fake_data()
+        dataset = FeatureExtractorTest.create_fake_data()
         dataset_reader = BIODatasetReader(dataset)
         instances = dataset_reader.read('fake.txt')
         vocab = Vocabulary.from_instances(instances)
@@ -76,4 +77,20 @@ class SpaCyFeatureExtractorTest(unittest.TestCase):
         assert len(features) == len(dataset.data[1]['input'])
         assert len(features) == len(computed_features)
         for i, (f, c) in enumerate(zip(features, computed_features)):
-            assert SpaCyFeatureExtractorTest.features_eq(f, c)
+            assert FeatureExtractorTest.features_eq(f, c)
+    
+    def test_word_feature_extractor(self):
+        dataset = FeatureExtractorTest.create_fake_data()
+        dataset_reader = BIODatasetReader(dataset)
+        instances = dataset_reader.read('fake.txt')
+        vocab = Vocabulary.from_instances(instances)
+        feature_extractor = WordFeatureExtractor(vocab=vocab)
+        for entry in dataset.data:
+            sentence = entry['input']
+            feats = feature_extractor.get_features(sentence_id=None, dataset_id=None, sentence=sentence)
+            for word, feat in zip(sentence, feats):
+                assert feat.shape == (1, vocab.get_vocab_size())
+                word_i = vocab.get_token_index(word)
+                assert feat.sum() == 1
+                assert feat.argmax() == word_i
+
