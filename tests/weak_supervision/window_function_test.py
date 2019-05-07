@@ -19,8 +19,11 @@ from allennlp.data import Vocabulary
 
 from dpd.utils import TensorList
 from dpd.dataset import BIODataset, BIODatasetReader
-from dpd.weak_supervision.feature_extractor import WordFeatureExtractor, FeatureCollator
-from dpd.weak_supervision.context_window_functions import BagWindowFunction
+from dpd.weak_supervision.feature_extractor import WordFeatureExtractor, FeatureCollator, FeatureExtractor, GloVeFeatureExtractor
+from dpd.weak_supervision.context_window_functions import BagWindowFunction, WindowFunction, LinearWindowFunction
+from dpd.constants import GLOVE_DIR
+
+GLOVE_ENABLED = os.path.exists(GLOVE_DIR)
 
 class WindowFunctionTest(unittest.TestCase):
     COMPARISON_FEATURES = ['pos_', 'lemma_', 'text', 'tag_', 'dep_']
@@ -61,13 +64,19 @@ class WindowFunctionTest(unittest.TestCase):
 
         return dataset
     
-    def _test_word_feature(self, feature_summarizer: FeatureCollator):
+    def _test_word_feature(
+        self,
+        feature_summarizer: FeatureCollator,
+        window_function: WindowFunction = BagWindowFunction,
+        feature_extractor_obj: FeatureExtractor = WordFeatureExtractor,
+        context_window: int = 2,
+    ):
         dataset = WindowFunctionTest.create_fake_data()
         dataset_reader = BIODatasetReader(dataset)
         instances = dataset_reader.read('fake.txt')
         vocab = Vocabulary.from_instances(instances)
-        feature_extractor = WordFeatureExtractor(vocab=vocab)
-        func = BagWindowFunction(positive_label='Tag', context_window=2, feature_extractor=feature_extractor, feature_summarizer=feature_summarizer)
+        feature_extractor = feature_extractor_obj(vocab=vocab)
+        func = window_function(positive_label='Tag', context_window=context_window, feature_extractor=feature_extractor, feature_summarizer=feature_summarizer)
         func.train(dataset.data)
         assert func.dictionary.shape[0] == func.labels.shape[0]
         
@@ -98,4 +107,40 @@ class WindowFunctionTest(unittest.TestCase):
         annotations = self._test_word_feature(
             feature_summarizer=FeatureCollator.sum,
         )
+        assert annotations == expected_result
+    
+    def test_linear_feature_context_window_sum(self):
+        if not GLOVE_ENABLED:
+            return
+        expected_result = [
+            {'id': 0, 'input': ['single'], 'output': ['Tag']},
+            {'id': 1, 'input': ['single', 'double'], 'output': ['Tag', 'Tag']},
+            {'id': 2, 'input': ['single', 'double', 'triple'], 'output': ['Tag', 'Tag', 'Tag']},
+            {'id': 3, 'input': ['no_label'], 'output': ['O']},
+        ]
+
+        annotations = self._test_word_feature(
+            feature_summarizer=FeatureCollator.sum,
+            window_function=LinearWindowFunction,
+            feature_extractor_obj=GloVeFeatureExtractor,
+        )
+
+        assert annotations == expected_result
+
+    def test_linear_feature_context_window_concat(self):
+        if not GLOVE_ENABLED:
+            return
+        expected_result = [
+            {'id': 0, 'input': ['single'], 'output': ['Tag']},
+            {'id': 1, 'input': ['single', 'double'], 'output': ['Tag', 'Tag']},
+            {'id': 2, 'input': ['single', 'double', 'triple'], 'output': ['Tag', 'Tag', 'O']},
+            {'id': 3, 'input': ['no_label'], 'output': ['O']},
+        ]
+
+        annotations = self._test_word_feature(
+            feature_summarizer=FeatureCollator.concat,
+            window_function=LinearWindowFunction,
+            feature_extractor_obj=GloVeFeatureExtractor,
+        )
+
         assert annotations == expected_result

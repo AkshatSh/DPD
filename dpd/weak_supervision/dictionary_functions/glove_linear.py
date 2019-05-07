@@ -17,30 +17,17 @@ from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction, AnnotatedDataType
 from dpd.weak_supervision.dictionary_functions.utils import build_gold_dictionary, build_sklearn_train_data
 from dpd.weak_supervision.dictionary_functions import KeywordMatchFunction
+from dpd.models import construct_linear_classifier, LinearType
 from dpd.models.embedder import GloVeWordEmbeddingIndex
 from dpd.constants import (
-    DictionaryFunctionLinear,
     STOP_WORDS,
 )
 
 class GloveLinearFunction(object):
-    @classmethod
-    def construct_linear_classifier(cls, linear_type: DictionaryFunctionLinear) -> None:
-        if linear_type == DictionaryFunctionLinear.LOGISTIC_REGRESSION:
-            return LogisticRegression()
-        elif linear_type == DictionaryFunctionLinear.SVM_LINEAR:
-            return SVC(kernel='linear', probability=True) 
-        elif linear_type == DictionaryFunctionLinear.SVM_QUADRATIC:
-            return SVC(kernel='poly', degree=2, probability=True)
-        elif linear_type == DictionaryFunctionLinear.SVM_RBF:
-            return SVC(kernel='rbf', probability=True) 
-        else:
-            raise Exception(f"Unknown Linear type: {linear_type}")
-
     def __init__(
         self,
         binary_class: str,
-        linear_function: DictionaryFunctionLinear = DictionaryFunctionLinear.SVM_LINEAR,
+        linear_function: LinearType = LinearType.SVM_LINEAR,
         threshold: Optional[float] = None,
     ):
         self.word_embedding_index = GloVeWordEmbeddingIndex.instance()
@@ -49,7 +36,7 @@ class GloveLinearFunction(object):
         self.linear_function = linear_function
         self.keywords_func: KeywordMatchFunction = None 
         self.binary_class = binary_class
-        self.linear_classifier = GloveLinearFunction.construct_linear_classifier(
+        self.linear_classifier = construct_linear_classifier(
             linear_type=linear_function,
         )
         self.threshold = threshold
@@ -100,11 +87,11 @@ class GloveLinearFunction(object):
     
     def __str__(self):
         linear_type = "SVM_LINEAR"
-        if self.linear_function == DictionaryFunctionLinear.LOGISTIC_REGRESSION:
+        if self.linear_function == LinearType.LOGISTIC_REGRESSION:
             linear_type = "LOGISTIC_REGRESSION"
-        elif self.linear_function == DictionaryFunctionLinear.SVM_QUADRATIC:
+        elif self.linear_function == LinearType.SVM_QUADRATIC:
             linear_type = "SVM_QUADRATIC"
-        elif self.linear_function == DictionaryFunctionLinear.SVM_RBF:
+        elif self.linear_function == LinearType.SVM_RBF:
             linear_type = "SVM_RBF"
 
         return f'GloVeLinearFunction({linear_type})'

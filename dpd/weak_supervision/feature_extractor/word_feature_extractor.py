@@ -25,6 +25,8 @@ class WordFeatureExtractor(FeatureExtractor):
     def __init__(
         self,
         vocab: Vocabulary,
+        *args,
+        **kwargs,
     ):
         self.vocab = vocab
     

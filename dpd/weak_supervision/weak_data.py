@@ -84,14 +84,25 @@ def build_weak_data(
             window, extractor, collator = f.split('-')[1:]
             window = int(window)
             for constructor in WINDOW_FUNCITON_IMPL.values():
-                window_functions.append(
-                    constructor(
-                        positive_label=unlabeled_corpus.binary_class,
-                        context_window=window,
-                        feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab),
-                        feature_summarizer=FeatureCollator.get(collator),
+                if extractor == 'cwr':
+                    for embedder in contextual_word_embeddings:
+                        window_functions.append(
+                            constructor(
+                                positive_label=unlabeled_corpus.binary_class,
+                                context_window=window,
+                                feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab, embedder=embedder),
+                                feature_summarizer=FeatureCollator.get(collator),
+                            )
+                        )
+                else:
+                    window_functions.append(
+                        constructor(
+                            positive_label=unlabeled_corpus.binary_class,
+                            context_window=window,
+                            feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab),
+                            feature_summarizer=FeatureCollator.get(collator),
+                        )
                     )
-                )
 
     collator = COLLATOR_IMPLEMENTATION[collator_type](positive_label=unlabeled_corpus.binary_class)
     bio_converter = BIOConverter(binary_class=unlabeled_corpus.binary_class)

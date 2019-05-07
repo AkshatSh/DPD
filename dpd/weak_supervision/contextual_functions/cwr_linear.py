@@ -17,24 +17,12 @@ from sklearn.svm import SVC
 from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction, AnnotatedDataType, AnnotationType
 from dpd.models.embedder import CachedTextFieldEmbedder
+from dpd.models import construct_linear_classifier, LinearType
 from dpd.utils import TensorList
 
 from .utils import get_label_index, construct_train_data, extract_features, NEGATIVE_LABEL
 
 class CWRLinear(WeakFunction):
-    @classmethod
-    def construct_linear_classifier(cls, linear_type: str) -> None:
-        if linear_type == 'lr':
-            return LogisticRegression()
-        elif linear_type == 'svm_linear':
-            return SVC(kernel='linear', probability=True) 
-        elif linear_type == 'svm_quadratic':
-            return SVC(kernel='poly', degree=2, probability=True)
-        elif linear_type == 'svm_rbf':
-            return SVC(kernel='rbf', probability=True) 
-        else:
-            raise Exception(f"Unknown Linear type: {linear_type}")
-
     def __init__(
         self,
         positive_label: str,
@@ -43,7 +31,7 @@ class CWRLinear(WeakFunction):
     ):
         self.positive_label = positive_label
         self.embedder = embedder
-        self.linear_model = CWRLinear.construct_linear_classifier(linear_type=linear_type)
+        self.linear_model = construct_linear_classifier(linear_type=linear_type)
     
     def _prepare_train_data(
         self,

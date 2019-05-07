@@ -7,6 +7,11 @@ from allennlp.data.vocabulary import Vocabulary
 from .weighted_crf import WeightedCRF
 from .allennlp_crf import ELMoCrfTagger, BERTCrfTagger
 
+from .statistical_models import (
+    construct_linear_classifier,
+    LinearType,
+)
+
 def build_model(
     model_type: str,
     vocab: Vocabulary,

@@ -25,7 +25,7 @@ from .feature_extractor import FeatureExtractor
 class GloVeFeatureExtractor(FeatureExtractor):
     def __init__(self, *args, **kwargs):
         self.glove = GloVeWordEmbeddingIndex.instance()
-    
+
     def get_glove(
         self,
         word: str,

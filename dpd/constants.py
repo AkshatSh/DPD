@@ -50,12 +50,6 @@ class SimilarityAlgorithm(Enum):
     L2Distance = 1
     CosineSimilarity = 2
 
-class DictionaryFunctionLinear(Enum):
-    LOGISTIC_REGRESSION = 1
-    SVM_LINEAR = 2
-    SVM_RBF = 3
-    SVM_QUADRATIC = 4
-
 # SAVE DIR
 SAVE_DIR = os.path.join(os.path.dirname(__file__), '..', '.saved')
 CADEC_ELMo = os.path.join(SAVE_DIR, 'cadec_elmo.tmp')

@@ -52,7 +52,7 @@ class FeaturePadder:
 class FeatureCollator:
     @classmethod
     def sum(cls, features: List[torch.Tensor]) -> torch.Tensor:
-        return sum(map(lambda t: t.float(), features)).long()
+        return sum(map(lambda t: t.float(), features))
 
     @classmethod
     def concat(cls, features: List[torch.Tensor]) -> torch.Tensor:
