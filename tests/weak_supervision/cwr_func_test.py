@@ -20,6 +20,7 @@ from allennlp.data.token_indexers import TokenIndexer
 
 from dpd.dataset import BIODataset, BIODatasetReader
 from dpd.models.embedder import NERElmoTokenEmbedder, CachedTextFieldEmbedder
+from dpd.models import LinearType
 from dpd.weak_supervision.contextual_functions import CWRLinear, CWRkNN
 
 SHOULD_RUN = False
@@ -93,7 +94,7 @@ class CWRFuncTest(unittest.TestCase):
             cwr_linear = CWRLinear(
                 positive_label='Tag',
                 embedder=embedder,
-                linear_type='svm_linear',
+                linear_type=LinearType.SVM_LINEAR,
             )
             cwr_linear.train(dataset, dataset_id=dataset.dataset_id)
             annotations = cwr_linear.evaluate(dataset)

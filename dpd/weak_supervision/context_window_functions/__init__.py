@@ -4,6 +4,6 @@ from .linear_window_function import LinearWindowFunction
 from .utils import get_context_range, get_context_window
 
 WINDOW_FUNCITON_IMPL = {
-    'bag': BagWindowFunction,
+    # 'bag': BagWindowFunction,
     'linear': LinearWindowFunction,
 }

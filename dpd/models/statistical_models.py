@@ -18,7 +18,7 @@ class LinearType(Enum):
     SVM_QUADRATIC = 'svm_quadratic'
     SVM_RBF = 'svm_rbf'
 
-def construct_linear_classifier(linear_type: str) -> None:
+def construct_linear_classifier(linear_type: LinearType) -> None:
     if linear_type == LinearType.LOGISTIC_REGRESSION:
         return LogisticRegression()
     elif linear_type == LinearType.SVM_LINEAR:

@@ -27,7 +27,7 @@ class CWRLinear(WeakFunction):
         self,
         positive_label: str,
         embedder: CachedTextFieldEmbedder,
-        linear_type: str = 'svm_linear',
+        linear_type: LinearType = LinearType.SVM_LINEAR,
     ):
         self.positive_label = positive_label
         self.embedder = embedder
