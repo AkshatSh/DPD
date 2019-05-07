@@ -7,6 +7,7 @@ from typing import (
 )
 
 import logging
+from tqdm import tqdm
 
 from allennlp.models import Model
 from allennlp.data import Vocabulary
@@ -112,13 +113,13 @@ def build_weak_data(
 
     basic_functions: List[WeakFunction] = dict_functions + window_functions
 
-    for function in basic_functions:
+    for function in tqdm(basic_functions):
         # contextual word representation functions
         function.train(train_data)
         annotated_corpus = function.evaluate(unlabeled_corpus)
         annotated_corpi.append(annotated_corpus)
     
-    for function in cwr_functions:
+    for function in tqdm(cwr_functions):
         # Contextual word representation functions
         function.train(train_data, unlabeled_corpus.dataset_id)
         annotated_corpus = function.evaluate(unlabeled_corpus)
