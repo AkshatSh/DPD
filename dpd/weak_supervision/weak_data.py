@@ -115,13 +115,17 @@ def build_weak_data(
 
     for function in tqdm(basic_functions):
         # contextual word representation functions
+        print(f'Training: {function}')
         function.train(train_data)
+        print(f'Evaluating: {function}')
         annotated_corpus = function.evaluate(unlabeled_corpus)
         annotated_corpi.append(annotated_corpus)
     
     for function in tqdm(cwr_functions):
         # Contextual word representation functions
+        print(f'Training: {function}')
         function.train(train_data, unlabeled_corpus.dataset_id)
+        print(f'Evaluating: {function}')
         annotated_corpus = function.evaluate(unlabeled_corpus)
         annotated_corpi.append(annotated_corpus)
 
