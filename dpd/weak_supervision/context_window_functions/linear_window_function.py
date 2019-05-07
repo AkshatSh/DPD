@@ -65,4 +65,4 @@ class LinearWindowFunction(WindowFunction):
     
     @overrides
     def __str__(self):
-        return f'LinearWindowFunction({self.feature_extractor})'
+        return f'LinearWindowFunction({self.context_window})({self.feature_extractor})'

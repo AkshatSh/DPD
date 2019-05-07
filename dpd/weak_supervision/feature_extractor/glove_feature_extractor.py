@@ -44,7 +44,7 @@ class GloVeFeatureExtractor(FeatureExtractor):
         ]
     
     def __str__(self):
-        return f'WordFeatureExtractor'
+        return f'GloVeFeatureExtractor'
     
     def __repr__(self):
         return self.__str__()

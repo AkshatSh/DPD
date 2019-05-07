@@ -61,4 +61,4 @@ class BagWindowFunction(WindowFunction):
     
     @overrides
     def __str__(self):
-        return f'BagWindowFunction({self.feature_extractor})'
+        return f'BagWindowFunction({self.context_window})({self.feature_extractor})'
