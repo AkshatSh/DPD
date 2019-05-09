@@ -11,8 +11,9 @@ import allennlp
 from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction, AnnotatedDataType
 from dpd.models.embedder import GloVeWordEmbeddingIndex
-from dpd.weak_supervision.dictionary_functions.utils import build_gold_dictionary
 from dpd.weak_supervision.dictionary_functions import KeywordMatchFunction
+
+from ..utils import build_gold_dictionary
 
 class GlovekNNFunction(object):
     def __init__(

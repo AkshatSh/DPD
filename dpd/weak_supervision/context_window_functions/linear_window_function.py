@@ -23,7 +23,7 @@ from dpd.models import LinearType, construct_linear_classifier
 from dpd.utils import TensorList, log_time
 from dpd.weak_supervision.feature_extractor import FeatureExtractor, FeatureCollator
 
-from .utils import get_context_window, get_context_range, label_index, NEGATIVE_LABEL
+from ..utils import get_context_window, get_context_range, label_index, NEGATIVE_LABEL
 from .window_function import WindowFunction
 
 class LinearWindowFunction(WindowFunction):

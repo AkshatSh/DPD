@@ -21,7 +21,7 @@ from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.utils import TensorList
 from dpd.weak_supervision.feature_extractor import FeatureExtractor, FeaturePadder
 
-from .utils import get_context_window, get_context_range
+from ..utils import get_context_window, get_context_range
 logger = logging.getLogger(name=__name__)
 
 class WindowFunction(WeakFunction):

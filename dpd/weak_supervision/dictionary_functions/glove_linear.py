@@ -15,13 +15,15 @@ from sklearn.svm import SVC
 
 from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction, AnnotatedDataType
-from dpd.weak_supervision.dictionary_functions.utils import build_gold_dictionary, build_sklearn_train_data
 from dpd.weak_supervision.dictionary_functions import KeywordMatchFunction
 from dpd.models import construct_linear_classifier, LinearType
 from dpd.models.embedder import GloVeWordEmbeddingIndex
 from dpd.constants import (
     STOP_WORDS,
 )
+
+
+from ..utils import build_gold_dictionary, build_sklearn_train_data
 
 class GloveLinearFunction(object):
     def __init__(
