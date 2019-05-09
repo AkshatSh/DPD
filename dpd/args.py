@@ -14,6 +14,7 @@ def get_active_args() -> argparse.ArgumentParser:
     parser.add_argument('--log_dir', type=str, default='logs/', help='the directory to log into')
     parser.add_argument('--model_name', type=str, default='active_learning_model', help='the name to give the model')
     parser.add_argument('--sample_strategy', type=str, default='sample', help='the method to sample the next points from')
+    parser.add_argument('--debug', action='store_true', help='log debug information to console')
 
     # dataset parameters
     parser.add_argument('--dataset', type=str, default='CADEC', help='the dataset to use {CONLL, CADEC}')

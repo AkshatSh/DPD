@@ -14,13 +14,15 @@ from dpd.constants import (
     SimilarityAlgorithm,
 )
 
+from dpd.utils import PickleFaiss
+
 from .glove_utils import (
     load_glove,
     EmbeddingSpaceType,
     EmbeddingType,
 )
 
-class GloVeWordEmbeddingIndex(object):
+class GloVeWordEmbeddingIndex(PickleFaiss):
     _INSTANCE = None
 
     @classmethod
@@ -52,9 +54,16 @@ class GloVeWordEmbeddingIndex(object):
         embedding_space_dims: int,
         similarity_algorithm: SimilarityAlgorithm,
     ):
+        super(GloVeWordEmbeddingIndex, self).__init__(
+            faiss_index_name='faiss_index',
+            index_np_name='index_np',
+            embedding_space_dims_name='embedding_space_dims',
+            similarity_algorithm_name='similarity_algorithm',
+        )
+
         self.embedding_space = embedding_space
         self.embedding_space_dims = embedding_space_dims
-        self.similarity_algorithm = SimilarityAlgorithm
+        self.similarity_algorithm = similarity_algorithm
         self.index_np, self.word_to_index, self.index_to_word = (
             GloVeWordEmbeddingIndex.build_index(
                 embedding_space,
@@ -189,8 +198,8 @@ class GloVeWordEmbeddingIndex(object):
     def get_embedding_index(self, word: str) -> np.ndarray:
         if word not in self.word_to_index:
             word = 'UNK'
-        return self.word_to_index[word]   
-    
+        return self.word_to_index[word]
+
     @classmethod
     def build_index(
         cls,

@@ -14,6 +14,7 @@ from dpd.constants import (
 from dpd.models.embedder import (
     GloVeWordEmbeddingIndex
 )
+logger = logging.getLogger(name=__name__)
 
 GLOVE_ENABLED = os.path.exists(GLOVE_DIR)
 
@@ -30,7 +31,7 @@ class GloveEmbedderTest(unittest.TestCase):
     
     def test_glove_singleton(self):
         if not GLOVE_ENABLED:
-            logging.warning(
+            logger.warning(
                 f'Skipping because glove dir not found: {GLOVE_DIR}'
             )
             return

@@ -76,11 +76,33 @@ class WindowFunctionTest(unittest.TestCase):
         instances = dataset_reader.read('fake.txt')
         vocab = Vocabulary.from_instances(instances)
         feature_extractor = feature_extractor_obj(vocab=vocab)
-        func = window_function(positive_label='Tag', context_window=context_window, feature_extractor=feature_extractor, feature_summarizer=feature_summarizer)
-        func.train(dataset.data)
-        assert func.dictionary.shape[0] == func.labels.shape[0]
+        batch_func = window_function(
+            positive_label='Tag',
+            context_window=context_window,
+            feature_extractor=feature_extractor,
+            feature_summarizer=feature_summarizer,
+            use_batch=True,
+        )
+
+        single_func = window_function(
+            positive_label='Tag',
+            context_window=context_window,
+            feature_extractor=feature_extractor,
+            feature_summarizer=feature_summarizer,
+            use_batch=False,
+        )
+
+        batch_func.train(dataset.data)
+        single_func.train(dataset.data)
+
+        assert batch_func.dictionary.shape[0] == batch_func.labels.shape[0]
         
-        return func.evaluate(dataset)
+        batch_eval = batch_func.evaluate(dataset)
+        single_eval = single_func.evaluate(dataset)
+
+        assert batch_eval == single_eval
+
+        return batch_eval
     
     def test_word_feature_context_window_concat(self):
         expected_result = [

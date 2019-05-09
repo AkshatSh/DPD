@@ -86,3 +86,15 @@ class TensorListTest(unittest.TestCase):
         tl = TensorList(tensor_list=_create_list())
         assert type(tl.tensor()) == torch.Tensor
 
+    def test_tensor_list(self):
+        def _create_list():
+            return [
+                torch.zeros(1,TENSOR_EMBEDDING_DIM),
+                torch.zeros(1,TENSOR_EMBEDDING_DIM),
+                torch.zeros(1,TENSOR_EMBEDDING_DIM),
+            ]
+        list_tensor = _create_list()
+        tl = TensorList(tensor_list=list_tensor)
+        created_list = tl.to_list()
+        assert type(created_list) == type(list_tensor)
+        assert all((t1 == t2).all() for t1, t2 in zip(list_tensor, created_list))

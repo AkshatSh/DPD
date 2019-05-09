@@ -18,8 +18,8 @@ from allennlp.data import Vocabulary
 
 from dpd.utils import TensorList
 from dpd.dataset import BIODataset, BIODatasetReader
-from dpd.weak_supervision.feature_extractor import SpaCyFeatureExtractor, WordFeatureExtractor, GloVeFeatureExtractor
-from dpd.constants import SPACY_NLP, GLOVE_DIR
+from dpd.weak_supervision.feature_extractor import SpaCyFeatureExtractor, WordFeatureExtractor, GloVeFeatureExtractor, POSFeatureExtractor
+from dpd.constants import SPACY_NLP, GLOVE_DIR, SPACY_POS
 
 GLOVE_ENABLED = os.path.exists(GLOVE_DIR)
 
@@ -75,7 +75,7 @@ class FeatureExtractorTest(unittest.TestCase):
         )
 
         features = feature_extractor.get_features(dataset_id=0, sentence_id=1)
-        computed_features = SPACY_NLP(' '.join([w for w in dataset.data[1]['input']]))
+        computed_features = SPACY_NLP(dataset.data[1]['input'])
         assert len(features) == len(dataset.data[1]['input'])
         assert len(features) == len(computed_features)
         for i, (f, c) in enumerate(zip(features, computed_features)):
@@ -109,3 +109,26 @@ class FeatureExtractorTest(unittest.TestCase):
             feats = feature_extractor.get_features(sentence_id=None, dataset_id=None, sentence=sentence)
             for word, feat in zip(sentence, feats):
                 assert feat.shape == (1, 300)
+    
+    def test_pos_feature_extractor(self):
+        dataset = FeatureExtractorTest.create_fake_data()
+        dataset_reader = BIODatasetReader(dataset)
+        instances = dataset_reader.read('fake.txt')
+        vocab = Vocabulary.from_instances(instances)
+        spacy_features = SpaCyFeatureExtractor()
+        spacy_features.cache(
+            dataset_id=0,
+            dataset=instances,
+            vocab=vocab,
+        )
+        feature_extractor = POSFeatureExtractor(spacy_module=spacy_features)
+        for entry in dataset.data:
+            sentence = entry['input']
+            feats = feature_extractor.get_features(
+                sentence_id=None,
+                dataset_id=None,
+                sentence=sentence,
+            )
+            assert len(feats) == len(sentence)
+            for word, feat in zip(sentence, feats):
+                assert feat.shape == (1, len(SPACY_POS))

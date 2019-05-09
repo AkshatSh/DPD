@@ -20,7 +20,7 @@ from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.models import construct_linear_classifier, LinearType
 from dpd.utils import TensorList
 
-from .utils import get_label_index, construct_train_data, extract_features, NEGATIVE_LABEL
+from ..utils import get_label_index, construct_train_data, extract_features, NEGATIVE_LABEL
 
 class CWRLinear(WeakFunction):
     def __init__(
@@ -28,6 +28,7 @@ class CWRLinear(WeakFunction):
         positive_label: str,
         embedder: CachedTextFieldEmbedder,
         linear_type: LinearType = LinearType.SVM_LINEAR,
+        **kwargs,
     ):
         self.positive_label = positive_label
         self.embedder = embedder

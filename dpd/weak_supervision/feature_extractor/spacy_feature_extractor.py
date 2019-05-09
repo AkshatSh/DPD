@@ -31,14 +31,16 @@ class CachedSpaCyFeatures(object):
     def cache_features(
         self,
         sentence_id: int,
-        sentence: str,
+        sentence: List[str],
     ):
-        self.id_to_doc[sentence_id] = SPACY_NLP(sentence)
+        spacy_features = SPACY_NLP(sentence)
+        self.id_to_doc[sentence_id] = spacy_features
+        return spacy_features
     
     def get_features(
         self,
         sentence_id: int,
-        sentence: Optional[str],
+        sentence: Optional[List[str]],
     ) -> Any:
         if sentence_id not in self.id_to_doc:
             if sentence is not None:
@@ -72,11 +74,13 @@ class CachedSpaCyFeatures(object):
         for instance in dataset:
             sentence = [t.text for t in instance.fields['sentence']]
             sentence_id = instance.fields['entry_id'].as_tensor(None).item()
-            sentence_str = ' '.join(sentence)
-            cached_fetures.cache_features(
+            f = cached_fetures.cache_features(
                 sentence_id=sentence_id,
-                sentence=sentence_str,
+                sentence=sentence,
             )
+            if len(f) != len(sentence):
+                print(f'{len(sentence)} {len(f)}')
+            assert len(f) == len(sentence)
         return cached_fetures
 
 class SpaCyFeatureExtractor(object):
@@ -101,18 +105,21 @@ class SpaCyFeatureExtractor(object):
         self,
         dataset_id: int,
         sentence_id: int,
-        sentence_str: Optional[str] = None,
+        sentence: Optional[List[str]] = None,
     ) -> Any:
         if dataset_id not in self.datasets:
-            if sentence_str is not None:
-                return SPACY_NLP(sentence_str)
+            if sentence is not None:
+                return SPACY_NLP(sentence)
             else:
                 raise Exception(f'Unknown dataset: {dataset_id}')
         else:
             return self.datasets[dataset_id].get_features(
                 sentence_id=sentence_id,
-                sentence=sentence_str,
+                sentence=sentence,
             )
+    
+    def enable_dataset(self, dataset_id: int):
+        self.datasets[dataset_id] = CachedSpaCyFeatures(dataset_id=dataset_id)
     
     def save(self, save_file: SaveFile):
         for d_id, features in self.datasets.items():
@@ -121,3 +128,10 @@ class SpaCyFeatureExtractor(object):
     def load(self, save_file: SaveFile):
         for d_id, features in self.datasets.items():
             features.load(key=f'dataset_id_{d_id}', save_file=save_file)
+    
+    @classmethod
+    def setup(cls, dataset_ids: List[int] = [0, 1]):
+        extractor = cls()
+        for dataset_id in dataset_ids:
+            extractor.enable_dataset(dataset_id)
+        return extractor

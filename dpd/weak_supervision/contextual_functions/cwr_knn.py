@@ -21,7 +21,7 @@ from dpd.weak_supervision import WeakFunction, AnnotatedDataType, AnnotationType
 from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.utils import TensorList
 
-from .utils import get_label_index, construct_train_data, extract_features, NEGATIVE_LABEL
+from ..utils import get_label_index, construct_train_data, extract_features, NEGATIVE_LABEL
 
 class CWRkNN(WeakFunction):
     '''
@@ -33,6 +33,7 @@ class CWRkNN(WeakFunction):
         embedder: CachedTextFieldEmbedder,
         resolve_mode: str = 'weighted',
         k: int = 10,
+        **kwargs,
     ):
         self.positive_label = positive_label
         self.embedder = embedder

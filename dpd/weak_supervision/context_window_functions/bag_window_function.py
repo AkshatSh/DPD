@@ -21,7 +21,7 @@ from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.utils import TensorList
 from dpd.weak_supervision.feature_extractor import FeatureExtractor, FeatureCollator
 
-from .utils import get_context_window, get_context_range, label_index, NEGATIVE_LABEL
+from ..utils import get_context_window, get_context_range, label_index, NEGATIVE_LABEL
 from .window_function import WindowFunction
 
 class BagWindowFunction(WindowFunction):
@@ -31,6 +31,8 @@ class BagWindowFunction(WindowFunction):
         context_window: int,
         feature_extractor: FeatureExtractor,
         feature_summarizer: Callable[[List[Any]], torch.Tensor] = FeatureCollator.sum,
+        use_batch: bool = True,
+        **kwargs,
     ):
         self.positive_label = positive_label
         self.feature_extractor = feature_extractor
@@ -39,6 +41,7 @@ class BagWindowFunction(WindowFunction):
             positive_label,
             feature_extractor,
             context_window,
+            use_batch=use_batch,
         )
 
         self.dictionary = TensorList()
@@ -58,6 +61,9 @@ class BagWindowFunction(WindowFunction):
             if (tensor == feature_summary).all():
                 return label.item()
         return 0
+    
+    def _batch_predict(self, features: List[List[torch.Tensor]]) -> List[int]:
+        return list(map(lambda f: self._predict(f), features))
     
     @overrides
     def __str__(self):

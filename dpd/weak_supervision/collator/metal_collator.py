@@ -7,6 +7,7 @@ from typing import (
 
 import os
 import sys
+import logging
 
 import torch
 import allennlp
@@ -24,6 +25,8 @@ from ..types import (
 
 from .collator import Collator
 from .collate_utils import bio_negative, bio_positive, NEGATIVE_LABEL
+
+logger = logging.getLogger(name=__name__)
 
 class SnorkeMeTalCollator(Collator):
     def __init__(
@@ -87,7 +90,7 @@ class SnorkeMeTalCollator(Collator):
     
     def train_label_model(self, collated_labels: np.ndarray):
         sparse_labels = sparse.csr_matrix(collated_labels)
-
+        logger.debug(lf_summary(sparse_labels))
         self.label_model.train_model(
             sparse_labels,
             n_epochs=self.num_epochs,

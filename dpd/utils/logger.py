@@ -9,6 +9,7 @@ try:
     from StringIO import StringIO  # Python 2.7
 except ImportError:
     from io import BytesIO         # Python 3.x
+logger = logging.getLogger(name=__name__)
 
 class Logger(object):
     '''
@@ -27,13 +28,13 @@ class Logger(object):
         '''
         file_name = os.path.join(self.log_dir, self.summary_file_name)
         summary_file = open(os.path.join(self.log_dir, self.summary_file_name), 'w')
-        logging.info(f'writing summary file: {file_name}...')
+        logger.info(f'writing summary file: {file_name}...')
         summary_writer = csv.writer(summary_file)
         for tag in self.log_data:
             for (value, step) in self.log_data[tag]:
                 summary_writer.writerow([tag, value, step])
         summary_file.close()
-        logging.info(f'wrote summary file: {file_name}')
+        logger.info(f'wrote summary file: {file_name}')
 
 
     def scalar_summary(self, tag: str, value: float, step: int):

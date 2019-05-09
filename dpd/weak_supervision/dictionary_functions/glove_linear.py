@@ -15,7 +15,6 @@ from sklearn.svm import SVC
 
 from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction, AnnotatedDataType
-from dpd.weak_supervision.dictionary_functions.utils import build_gold_dictionary, build_sklearn_train_data
 from dpd.weak_supervision.dictionary_functions import KeywordMatchFunction
 from dpd.models import construct_linear_classifier, LinearType
 from dpd.models.embedder import GloVeWordEmbeddingIndex
@@ -23,12 +22,16 @@ from dpd.constants import (
     STOP_WORDS,
 )
 
+
+from ..utils import build_gold_dictionary, build_sklearn_train_data
+
 class GloveLinearFunction(object):
     def __init__(
         self,
         binary_class: str,
         linear_function: LinearType = LinearType.SVM_LINEAR,
         threshold: Optional[float] = None,
+        **kwargs,
     ):
         self.word_embedding_index = GloVeWordEmbeddingIndex.instance()
         self.similar_words: Dict[str, Counter] = {}
