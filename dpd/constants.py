@@ -2,6 +2,7 @@ import os
 import sys
 from enum import Enum
 import spacy
+from spacy.tokens import Doc
 import nltk
 from nltk.corpus import stopwords
 
@@ -70,3 +71,11 @@ CADEC_SPACY = os.path.join(SAVE_DIR, 'cadec_spacy.tmp')
 CONLL_SPACY = os.path.join(SAVE_DIR, 'conll_spacy.tmp')
 SPACY_POS = ['UNK', 'ADJ','ADP','PUNCT','ADV','AUX','SYM','INTJ','CCONJ','X','NOUN','DET','PROPN','NUM','VERB','PART','PRON','SCONJ',]
 SPACY_POS_INDEX = {pos: i for i, pos in enumerate(SPACY_POS)}
+
+# if set to true, expects list strs as input to NLP in spacy
+USE_TOKEN_TOKENIZER = True
+def token_tokenizer(tokens):
+    return Doc(SPACY_NLP.vocab, tokens)
+
+if USE_TOKEN_TOKENIZER:
+    SPACY_NLP.tokenizer = token_tokenizer

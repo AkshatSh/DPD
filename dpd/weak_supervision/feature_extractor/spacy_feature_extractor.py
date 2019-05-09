@@ -31,14 +31,16 @@ class CachedSpaCyFeatures(object):
     def cache_features(
         self,
         sentence_id: int,
-        sentence: str,
+        sentence: List[str],
     ):
-        self.id_to_doc[sentence_id] = SPACY_NLP(sentence)
+        spacy_features = SPACY_NLP(sentence)
+        self.id_to_doc[sentence_id] = spacy_features
+        return spacy_features
     
     def get_features(
         self,
         sentence_id: int,
-        sentence: Optional[str],
+        sentence: Optional[List[str]],
     ) -> Any:
         if sentence_id not in self.id_to_doc:
             if sentence is not None:
@@ -72,11 +74,13 @@ class CachedSpaCyFeatures(object):
         for instance in dataset:
             sentence = [t.text for t in instance.fields['sentence']]
             sentence_id = instance.fields['entry_id'].as_tensor(None).item()
-            sentence_str = ' '.join(sentence)
-            cached_fetures.cache_features(
+            f = cached_fetures.cache_features(
                 sentence_id=sentence_id,
-                sentence=sentence_str,
+                sentence=sentence,
             )
+            if len(f) != len(sentence):
+                print(f'{len(sentence)} {len(f)}')
+            assert len(f) == len(sentence)
         return cached_fetures
 
 class SpaCyFeatureExtractor(object):
