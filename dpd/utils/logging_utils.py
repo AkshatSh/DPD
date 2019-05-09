@@ -2,14 +2,36 @@ from typing import (
     List,
     Tuple,
     Dict,
+    Any,
 )
 
+import time
 import logging
 
 from .logger import Logger
-
+logger = logging.getLogger(name=__name__)
 
 MetricsType = Dict[str, object]
+
+def time_metric(function: callable) -> callable:
+    def _wrapper(*args, **kwargs) -> Any:
+        start_time: float = time.time()
+        res = function(*args, **kwargs)
+        end_time: float = time.time()
+        logger.debug(f'{function.__name__}: {end_time - start_time} seconds')
+        return res
+    return _wrapper
+
+def log_time(function_prefix: str) -> callable:
+    def _decorator(function: callable) -> callable:
+        def _wrapper(*args, **kwargs) -> Any:
+            start_time: float = time.time()
+            res = function(*args, **kwargs)
+            end_time: float = time.time()
+            logger.debug(f'{function_prefix}: {end_time - start_time} seconds')
+            return res
+        return _wrapper
+    return _decorator
 
 def log_train_metrics(
     logger: Logger,

@@ -43,6 +43,8 @@ from dpd.args import get_active_args
 
 ORACLE_SAMPLES = [10, 40, 50]
 
+logger = logging.getLogger(name=__name__)
+
 # type definitions
 
 '''
@@ -416,6 +418,8 @@ def construct_vocab(datasets: List[BIODataset]) -> Vocabulary:
 
 def main():
     args = get_active_args().parse_args()
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
 
     device = 'cuda' if torch.cuda.is_available() and args.cuda else 'cpu'
 
