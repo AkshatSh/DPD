@@ -55,9 +55,9 @@ class GloVeWordEmbeddingIndex(PickleFaiss):
         similarity_algorithm: SimilarityAlgorithm,
     ):
         super(GloVeWordEmbeddingIndex, self).__init__(
-            faiss_index_name='faiss_index'
-            index_np_name='index_np'
-            embedding_space_dims_name='embedding_space_dims'
+            faiss_index_name='faiss_index',
+            index_np_name='index_np',
+            embedding_space_dims_name='embedding_space_dims',
             similarity_algorithm_name='similarity_algorithm',
         )
 
