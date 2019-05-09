@@ -68,3 +68,5 @@ ELMO_WEIGHT_FILE = 'https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x10
 SPACY_NLP = spacy.load('en_core_web_sm')
 CADEC_SPACY = os.path.join(SAVE_DIR, 'cadec_spacy.tmp')
 CONLL_SPACY = os.path.join(SAVE_DIR, 'conll_spacy.tmp')
+SPACY_POS = ['UNK', 'ADJ','ADP','PUNCT','ADV','AUX','SYM','INTJ','CCONJ','X','NOUN','DET','PROPN','NUM','VERB','PART','PRON','SCONJ',]
+SPACY_POS_INDEX = {pos: i for i, pos in enumerate(SPACY_POS)}
