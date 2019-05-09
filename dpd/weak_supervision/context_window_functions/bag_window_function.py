@@ -31,6 +31,7 @@ class BagWindowFunction(WindowFunction):
         context_window: int,
         feature_extractor: FeatureExtractor,
         feature_summarizer: Callable[[List[Any]], torch.Tensor] = FeatureCollator.sum,
+        use_batch: bool = True,
     ):
         self.positive_label = positive_label
         self.feature_extractor = feature_extractor
@@ -39,6 +40,7 @@ class BagWindowFunction(WindowFunction):
             positive_label,
             feature_extractor,
             context_window,
+            use_batch=use_batch,
         )
 
         self.dictionary = TensorList()
@@ -58,6 +60,9 @@ class BagWindowFunction(WindowFunction):
             if (tensor == feature_summary).all():
                 return label.item()
         return 0
+    
+    def _batch_predict(self, features: List[List[torch.Tensor]]) -> List[int]:
+        return list(map(lambda f: self._predict(f), features))
     
     @overrides
     def __str__(self):
