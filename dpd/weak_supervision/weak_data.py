@@ -155,9 +155,8 @@ def build_weak_data(
                         constructor(
                             positive_label=unlabeled_corpus.binary_class,
                             context_window=window,
-                            feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab),
+                            feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab, spacy_module=spacy_feature_extractor),
                             feature_summarizer=FeatureCollator.get(collator),
-                            spacy_module=spacy_feature_extractor,
                         )
                     )
 

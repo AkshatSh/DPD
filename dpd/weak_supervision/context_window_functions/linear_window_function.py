@@ -35,6 +35,7 @@ class LinearWindowFunction(WindowFunction):
         feature_summarizer: Callable[[List[Any]], torch.Tensor] = FeatureCollator.sum,
         linear_type: LinearType = LinearType.SVM_LINEAR,
         use_batch: bool = True,
+        **kwargs,
     ):
         self.positive_label = positive_label
         self.feature_extractor = feature_extractor
