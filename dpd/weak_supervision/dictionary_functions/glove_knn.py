@@ -19,6 +19,7 @@ class GlovekNNFunction(object):
         self,
         binary_class: str,
         k: int = 5,
+        **kwargs,
     ):
         self.word_embedding_index = GloVeWordEmbeddingIndex.instance()
         self.similar_words: Dict[str, Counter] = {}

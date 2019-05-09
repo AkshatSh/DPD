@@ -29,6 +29,7 @@ class GloveLinearFunction(object):
         binary_class: str,
         linear_function: LinearType = LinearType.SVM_LINEAR,
         threshold: Optional[float] = None,
+        **kwargs,
     ):
         self.word_embedding_index = GloVeWordEmbeddingIndex.instance()
         self.similar_words: Dict[str, Counter] = {}

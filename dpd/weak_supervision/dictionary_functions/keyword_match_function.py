@@ -27,6 +27,8 @@ class KeywordMatchFunction(object):
     def __init__(
         self,
         binary_class: str,
+        *args,
+        **kwargs,
     ):
         '''
         Initializes a keyword tracker that checks for the binary class

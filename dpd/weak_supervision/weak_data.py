@@ -148,7 +148,6 @@ def build_weak_data(
                                 context_window=window,
                                 feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab, embedder=embedder),
                                 feature_summarizer=FeatureCollator.get(collator),
-                                spacy_module=spacy_feature_extractor,
                             )
                         )
                 else:
@@ -158,6 +157,7 @@ def build_weak_data(
                             context_window=window,
                             feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab),
                             feature_summarizer=FeatureCollator.get(collator),
+                            spacy_module=spacy_feature_extractor,
                         )
                     )
 

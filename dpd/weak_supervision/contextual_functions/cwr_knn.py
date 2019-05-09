@@ -33,6 +33,7 @@ class CWRkNN(WeakFunction):
         embedder: CachedTextFieldEmbedder,
         resolve_mode: str = 'weighted',
         k: int = 10,
+        **kwargs,
     ):
         self.positive_label = positive_label
         self.embedder = embedder
