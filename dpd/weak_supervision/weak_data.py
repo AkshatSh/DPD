@@ -67,15 +67,19 @@ def parallel_corpus_generation(
     function_args: List[Any],
 ) -> List[AnnotatedDataType]:
     # set pool size
-    pool: mp.Pool = mp.Pool(mp.cpu_count() - 1)
-    annotated_corpora = pool.map(
+    pool: mp.Pool = mp.Pool(processes=5, maxtasksperchild=2)
+    annotated_corpora = pool.imap(
         func=single_function_corpus_generation,
         iterable=[(function, train_data, unlabeled_corpus) for function, f_arg in zip(functions, function_args)],
     )
 
     pool.close()
 
-    return annotated_corpora
+    res = []
+    for corpus in tqdm(annotated_corpora, total=len(functions)):
+        res.append(corpus)
+
+    return res
 
 def sequential_corpus_generation(
     functions: List[WeakFunction],
@@ -173,12 +177,12 @@ def build_weak_data(
 
     corpus_generation_func = parallel_corpus_generation if parallelize else sequential_corpus_generation
 
-    annotated_corpora = corpus_generation_func(
+    annotated_corpora = list(corpus_generation_func(
         functions=functions,
         train_data=train_data,
         unlabeled_corpus=unlabeled_corpus,
         function_args=function_args,
-    )
+    ))
 
     fin_annotated_corpus = collator.collate(annotated_corpora)
     bio_corpus = bio_converter.convert(fin_annotated_corpus)
