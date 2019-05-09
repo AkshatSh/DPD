@@ -26,17 +26,17 @@ class PickleFaiss(object):
     '''
     def __getstate__(self):
         state = self.__dict__.copy()
-        state[self.faiss_index_name] = None
+        state[state['faiss_index_name']] = None
         return state
 
     def __setstate__(self, newstate):
-        embedding_space_dims = newstate[self.embedding_space_dims_name]
-        similarity_algorithm = newstate[self.similarity_algorithm_name]
-        index_np = newstate[self.index_np_name]
+        embedding_space_dims = newstate[newstate['embedding_space_dims_name']]
+        similarity_algorithm = newstate[newstate['similarity_algorithm_name']]
+        index_np = newstate[newstate['index_np_name']]
         faiss_index = faiss.IndexFlatIP(embedding_space_dims)
         if similarity_algorithm == SimilarityAlgorithm.CosineSimilarity:
             # normalize with L2 as a proxy for cosine search
             faiss.normalize_L2(index_np)
         faiss_index.add(index_np)
-        newstate[self.faiss_index_name] = faiss_index
+        newstate[newstate['faiss_index_name']] = faiss_index
         self.__dict__.update(newstate)
