@@ -90,7 +90,7 @@ class SnorkeMeTalCollator(Collator):
     
     def train_label_model(self, collated_labels: np.ndarray):
         sparse_labels = sparse.csr_matrix(collated_labels)
-
+        logger.debug(lf_summary(sparse_labels))
         self.label_model.train_model(
             sparse_labels,
             n_epochs=self.num_epochs,
