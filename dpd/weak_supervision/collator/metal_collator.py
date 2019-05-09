@@ -7,6 +7,7 @@ from typing import (
 
 import os
 import sys
+import logging
 
 import torch
 import allennlp
@@ -24,6 +25,8 @@ from ..types import (
 
 from .collator import Collator
 from .collate_utils import bio_negative, bio_positive, NEGATIVE_LABEL
+
+logger = logging.getLogger(name=__name__)
 
 class SnorkeMeTalCollator(Collator):
     def __init__(

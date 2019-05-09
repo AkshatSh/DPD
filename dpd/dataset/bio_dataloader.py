@@ -6,6 +6,8 @@ from typing import (
     Iterator,
 )
 
+import logging
+
 from allennlp.data import Instance
 from allennlp.data.fields import TextField, SequenceLabelField
 from allennlp.data.dataset_readers import DatasetReader
@@ -15,6 +17,8 @@ from allennlp.data.tokenizers import Token
 
 from .bio_dataset import BIODataset
 from .fields import IntField, FloatField
+
+logger = logging.getLogger(name=__name__)
 
 class BIODatasetReader(DatasetReader):
     """

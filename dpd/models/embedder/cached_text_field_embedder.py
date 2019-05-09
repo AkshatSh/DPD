@@ -30,6 +30,8 @@ from allennlp.nn.util import get_text_field_mask, move_to_device
 
 from dpd.utils import SaveFile
 
+logger = logging.getLogger(name=__name__)
+
 class CachedDataset(object):
     def __init__(
         self,
@@ -238,7 +240,7 @@ class CachedTextFieldEmbedder(nn.Module):
         if dataset_id not in self.cached_datasets:
             self.cached_datasets[dataset_id] = CachedDataset(dataset_id=dataset_id)
         else:
-            logging.info(f'Already cached dataset with id: {dataset_id}')
+            logger.info(f'Already cached dataset with id: {dataset_id}')
 
     def save(
         self,
