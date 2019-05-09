@@ -76,6 +76,9 @@ class TensorList(object):
         self.tensor_list.to(device)
         self.device = device
     
+    def to_list(self) -> List[torch.Tensor]:
+        return list(map(lambda t: t.unsqueeze(0), self.tensor_list))
+    
     def numpy(self) -> np.ndarray:
         return self.tensor_list.cpu().detach().numpy()
 
