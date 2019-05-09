@@ -114,6 +114,9 @@ class SpaCyFeatureExtractor(object):
                 sentence=sentence_str,
             )
     
+    def enable_dataset(self, dataset_id: int):
+        self.datasets[dataset_id] = CachedSpaCyFeatures(dataset_id=dataset_id)
+    
     def save(self, save_file: SaveFile):
         for d_id, features in self.datasets.items():
             features.save(key=f'dataset_id_{d_id}', save_file=save_file)
@@ -121,3 +124,10 @@ class SpaCyFeatureExtractor(object):
     def load(self, save_file: SaveFile):
         for d_id, features in self.datasets.items():
             features.load(key=f'dataset_id_{d_id}', save_file=save_file)
+    
+    @classmethod
+    def setup(cls, dataset_ids: List[int] = [0, 1]):
+        extractor = cls()
+        for dataset_id in dataset_ids:
+            extractor.enable_dataset(dataset_id)
+        return extractor

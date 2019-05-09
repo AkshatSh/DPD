@@ -31,7 +31,14 @@ from dpd.utils import (
     get_dataset_files,
     Logger,
     construct_f1_class_labels,
+    PickleSaveFile,
 )
+
+from dpd.constants import (
+    CADEC_SPACY,
+)
+
+from dpd.weak_supervision.feature_extractor import SpaCyFeatureExtractor
 
 from dpd.models import build_model
 from dpd.models.embedder import CachedTextFieldEmbedder
@@ -128,6 +135,7 @@ def active_train_fine_tune_iteration(
     vocab: Vocabulary,
     model: Model,
     cached_text_field_embedders: List[CachedTextFieldEmbedder],
+    spacy_feature_extractor: SpaCyFeatureExtractor,
     optimizer_type: str,
     optimizer_learning_rate: float,
     optimizer_weight_decay: float,
@@ -188,6 +196,7 @@ def active_train_fine_tune_iteration(
             function_types=weak_function,
             collator_type=weak_collator,
             contextual_word_embeddings=cached_text_field_embedders,
+            spacy_feature_extractor=spacy_feature_extractor,
             vocab=vocab,
         )
 
@@ -234,6 +243,7 @@ def active_train_iteration(
     vocab: Vocabulary,
     model: Model,
     cached_text_field_embedders: List[CachedTextFieldEmbedder],
+    spacy_feature_extractor: SpaCyFeatureExtractor,
     optimizer_type: str,
     optimizer_learning_rate: float,
     optimizer_weight_decay: float,
@@ -299,6 +309,7 @@ def active_train_iteration(
             function_types=weak_function,
             collator_type=weak_collator,
             contextual_word_embeddings=cached_text_field_embedders,
+            spacy_feature_extractor=spacy_feature_extractor,
             vocab=vocab,
         )
 
@@ -361,6 +372,8 @@ def active_train(
     )
 
     cached_text_field_embedders: List[CachedTextFieldEmbedder] = get_all_embedders()
+    spacy_feature_extractor: SpaCyFeatureExtractor = SpaCyFeatureExtractor.setup(dataset_ids=[0, 1])
+    spacy_feature_extractor.load(save_file=PickleSaveFile(CADEC_SPACY))
 
     for i, sample_size in enumerate(ORACLE_SAMPLES):
         active_iteration_kwargs = dict(
@@ -373,6 +386,7 @@ def active_train(
             valid_reader=valid_reader,
             model=model,
             cached_text_field_embedders=cached_text_field_embedders,
+            spacy_feature_extractor=spacy_feature_extractor,
             vocab=vocab,
             optimizer_type=optimizer_type,
             optimizer_learning_rate=optimizer_learning_rate,

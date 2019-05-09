@@ -19,7 +19,7 @@ from dpd.dataset import UnlabeledBIODataset
 from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.weak_supervision import WeakFunction, BIOConverter
 from dpd.utils import time_metric
-from dpd.weak_supervision.feature_extractor import FEATURE_EXTRACTOR_IMPL, FeatureCollator
+from dpd.weak_supervision.feature_extractor import FEATURE_EXTRACTOR_IMPL, FeatureCollator, SpaCyFeatureExtractor
 from dpd.weak_supervision.dictionary_functions import (
     KeywordMatchFunction,
     GlovekNNFunction,
@@ -103,6 +103,7 @@ def build_weak_data(
     function_types: List[str] = ['linear'],
     collator_type: str = 'union',
     contextual_word_embeddings: Optional[List[CachedTextFieldEmbedder]] = None,
+    spacy_feature_extractor: Optional[SpaCyFeatureExtractor] = None,
     parallelize: bool = True,
 ) -> DatasetType:
     '''
@@ -147,6 +148,7 @@ def build_weak_data(
                                 context_window=window,
                                 feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab, embedder=embedder),
                                 feature_summarizer=FeatureCollator.get(collator),
+                                spacy_module=spacy_feature_extractor,
                             )
                         )
                 else:
