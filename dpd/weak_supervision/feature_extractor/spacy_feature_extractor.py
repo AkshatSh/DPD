@@ -105,17 +105,17 @@ class SpaCyFeatureExtractor(object):
         self,
         dataset_id: int,
         sentence_id: int,
-        sentence_str: Optional[str] = None,
+        sentence: Optional[List[str]] = None,
     ) -> Any:
         if dataset_id not in self.datasets:
-            if sentence_str is not None:
-                return SPACY_NLP(sentence_str)
+            if sentence is not None:
+                return SPACY_NLP(sentence)
             else:
                 raise Exception(f'Unknown dataset: {dataset_id}')
         else:
             return self.datasets[dataset_id].get_features(
                 sentence_id=sentence_id,
-                sentence=sentence_str,
+                sentence=sentence,
             )
     
     def enable_dataset(self, dataset_id: int):

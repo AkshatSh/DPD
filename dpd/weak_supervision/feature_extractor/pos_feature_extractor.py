@@ -50,7 +50,7 @@ class POSFeatureExtractor(FeatureExtractor):
         spacy_features = self.spacy_module.get_features(
             dataset_id=dataset_id,
             sentence_id=sentence_id,
-            sentence_str=' '.join(sentence),
+            sentence=sentence,
         )
         pos_features = list(map(lambda f: f.pos_, spacy_features))
         return [

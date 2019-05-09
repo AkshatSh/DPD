@@ -75,7 +75,7 @@ class FeatureExtractorTest(unittest.TestCase):
         )
 
         features = feature_extractor.get_features(dataset_id=0, sentence_id=1)
-        computed_features = SPACY_NLP(' '.join([w for w in dataset.data[1]['input']]))
+        computed_features = SPACY_NLP(dataset.data[1]['input'])
         assert len(features) == len(dataset.data[1]['input'])
         assert len(features) == len(computed_features)
         for i, (f, c) in enumerate(zip(features, computed_features)):
@@ -124,6 +124,11 @@ class FeatureExtractorTest(unittest.TestCase):
         feature_extractor = POSFeatureExtractor(spacy_module=spacy_features)
         for entry in dataset.data:
             sentence = entry['input']
-            feats = feature_extractor.get_features(sentence_id=None, dataset_id=None, sentence=sentence)
+            feats = feature_extractor.get_features(
+                sentence_id=None,
+                dataset_id=None,
+                sentence=sentence,
+            )
+            assert len(feats) == len(sentence)
             for word, feat in zip(sentence, feats):
                 assert feat.shape == (1, len(SPACY_POS))
