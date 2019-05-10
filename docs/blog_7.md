@@ -38,7 +38,11 @@ Messing with this limitations, I have brought down the runtime from `0.5-1.5 hou
 
 ### Results from Active Learning Experiments
 
-The results from the latest experiment are presented here. There is still quite a bit of work to be done on the experimentation side, which I will continue doing, but to briefly talk about what the issues are and where I plan to go.
+The results from the latest experiment are presented here. There is still quite a bit of work to be done on the experimentation side, which I will continue doing, but to briefly talk about what the issues are and where I plan to go. (Results are averaged over 5 trials with 95% confidence intervals showing)
+
+![results](figures/token_f1_span_f1_all_collation.png)
+
+Linear refers to our best performing single function experiment from [blog 5](blog_5.md), but further refined in the beginning of [blog 6](blog_6.md). Metal is our Snorkel MeTal collator, described in the [previous blog post](blog_6.md), with the adjustment that it includes all the labeling function generation stuff described above. The results show the for the Token and Span F1 the Metal Collator is better than our no weak baseline. It also shows that our Metal Collator is marginally better than our linear weak set and performs quite similarly, even though the Metal Collator takes 30 weak functions into account and our linear one is simply the best performing one. I discuss reasons for this below.
 
 ### Error Analysis
 
@@ -47,7 +51,7 @@ The results from the latest experiment are presented here. There is still quite 
 Now part of `Snorkel` allows us to analyze the labeling functions we have trained. In particular look for what classes they are predicting, how much they overlap with other labeling functions, how much of the data they cover, and how much they conflict with other labeling functions. The results are presented below.
 
 
-In particular notice how coverage and overlaps are `1.0`, this is because the way I wrote each function was to predict whether a word was positive or negative. However, digging into this further, `snorkel` heavil relies on having one function predict whether a word is positive and if it says its not, assign a `VOID` label not a negative one, and have a separate function determine if something is negative or not. A part of what I plan to do the next couple of days is to rewrite the labeling functions to follow this paradigm, and hopefully we will see some interesting results from that.
+In particular notice how coverage and overlaps are `1.0`, this is because the way I wrote each function was to predict whether a word was positive or negative. However, digging into this further, `snorkel` heavil relies on having one function predict whether a word is positive and if it says its not, assign a `VOID` label not a negative one, and have a separate function determine if something is negative or not. A part of what I plan to do the next couple of days is to rewrite the labeling functions to follow this paradigm, and hopefully we will see some interesting results from that. The `snorkel` pipeline defines a generative model that looks at the correlations between labeling functions and relies on the presence of void labels in labeling functions to correctly collate them. Since our pipeline is missing this, it could be an indication that our use of `snorkel` is not what we expected.
 
 ## Next Blog Post / Next Solution
 
@@ -59,19 +63,16 @@ As mentioned earlier, I will continue working on some of the problems I describe
 
 ### Next Big Thing to Try
 
-Weighted Training or `noisy -> gold` training don't seem to fully capture the noisy set. There are a few ideas, I have to leverage this better. The main theme is instead of treating the noisy set as a noisy version of the gold set. Treat it as a different but related task. This could change the goal from using the noisy set to further solidfy model predictions, to instead use the noisy set to refine the hidden states of the model.
+Weighted Training or `noisy -> gold` training don't seem to fully capture the noisy set.In particular, with the recent changes, if I changed the weak weight of the Metal Collator to be `1.0` the Span F1 performs better and if it is `0.1` then the Token F1 performs better. There are a few ideas, I have to leverage this better. The main theme is instead of treating the noisy set as a noisy version of the gold set. Treat it as a different but related task. This could change the goal from using the noisy set to further solidfy model predictions, to instead use the noisy set to refine the hidden states of the model.
 
-#### Freeze and Retrain
 
-#### Multitask Learning
+* **MulitTask / Freeze and Retrain**: During training, I notice overfitting to the train data when sample size is low. I suspect this is due to overparameterization, where I want a single model configuration to work when there is `10`, `50`, or `100` data points available. However the noisy set size is roughly the same in each run. Currently the model here is `CWR -> RNN -> CRF`. One idea was to treat the noisy set as a related but different task, by training two different task heads, one `CRF` for the noisy set and one `CRF` for the gold set. This would adjust the task for the noisy set to instead be guiding the model to solidify the hidden states as compared to being a noiser source of supervision. To help with overparameterization, one possible solution could be to train the model on the noisy set, and then freeze the `CWR -> RNN` pipeline and only train the `CRF` on the gold labels.
+* **Unsupervised Data Augmentation**: Another idea was proposed in a recent paper called *Unsupervised Data Augmentation*. The paper looks at a semi supervised learning framework for image and text classification. In particular they contribute two relevant ideas.
+    * **TSA**: (Training Signal Annealing), they propose that when labeled data is much less than unlabeled data and prone to overfitting to only train on a subset of examples. The loss function is descibed here:
+    
+    ![uda_loss](figures/uda_loss.png).
+    
+    The main difference is that this loss function will only back propogate on examples where the probabiliy of the label is less than some threshold, where the threshold is a monotnic function of the training progress. For example when you are 20% done with training, the algorithm will only backpropogate on instances that have a predicted confidence less than `0.2`, but hwne you are 80% done with training the model will only backpropogate when the confidence is less than `0.8`. They claim that this methods reduces a model being over confident in instances and thus overfitting.
+    * **Consistency Loss**: They make use of their unlabeled data by defining a consistency loss. In particular, given an unlabled input `x`, the run `x` through the model to produce a predicted label `y^`. They then paraphrase the unlabeled input to `x'` (through back translation or TF-IDF word replacement) and run `x'` through the model to get a predicted label `y'`. Then they ensure that the distribution `y^` is similar to the distribution for `y'`.
 
-#### Unsupervised Data Augmentation
-
-##### Paraphrasing
-
-`TODO: summarize paper`
-
-`TODO: include figure`
-
-* Backtranslation
-* Parabank
+These two method could be applied to the active learning pipelien for sequence classification to help with the overfitting problem I described.
