@@ -22,12 +22,16 @@ from dpd.constants import STOP_WORDS
 from dpd.weak_supervision import AnnotatedDataType, AnnotationType
 
 NEGATIVE_LABEL = 'O'
+ABSTAIN_LABEL = '<ABS>'
 
 def is_negative(label: str) -> bool:
     return label == NEGATIVE_LABEL
 
+def is_abstain(label: str) -> bool:
+    return label == ABSTAIN_LABEL
+
 def is_positive(label: str) -> bool:
-    return not is_negative(label)
+    return not is_negative(label) and not is_abstain(label)
 
 def label_index(label: str) -> int:
     if is_positive(label):

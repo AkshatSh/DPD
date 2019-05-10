@@ -15,7 +15,7 @@ import allennlp
 
 from dpd.weak_supervision import AnnotatedDataType
 from .collator import Collator
-from .collate_utils import bio_negative, bio_positive, NEGATIVE_LABEL
+from ..utils import is_negative, is_positive, NEGATIVE_LABEL
 
 class UnionCollator(Collator):
     def __init__(
@@ -26,7 +26,7 @@ class UnionCollator(Collator):
 
     def _union(self, potential_tags: List[str]) -> str:
         for tag in potential_tags:
-            if bio_positive(tag):
+            if is_positive(tag):
                 return self.positive_label
         return NEGATIVE_LABEL
 

@@ -24,7 +24,7 @@ from ..types import (
 )
 
 from .collator import Collator
-from .collate_utils import bio_negative, bio_positive, NEGATIVE_LABEL
+from ..utils import NEGATIVE_LABEL, ABSTAIN_LABEL, is_negative, is_positive, is_abstain
 
 logger = logging.getLogger(name=__name__)
 
@@ -46,10 +46,12 @@ class SnorkeMeTalCollator(Collator):
     
     @classmethod
     def get_snorkel_index(cls, tag: str) -> int:
-        if bio_positive(tag):
+        if is_positive(tag):
             return 2
-        else:
+        elif is_negative(tag):
             return 1
+        else:
+            return 0
 
     def get_tag(self, index: int) -> str:
         if index == 1:
