@@ -10,7 +10,7 @@ Part of my comments were `The word/span -> positive selection for labeling funct
 
 Reponse: I think (and the way I have been working on this) was to directly extend the intuition. While this may not be clear as to why because predicting something like an adverse reaction soley based on the POS/parse features is not going to work, it will be used along side many other labeling functions and weak classifiers. So while it may not be perfect, it provides some supervision as to what our model should be learning from this noisy set.
 
-## Group Feedback
+### Group Feedback
 
 I am working by myself (at least in the context of this class), so I will use this area to mostly reflect on what has been going on this quarter. While this project does look quite large from the outside, I want to mention that the entire Active Learning component of this pipleline and modeling components have been done in previous work before this class. That being said, what I am finding is that the number of things to try for this project is growing larger and larger, and may habe been a bit ambitious for me to complete in 10 weeks. With that in mind, I do think I have been progressing quite well with the experimentation and engineering work. To keep this pace up, it will be important for me to decide one path to focus on for the rest of the quarter, and I will explain that direction towards the end of this post.
 
@@ -42,13 +42,44 @@ The results from the latest experiment are presented here. There is still quite 
 
 ![results](figures/token_f1_span_f1_all_collation.png)
 
-Linear refers to our best performing single function experiment from [blog 5](blog_5.md), but further refined in the beginning of [blog 6](blog_6.md). Metal is our Snorkel MeTal collator, described in the [previous blog post](blog_6.md), with the adjustment that it includes all the labeling function generation stuff described above. The results show the for the Token and Span F1 the Metal Collator is better than our no weak baseline. It also shows that our Metal Collator is marginally better than our linear weak set and performs quite similarly, even though the Metal Collator takes 30 weak functions into account and our linear one is simply the best performing one. I discuss reasons for this below.
+Linear refers to our best performing single function experiment from [blog 5](blog_5.md), but further refined in the beginning of [blog 6](blog_6.md). Metal [3 Hancock et al. 2019] is our Snorkel MeTal collator, described in the [previous blog post](blog_6.md), with the adjustment that it includes all the labeling function generation stuff described above. The results show the for the Token and Span F1 the Metal Collator is better than our no weak baseline. It also shows that our Metal Collator is marginally better than our linear weak set and performs quite similarly, even though the Metal Collator takes 30 weak functions into account and our linear one is simply the best performing one. I discuss reasons for this below.
 
 ### Error Analysis
 
 #### Labeling Function Analysis
 
-Now part of `Snorkel` allows us to analyze the labeling functions we have trained. In particular look for what classes they are predicting, how much they overlap with other labeling functions, how much of the data they cover, and how much they conflict with other labeling functions. The results are presented below.
+Now part of `Snorkel` [2. Ratner et al. 2017] allows us to analyze the labeling functions we have trained. In particular look for what classes they are predicting, how much they overlap with other labeling functions, how much of the data they cover, and how much they conflict with other labeling functions. The results are presented below.
+
+```
+      Polarity  Coverage  Overlaps  Conflicts
+0   [1.0, 2.0]  1.000000  1.000000   0.582901
+1   [1.0, 2.0]  1.000000  1.000000   0.582901
+2   [1.0, 2.0]  1.000000  1.000000   0.582901
+3   [1.0, 2.0]  1.000000  1.000000   0.582901
+4   [1.0, 2.0]  1.000000  1.000000   0.582901
+5   [1.0, 2.0]  1.000000  1.000000   0.582901
+6   [1.0, 2.0]  1.000000  1.000000   0.582901
+7   [1.0, 2.0]  0.994009  0.994009   0.580310
+8   [1.0, 2.0]  1.000000  1.000000   0.582901
+9   [1.0, 2.0]  0.994009  0.994009   0.580310
+10  [1.0, 2.0]  1.000000  1.000000   0.582901
+11           1  1.000000  1.000000   0.582901
+12  [1.0, 2.0]  1.000000  1.000000   0.582901
+13  [1.0, 2.0]  1.000000  1.000000   0.582901
+14  [1.0, 2.0]  1.000000  1.000000   0.582901
+15           1  1.000000  1.000000   0.582901
+16  [1.0, 2.0]  1.000000  1.000000   0.582901
+17  [1.0, 2.0]  0.994009  0.994009   0.580310
+18  [1.0, 2.0]  1.000000  1.000000   0.582901
+19  [1.0, 2.0]  0.994009  0.994009   0.580310
+20  [1.0, 2.0]  1.000000  1.000000   0.582901
+21           1  1.000000  1.000000   0.582901
+22  [1.0, 2.0]  1.000000  1.000000   0.582901
+23  [1.0, 2.0]  0.994009  0.994009   0.580310
+24  [1.0, 2.0]  1.000000  1.000000   0.582901
+25  [1.0, 2.0]  0.994009  0.994009   0.580310
+26  [1.0, 2.0]  1.000000  1.000000   0.582901
+```
 
 
 In particular notice how coverage and overlaps are `1.0`, this is because the way I wrote each function was to predict whether a word was positive or negative. However, digging into this further, `snorkel` heavil relies on having one function predict whether a word is positive and if it says its not, assign a `VOID` label not a negative one, and have a separate function determine if something is negative or not. A part of what I plan to do the next couple of days is to rewrite the labeling functions to follow this paradigm, and hopefully we will see some interesting results from that. The `snorkel` pipeline defines a generative model that looks at the correlations between labeling functions and relies on the presence of void labels in labeling functions to correctly collate them. Since our pipeline is missing this, it could be an indication that our use of `snorkel` is not what we expected.
@@ -63,11 +94,11 @@ As mentioned earlier, I will continue working on some of the problems I describe
 
 ### Next Big Thing to Try
 
-Weighted Training or `noisy -> gold` training don't seem to fully capture the noisy set.In particular, with the recent changes, if I changed the weak weight of the Metal Collator to be `1.0` the Span F1 performs better and if it is `0.1` then the Token F1 performs better. There are a few ideas, I have to leverage this better. The main theme is instead of treating the noisy set as a noisy version of the gold set. Treat it as a different but related task. This could change the goal from using the noisy set to further solidfy model predictions, to instead use the noisy set to refine the hidden states of the model.
+Weighted Training or `noisy -> gold` training don't seem to fully capture the noisy set. In particular, with the recent changes, if I changed the weak weight of the Metal Collator to be `1.0` the Span F1 performs better and if it is `0.1` then the Token F1 performs better. There are a few ideas, I have to leverage this better. The main theme is instead of treating the noisy set as a noisy version of the gold set. Treat it as a different but related task. This could change the goal from using the noisy set to further solidfy model predictions, to instead use the noisy set to refine the hidden states of the model.
 
 
 * **MulitTask / Freeze and Retrain**: During training, I notice overfitting to the train data when sample size is low. I suspect this is due to overparameterization, where I want a single model configuration to work when there is `10`, `50`, or `100` data points available. However the noisy set size is roughly the same in each run. Currently the model here is `CWR -> RNN -> CRF`. One idea was to treat the noisy set as a related but different task, by training two different task heads, one `CRF` for the noisy set and one `CRF` for the gold set. This would adjust the task for the noisy set to instead be guiding the model to solidify the hidden states as compared to being a noiser source of supervision. To help with overparameterization, one possible solution could be to train the model on the noisy set, and then freeze the `CWR -> RNN` pipeline and only train the `CRF` on the gold labels.
-* **Unsupervised Data Augmentation**: Another idea was proposed in a recent paper called *Unsupervised Data Augmentation*. The paper looks at a semi supervised learning framework for image and text classification. In particular they contribute two relevant ideas.
+* **Unsupervised Data Augmentation**: Another idea was proposed in a recent paper called *Unsupervised Data Augmentation* [1 Xie et al. 2019]. The paper looks at a semi supervised learning framework for image and text classification. In particular they contribute two relevant ideas.
     * **TSA**: (Training Signal Annealing), they propose that when labeled data is much less than unlabeled data and prone to overfitting to only train on a subset of examples. The loss function is descibed here:
     
     ![uda_loss](figures/uda_loss.png).
@@ -76,3 +107,20 @@ Weighted Training or `noisy -> gold` training don't seem to fully capture the no
     * **Consistency Loss**: They make use of their unlabeled data by defining a consistency loss. In particular, given an unlabled input `x`, the run `x` through the model to produce a predicted label `y^`. They then paraphrase the unlabeled input to `x'` (through back translation or TF-IDF word replacement) and run `x'` through the model to get a predicted label `y'`. Then they ensure that the distribution `y^` is similar to the distribution for `y'`.
 
 These two method could be applied to the active learning pipelien for sequence classification to help with the overfitting problem I described.
+
+## References
+
+1. Unsupervised Data Augmentation
+    - Qizhe Xie, Zihang Dai, Eduard Hovy, Minh-Thang Luong, Quoc V. Le
+    - 2019 Arxiv
+    - [Paper](https://arxiv.org/abs/1904.12848)
+2. Snorkel: Rapid Training Data Creation with Weak Supervision
+    - Alexander J. Ratner and Stephen H. Bach and Henry R. Ehrenberg and Jason Alan Fries and Sen Wu and Christopher R'e
+    - 2017 VLDB
+    - [Project Website](https://hazyresearch.github.io/snorkel/)
+    - [Paper](https://arxiv.org/abs/1711.10160)
+3. Snorkel MeTal
+    - Braden Hancock, Clara McCreery, Ines Chami, Vincent Chen, Sen Wu, Jared Dunnmon, Paroma Varma, Max Lam, and Chris Ré
+    - 2019
+    - [Blog Post](https://dawn.cs.stanford.edu/2019/03/22/glue/)
+    - [Github](https://github.com/HazyResearch/metal)
