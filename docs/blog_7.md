@@ -20,13 +20,18 @@ In my [previous blog post](blog_6.md), I mentioned that the advanced solution I 
 
 ### Labeling Function Generating Pipelines
 
-After some thought the set up for generation of a labeling function is the following:
+After some thought the set up for generation of a labeling function, each labeling function is designed to predict what class each individual word belongs to. The processe is depicted below:
 
 ![lf_diagram](figures/lf_diagram.png)
 
-* **Feature Extractor**: Is what converts each sentence into a (sentence_len, embedding_dim) matrix of features. The ones I have implemented are: (`ELMo`, `BERT`, `GloVe`, `word (one hot)`, `POS tags (one hot)`).
+* **Feature Extractor**: Is what converts each word into a `(1, embedding_dim)` vector of features. The ones I have implemented are: (`ELMo`, `BERT`, `GloVe`, `word (one hot)`, `POS tags (one hot)`).
 * **Feature Summarizer**: Suppose a function takes in a series of features, for example the window function takes `window_width` number of features for each instance. Feature summarizer is a simple transform that decides how these features are combined. This could be either `sum` to add all the features together or `concat` to concatenate them together, to retain some information about order.
 * **Weak Function**: This is actual function to apply. For example, `exact match` checks to see if the incoming feature has been seen before, and if it has assigns it a label. Linear trains a `svm_linear` classifier to classify positive and negative terms in the training data. `kNN` does the same thing except with the `kNN` algorithm. Lastly, window takes a `window_dim`, and uses the context of `window_dim` items before the current word and `window_dim` items after the current word to classify the current one.
+
+Each of these functions support the following two operations:
+
+* **Train**: Given an annotated set of data, the labeling function trains itself based on the extracted features on this set
+* **Evaluate**: Given an unlabeled set of data, runs this labeling function to produce noisy labels
 
 Enumerating a subset of all posibile combinations of these we end up with around 27 labeling functions we need to train and apply.
 
