@@ -35,6 +35,7 @@ class LinearWindowFunction(WindowFunction):
         feature_summarizer: Callable[[List[Any]], torch.Tensor] = FeatureCollator.sum,
         linear_type: LinearType = LinearType.SVM_LINEAR,
         use_batch: bool = True,
+        threshold: Optional[float] = 0.7,
         **kwargs,
     ):
         self.positive_label = positive_label
@@ -45,6 +46,8 @@ class LinearWindowFunction(WindowFunction):
             feature_extractor,
             context_window,
             use_batch=use_batch,
+            threshold=threshold,
+            **kwargs,
         )
 
         self.dictionary = TensorList()
@@ -65,16 +68,27 @@ class LinearWindowFunction(WindowFunction):
     def _predict(self, features: List[torch.Tensor]) -> int:
         feature_summary = self.feature_summarizer(features).numpy()
         label: np.ndarray = self.linear_model.predict(feature_summary)
-        prob: np.ndarray = self.linear_model.predict_proba(feature_summary)
         return label.item()
     
+    def _predict_probabilities(self, features: List[torch.Tensor]) -> float:
+        feature_summary = self.feature_summarizer(features).numpy()
+        confidence: np.ndarray = self.linear_model.decision_function(feature_summary)
+        return confidence.item()
+
+    @log_time(function_prefix='linear_window_snorkel_predict')
+    def _batch_probabilities(self, features: List[List[torch.Tensor]]) -> List[float]:
+        feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
+        batch_np: np.ndarray = TensorList(feature_summaries).numpy()
+        confidence_batch: np.ndarray = self.linear_model.decision_function(batch_np)
+        return list(map(lambda conf: conf.item(), TensorList([confidence_batch]).to_list()))
+
     @log_time(function_prefix='linear_window_predict')
     def _batch_predict(self, features: List[List[torch.Tensor]]) -> List[int]:
         feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
         batch_np: np.ndarray = TensorList(feature_summaries).numpy()
         label_batch: np.ndarray = self.linear_model.predict(batch_np)
         return list(map(lambda label: label.item(), TensorList([label_batch]).to_list()))
-    
+
     @overrides
     def __str__(self):
         return f'LinearWindowFunction({self.context_window})({self.feature_extractor})'

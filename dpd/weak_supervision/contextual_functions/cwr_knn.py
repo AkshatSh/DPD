@@ -33,8 +33,10 @@ class CWRkNN(WeakFunction):
         embedder: CachedTextFieldEmbedder,
         resolve_mode: str = 'weighted',
         k: int = 10,
+        threshold: Optional[float] = 0.7,
         **kwargs,
     ):
+        super(CWRkNN, self).__init__(positive_label, threshold, **kwargs)
         self.positive_label = positive_label
         self.embedder = embedder
         self.index_np: np.ndarray = None
@@ -66,11 +68,6 @@ class CWRkNN(WeakFunction):
             feature_extractor=_feature_extractor,
         )
     
-    def get_label(self, index: int) -> str:
-        if index == 0:
-            return NEGATIVE_LABEL
-        return self.positive_label
-    
     def resolve_label_weighted(self, index: np.ndarray, distances: np.ndarray) -> np.ndarray:
         '''
         given the resutls from the kNN search, determine the label of the index
@@ -92,13 +89,34 @@ class CWRkNN(WeakFunction):
         pos_neighbors = neighbor_labels == 1
         neg_neighbors = neighbor_labels == 0
 
+
         # (num_words, 1)
-        pos_distances = (distances * pos_neighbors).sum(axis=1) / pos_neighbors.sum(axis=1)
+        num_pos_neighbors = pos_neighbors.sum(axis=1)
+
+        # (num_words, 1)
+        pos_distances = (distances * pos_neighbors).sum(axis=1) / num_pos_neighbors
         np.nan_to_num(pos_distances, copy=False)
 
         # (num_words, 1)
-        neg_distances = (distances * neg_neighbors).sum(axis=1) / neg_neighbors.sum(axis=1)
+        num_neg_neighbors = neg_neighbors.sum(axis=1)
+
+        # (num_words, 1)
+        neg_distances = (distances * neg_neighbors).sum(axis=1) / num_neg_neighbors
         np.nan_to_num(neg_distances, copy=False)
+        if self.threshold is not None:
+            # (num_words, 1)
+            total_valid_neighbors = pos_distances + neg_distances
+
+            # ratio pos
+            rp = pos_distances / total_valid_neighbors
+            
+            # raio neg
+            rn = neg_distances / total_valid_neighbors
+
+            res = np.zeros(rn.shape)
+            res[rp > self.threshold] = 2
+            res[rn > self.threshold] = 1
+            return res.astype(int)
 
         # return the modes as (num_words, 1)
         return (pos_distances > neg_distances).astype(int)
@@ -171,7 +189,10 @@ class CWRkNN(WeakFunction):
 
             distances, indexes = self.faiss_index.search(cwr_embeddings.detach().cpu().numpy(), self.k)
             resolved_labels = self.resolve_label(indexes, distances, mode=self.resolve_mode)
-            predicted_labels: List[str] = [self.get_label(li) for li in resolved_labels]
+            if self.threshold is not None:
+                predicted_labels: List[str] = [self.get_snorkel_index(pi) for pi in resolved_labels]
+            else:
+                predicted_labels: List[str] = [self.get_label(li) for li in resolved_labels]
             annotated_data.append({
                 'id': s_id,
                 'input': sentence,

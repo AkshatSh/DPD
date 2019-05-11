@@ -32,6 +32,7 @@ class BagWindowFunction(WindowFunction):
         feature_extractor: FeatureExtractor,
         feature_summarizer: Callable[[List[Any]], torch.Tensor] = FeatureCollator.sum,
         use_batch: bool = True,
+        threshold: Optional[float] = 0.7,
         **kwargs,
     ):
         self.positive_label = positive_label
@@ -42,6 +43,8 @@ class BagWindowFunction(WindowFunction):
             feature_extractor,
             context_window,
             use_batch=use_batch,
+            threshold=threshold,
+            **kwargs,
         )
 
         self.dictionary = TensorList()

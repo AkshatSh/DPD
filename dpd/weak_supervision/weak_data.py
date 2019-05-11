@@ -51,21 +51,21 @@ def single_function_corpus_generation(
     train_arg,
     *args,
     **kwargs,
-) -> AnnotatedDataType:
+) -> Tuple[str, AnnotatedDataType]:
     function, train_data, unlabeled_corpus = train_arg[:3]
     train_args = train_arg[3:]
     logger.info(f'Parallel Training: {function}')
     function.train(train_data, *train_args)
     logger.info(f'Parallel Evaluating: {function}')
     annotated_corpus = function.evaluate(unlabeled_corpus)
-    return annotated_corpus
+    return str(function), annotated_corpus
 
 def parallel_corpus_generation(
     functions: List[WeakFunction],
     train_data: AnnotatedDataType,
     unlabeled_corpus: UnlabeledBIODataset,
     function_args: List[Any],
-) -> List[AnnotatedDataType]:
+) -> List[Tuple[str, AnnotatedDataType]]:
     # set pool size
     pool: mp.Pool = mp.Pool(processes=5, maxtasksperchild=2)
     annotated_corpora = pool.imap(
@@ -109,6 +109,7 @@ def build_weak_data(
     contextual_word_embeddings: Optional[List[CachedTextFieldEmbedder]] = None,
     spacy_feature_extractor: Optional[SpaCyFeatureExtractor] = None,
     parallelize: bool = True,
+    threshold: Optional[float] = 0.7,
 ) -> DatasetType:
     '''
     This constructs a weak dataset
@@ -134,10 +135,10 @@ def build_weak_data(
     window_functions: List[WeakFunction] = []
     for f in function_types:
         if f in DICTIONARY_FUNCTION_IMPL:
-            dict_functions.append(DICTIONARY_FUNCTION_IMPL[f](unlabeled_corpus.binary_class))
+            dict_functions.append(DICTIONARY_FUNCTION_IMPL[f](unlabeled_corpus.binary_class, threshold=threshold))
         elif f in CONTEXTUAL_FUNCTIONS_IMPL and contextual_word_embeddings is not None:
             for contextual_word_embedding in contextual_word_embeddings:
-                cwr_functions.append(CONTEXTUAL_FUNCTIONS_IMPL[f](unlabeled_corpus.binary_class, contextual_word_embedding))
+                cwr_functions.append(CONTEXTUAL_FUNCTIONS_IMPL[f](unlabeled_corpus.binary_class, contextual_word_embedding, threshold=threshold))
         elif f.startswith('context_window'):
             # format
             # context_window-{window}-{extractor}-{collator}
@@ -152,6 +153,7 @@ def build_weak_data(
                                 context_window=window,
                                 feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab, embedder=embedder),
                                 feature_summarizer=FeatureCollator.get(collator),
+                                threshold=threshold,
                             )
                         )
                 else:
@@ -161,6 +163,7 @@ def build_weak_data(
                             context_window=window,
                             feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab, spacy_module=spacy_feature_extractor),
                             feature_summarizer=FeatureCollator.get(collator),
+                            threshold=threshold,
                         )
                     )
 
@@ -177,14 +180,17 @@ def build_weak_data(
 
     corpus_generation_func = parallel_corpus_generation if parallelize else sequential_corpus_generation
 
-    annotated_corpora = list(corpus_generation_func(
+    annotated_corpora_info = list(corpus_generation_func(
         functions=functions,
         train_data=train_data,
         unlabeled_corpus=unlabeled_corpus,
         function_args=function_args,
     ))
 
-    fin_annotated_corpus = collator.collate(annotated_corpora)
+    annotated_corpora = [corpus for _, corpus in annotated_corpora_info]
+    annotated_description = [desc for desc, _ in annotated_corpora_info]
+
+    fin_annotated_corpus = collator.collate(annotated_corpora, descriptions=annotated_description)
     bio_corpus = bio_converter.convert(fin_annotated_corpus)
     for i, item in enumerate(bio_corpus):
         item['weight'] = weight

@@ -2,6 +2,7 @@ from typing import (
     List,
     Tuple,
     Dict,
+    Optional,
 )
 
 from collections import Counter
@@ -9,15 +10,19 @@ from collections import Counter
 import os
 import torch
 import allennlp
+import logging
 
 from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction, AnnotatedDataType
 from dpd.utils import (
     remove_bio,
-    get_words
+    get_words,
 )
+from dpd.weak_supervision.utils import ABSTAIN_LABEL
 
-class KeywordMatchFunction(object):
+logger =logging.getLogger(name=__name__)
+
+class KeywordMatchFunction(WeakFunction):
     '''
     A keyword matching function, trains by keeping track of all the
     keywords in the train set
@@ -27,9 +32,10 @@ class KeywordMatchFunction(object):
     def __init__(
         self,
         binary_class: str,
-        *args,
+        threshold: Optional[float] = 0.7,
         **kwargs,
     ):
+        super(KeywordMatchFunction, self).__init__(binary_class, threshold=threshold, **kwargs)
         '''
         Initializes a keyword tracker that checks for the binary class
 
@@ -45,6 +51,8 @@ class KeywordMatchFunction(object):
         }
 
         self.binary_class = binary_class
+        if self.threshold is None:
+            raise Exception('some error')
     
     def set_keywords(self, keywords: Dict[str, Counter]):
         self.keywords = keywords
@@ -87,7 +95,7 @@ class KeywordMatchFunction(object):
                 if s_word in self.keywords['pos']:
                     annotations.append(self.binary_class)
                 else:
-                    annotations.append('O')
+                    annotations.append('O' if self.threshold is None else ABSTAIN_LABEL)
             data_entry['output'] = annotations
             annotated_data.append(data_entry)
         return annotated_data

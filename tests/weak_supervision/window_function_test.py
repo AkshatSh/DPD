@@ -70,6 +70,7 @@ class WindowFunctionTest(unittest.TestCase):
         window_function: WindowFunction = BagWindowFunction,
         feature_extractor_obj: FeatureExtractor = WordFeatureExtractor,
         context_window: int = 2,
+        threshold: Optional[float] =None,
     ):
         dataset = WindowFunctionTest.create_fake_data()
         dataset_reader = BIODatasetReader(dataset)
@@ -82,6 +83,7 @@ class WindowFunctionTest(unittest.TestCase):
             feature_extractor=feature_extractor,
             feature_summarizer=feature_summarizer,
             use_batch=True,
+            threshold=threshold,
         )
 
         single_func = window_function(
@@ -90,6 +92,7 @@ class WindowFunctionTest(unittest.TestCase):
             feature_extractor=feature_extractor,
             feature_summarizer=feature_summarizer,
             use_batch=False,
+            threshold=threshold,
         )
 
         batch_func.train(dataset.data)
@@ -163,6 +166,44 @@ class WindowFunctionTest(unittest.TestCase):
             feature_summarizer=FeatureCollator.concat,
             window_function=LinearWindowFunction,
             feature_extractor_obj=GloVeFeatureExtractor,
+        )
+
+        assert annotations == expected_result
+
+    def test_linear_feature_context_window_sum_zero_threshold(self):
+        if not GLOVE_ENABLED:
+            return
+        expected_result = [
+            {'id': 0, 'input': ['single'], 'output': ['Tag']},
+            {'id': 1, 'input': ['single', 'double'], 'output': ['Tag', 'Tag']},
+            {'id': 2, 'input': ['single', 'double', 'triple'], 'output': ['Tag', 'Tag', 'Tag']},
+            {'id': 3, 'input': ['no_label'], 'output': ['O']},
+        ]
+
+        annotations = self._test_word_feature(
+            feature_summarizer=FeatureCollator.sum,
+            window_function=LinearWindowFunction,
+            feature_extractor_obj=GloVeFeatureExtractor,
+            threshold=0.,
+        )
+
+        assert annotations == expected_result
+    
+    def test_linear_feature_context_window_sum_high_threshold(self):
+        if not GLOVE_ENABLED:
+            return
+        expected_result = [
+            {'id': 0, 'input': ['single'], 'output': ['Tag']},
+            {'id': 1, 'input': ['single', 'double'], 'output': ['Tag', 'Tag']},
+            {'id': 2, 'input': ['single', 'double', 'triple'], 'output': ['Tag', 'Tag', 'Tag']},
+            {'id': 3, 'input': ['no_label'], 'output': ['<ABS>']},
+        ]
+
+        annotations = self._test_word_feature(
+            feature_summarizer=FeatureCollator.sum,
+            window_function=LinearWindowFunction,
+            feature_extractor_obj=GloVeFeatureExtractor,
+            threshold=0.7,
         )
 
         assert annotations == expected_result

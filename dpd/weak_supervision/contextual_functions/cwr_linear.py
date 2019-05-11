@@ -20,7 +20,7 @@ from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.models import construct_linear_classifier, LinearType
 from dpd.utils import TensorList
 
-from ..utils import get_label_index, construct_train_data, extract_features, NEGATIVE_LABEL
+from ..utils import get_label_index, construct_train_data, extract_features, NEGATIVE_LABEL, ABSTAIN_LABEL
 
 class CWRLinear(WeakFunction):
     def __init__(
@@ -28,8 +28,10 @@ class CWRLinear(WeakFunction):
         positive_label: str,
         embedder: CachedTextFieldEmbedder,
         linear_type: LinearType = LinearType.SVM_LINEAR,
+        threshold: float = 0.7,
         **kwargs,
     ):
+        super(CWRLinear, self).__init__(positive_label, threshold, **kwargs)
         self.positive_label = positive_label
         self.embedder = embedder
         self.linear_model = construct_linear_classifier(linear_type=linear_type)
@@ -57,11 +59,6 @@ class CWRLinear(WeakFunction):
             shuffle=shuffle,
             feature_extractor=_feature_extractor,
         )
-    
-    def get_label(self, index: int) -> str:
-        if index == 0:
-            return NEGATIVE_LABEL
-        return self.positive_label
 
     def train(self, train_data: AnnotatedDataType, dataset_id: int = 0):
         '''
@@ -95,10 +92,12 @@ class CWRLinear(WeakFunction):
             )
 
             # (sentence_len, 1)
-            labels: np.ndarray = self.linear_model.predict(cwr_embeddings)
-            # (sentence_len, 2)
-            probs: np.ndarray = self.linear_model.predict_proba(cwr_embeddings)
-            predicted_labels: List[str] = [self.get_label(li) for li in labels]
+            if self.threshold is not None:
+                confidence: np.ndarray = self.linear_model.decision_function(cwr_embeddings)
+                predicted_labels: List[str] = [self.get_probability_label(li) for li in confidence]
+            else:
+                labels: np.ndarray = self.linear_model.predict(cwr_embeddings)
+                predicted_labels: List[str] = [self.get_label(li) for li in labels]
             annotated_data.append({
                 'id': s_id,
                 'input': sentence,

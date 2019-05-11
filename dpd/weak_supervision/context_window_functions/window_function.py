@@ -21,7 +21,7 @@ from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.utils import TensorList
 from dpd.weak_supervision.feature_extractor import FeatureExtractor, FeaturePadder
 
-from ..utils import get_context_window, get_context_range
+from ..utils import get_context_window, get_context_range, NEGATIVE_LABEL, ABSTAIN_LABEL
 logger = logging.getLogger(name=__name__)
 
 class WindowFunction(WeakFunction):
@@ -32,17 +32,15 @@ class WindowFunction(WeakFunction):
         context_window: int,
         padder: FeaturePadder = FeaturePadder.zero_tensor,
         use_batch: bool = True,
+        threshold: Optional[float] = 0.7,
     ):
+        super(WindowFunction, self).__init__(positive_label, threshold)
         self.positive_label = positive_label
         self.feature_extractor = feature_extractor
         self.context_window = context_window
         self.padder = padder
         self.use_batch = use_batch
-
-    def get_label(self, index: int) -> str:
-        if index == 0:
-            return 'O'
-        return self.positive_label
+        self.threshold = threshold
 
     def _train_model(self, training_data: List[Tuple[List[str], List[Any], str]]):
         raise NotImplementedError()
@@ -70,8 +68,14 @@ class WindowFunction(WeakFunction):
 
     def _predict(self, features: List[torch.Tensor]) -> int:
         raise NotImplementedError()
+
+    def _predict_probabilities(self, features: List[torch.Tensor]) -> float:
+        raise NotImplementedError()
     
     def _batch_predict(self, features: List[List[torch.Tensor]]) -> List[int]:
+        raise NotImplementedError()
+    
+    def _batch_probabilities(self, features: List[List[torch.Tensor]]) -> List[float]:
         raise NotImplementedError()
     
     def batch_predict(self, features: List[List[Any]], indexes: List[int]) -> List[str]:
@@ -86,12 +90,29 @@ class WindowFunction(WeakFunction):
 
         batched_predict: List[int] = self._batch_predict(batch_feature_window)
         return list(map(lambda pred: self.get_label(pred), batched_predict))
+    
+    def batch_predict_threshold(self, features: List[Any], indexes: List[int]) -> List[str]:
+        batch_feature_window: List[List[torch.Tensor]] = list(map(
+            lambda pair: self.padder(get_context_window(
+                pair[0],
+                index=pair[1],
+                window=self.context_window,
+            )),
+            zip(features, indexes),
+        ))
+
+        batched_probs: List[np.ndarray] = self._batch_probabilities(batch_feature_window)
+        return list(map(lambda probs: self.get_probability_label(probs), batched_probs))
 
     def predict(self, features: List[Any], index: int) -> str:
         feature_window = get_context_window(features, index=index, window=self.context_window)
         feature_window = self.padder(feature_window)
-        predict_index = self._predict(feature_window)
-        return self.get_label(predict_index)
+        if self.threshold is None:
+            predict_index = self._predict(feature_window)
+            return self.get_label(predict_index)
+        else:
+            probs = self._predict_probabilities(feature_window)
+            return self.get_probability_label(probs)
     
     def _single_evalaute(self, unlabeled_corpus: UnlabeledBIODataset) -> AnnotatedDataType:
         # if len(sentence) != len(features) or s_id == 202:
@@ -125,7 +146,12 @@ class WindowFunction(WeakFunction):
                 logger.debug(f's_id {s_id}, labels: {end - start} num features: {len(features)}')
             offsets.append((s_id, sentence, start, end))
 
-        batch_labels: List[str] = self.batch_predict(batch_features, batch_indexes)
+        batch_labels: List[str] = []        
+        if self.threshold is None:
+            batch_labels = self.batch_predict(batch_features, batch_indexes)
+        else:
+            batch_labels = self.batch_predict_threshold(batch_features, batch_indexes)
+
         for (s_id, sentence, start , end) in offsets:
             predicted_labels = batch_labels[start : end]
             # BERT may mean len(predicted_labels) != len(sentence)
