@@ -90,9 +90,12 @@ class SnorkeMeTalCollator(Collator):
         output_res = np.concatenate(output_arrs, axis=0)
         return output_res, words_list, id_to_labels
     
-    def train_label_model(self, collated_labels: np.ndarray):
+    def train_label_model(self, collated_labels: np.ndarray, descriptions: Optional[List[str]]):
         sparse_labels = sparse.csr_matrix(collated_labels)
-        logger.debug(lf_summary(sparse_labels))
+        if descriptions is not None:
+            descriptions = [(i, desc) for i, desc in enumerate(descriptions)]
+            logger.warn(f'labeling function order: {descriptions}')
+        logger.warn(lf_summary(sparse_labels))
         self.label_model.train_model(
             sparse_labels,
             n_epochs=self.num_epochs,
@@ -126,6 +129,7 @@ class SnorkeMeTalCollator(Collator):
         self,
         annotations: List[AnnotatedDataType],
         should_verify: bool = False,
+        descriptions: Optional[List[str]] = None,
     ) -> AnnotatedDataType:
         '''
         args:
@@ -138,7 +142,7 @@ class SnorkeMeTalCollator(Collator):
             # proper format
             Collator.verify_annotations(annotations)
         collate_np, word_lists, id_to_labels = self.collate_np(annotations)
-        self.train_label_model(collated_labels=collate_np)
+        self.train_label_model(collated_labels=collate_np, descriptions=descriptions)
         y_train_probs = self.get_probabilistic_labels(collated_labels=collate_np,)
         tags = self.convert_to_tags(y_train_probs, word_list=word_lists, id_to_labels=id_to_labels)
         return tags
