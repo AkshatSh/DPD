@@ -43,6 +43,7 @@ def get_context_range(features: List[Any], index: int, window: int) -> Tuple[int
     left_pad: int = 0
     if index - window < 0:
         left_pad = window - index
+    # TODO: change this to `window + 1` (Off by one error)
     right_half: int = min(index + window, len(features))
     right_pad: int = 0
     if index + window > len(features):
