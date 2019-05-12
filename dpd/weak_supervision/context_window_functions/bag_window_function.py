@@ -21,7 +21,7 @@ from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.utils import TensorList
 from dpd.weak_supervision.feature_extractor import FeatureExtractor, FeatureCollator
 
-from ..utils import get_context_window, get_context_range, label_index, NEGATIVE_LABEL
+from ..utils import get_context_window, get_context_range, label_index, NEGATIVE_LABEL, ABSTAIN_LABEL
 from .window_function import WindowFunction
 
 class BagWindowFunction(WindowFunction):
@@ -65,8 +65,19 @@ class BagWindowFunction(WindowFunction):
                 return label.item()
         return 0
     
+    def _predict_probabilities(self, features: List[torch.Tensor]) -> float:
+        feature_summary = self.feature_summarizer(features).long()
+        dictionary, labels = self.dictionary.tensor().long(), self.labels.tensor().long()
+        for i, (tensor, label) in enumerate(zip(dictionary, labels)):
+            if (tensor == feature_summary).all():
+                return 2 * label.item() - 1 # (0 -> -1 ,1 -> 1)
+        return 0. # no confidence (should be ABSTAIN)
+    
     def _batch_predict(self, features: List[List[torch.Tensor]]) -> List[int]:
         return list(map(lambda f: self._predict(f), features))
+    
+    def _batch_probabilities(self, features: List[List[torch.Tensor]]) -> List[float]:
+        return list(map(lambda f: self._predict_probabilities(f), features))
     
     @overrides
     def __str__(self):
