@@ -21,6 +21,7 @@ from dpd.weak_supervision import WeakFunction, AnnotatedDataType, AnnotationType
 from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.models import LinearType, construct_linear_classifier
 from dpd.utils import TensorList, log_time
+from dpd.utils.model_utils import balance_dataset
 from dpd.weak_supervision.feature_extractor import FeatureExtractor, FeatureCollator
 
 from ..utils import get_context_window, get_context_range, label_index, NEGATIVE_LABEL
@@ -63,6 +64,7 @@ class LinearWindowFunction(WindowFunction):
             self.labels.append(torch.Tensor([label_index(label)]))
         x_train = self.dictionary.numpy()
         y_train = self.labels.numpy()
+        x_train, y_train = balance_dataset(x_train, y_train)
         self.linear_model.fit(x_train, y_train)
 
     def _predict(self, features: List[torch.Tensor]) -> int:

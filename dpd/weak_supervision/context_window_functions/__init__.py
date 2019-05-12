@@ -3,6 +3,6 @@ from .bag_window_function import BagWindowFunction
 from .linear_window_function import LinearWindowFunction
 
 WINDOW_FUNCITON_IMPL = {
-    # 'bag': BagWindowFunction,
+    'bag': BagWindowFunction,
     'linear': LinearWindowFunction,
 }
