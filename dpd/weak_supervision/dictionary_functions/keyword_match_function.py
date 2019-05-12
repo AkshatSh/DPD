@@ -94,8 +94,10 @@ class KeywordMatchFunction(WeakFunction):
             for s_word in sentence:
                 if s_word in self.keywords['pos']:
                     annotations.append(self.binary_class)
+                elif self.threshold is None or ('neg' in self.keywords and s_word in self.keywords['neg']):
+                    annotations.append('O')
                 else:
-                    annotations.append('O' if self.threshold is None else ABSTAIN_LABEL)
+                    annotations.append(ABSTAIN_LABEL)
             data_entry['output'] = annotations
             annotated_data.append(data_entry)
         return annotated_data
