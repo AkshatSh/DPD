@@ -88,13 +88,12 @@ def sequential_corpus_generation(
     function_args: List[Any],
 ):
     annotated_corpora = []
-    for function, f_arg, f_kwargs in zip(functions, function_args, function_kwargs):
+    for function, f_arg in zip(functions, function_args):
         annotated_corpora.append(single_function_corpus_generation(
             function,
             train_data,
             unlabeled_corpus,
             *f_arg,
-            **f_kwargs,
         ))
     return annotated_corpora
 
@@ -130,6 +129,10 @@ def build_weak_data(
         ``DatasetType``
             the weak dataset that can be used along side training
     '''
+    if parallelize and contextual_word_embeddings is not None:
+        # ensure the CWR modules are moved to shared memory
+        for cwr in contextual_word_embeddings:
+            cwr.share_memory()
     dict_functions: List[WeakFunction] = []
     cwr_functions: List[WeakFunction] = []
     window_functions: List[WeakFunction] = []
@@ -141,31 +144,31 @@ def build_weak_data(
                 cwr_functions.append(CONTEXTUAL_FUNCTIONS_IMPL[f](unlabeled_corpus.binary_class, contextual_word_embedding, threshold=threshold))
         elif f.startswith('context_window'):
             # format
-            # context_window-{window}-{extractor}-{collator}
-            window, extractor, collator = f.split('-')[1:]
+            # context_window-{window}-{extractor}-{collator}-{type}
+            window, extractor, collator, window_type = f.split('-')[1:]
+            constructor = WINDOW_FUNCITON_IMPL[window_type]
             window = int(window)
-            for constructor in WINDOW_FUNCITON_IMPL.values():
-                if extractor == 'cwr':
-                    for embedder in contextual_word_embeddings:
-                        window_functions.append(
-                            constructor(
-                                positive_label=unlabeled_corpus.binary_class,
-                                context_window=window,
-                                feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab, embedder=embedder),
-                                feature_summarizer=FeatureCollator.get(collator),
-                                threshold=threshold,
-                            )
-                        )
-                else:
+            if extractor == 'cwr':
+                for embedder in contextual_word_embeddings:
                     window_functions.append(
                         constructor(
                             positive_label=unlabeled_corpus.binary_class,
                             context_window=window,
-                            feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab, spacy_module=spacy_feature_extractor),
+                            feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab, embedder=embedder),
                             feature_summarizer=FeatureCollator.get(collator),
                             threshold=threshold,
                         )
                     )
+            else:
+                window_functions.append(
+                    constructor(
+                        positive_label=unlabeled_corpus.binary_class,
+                        context_window=window,
+                        feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab, spacy_module=spacy_feature_extractor),
+                        feature_summarizer=FeatureCollator.get(collator),
+                        threshold=threshold,
+                    )
+                )
 
     collator = COLLATOR_IMPLEMENTATION[collator_type](positive_label=unlabeled_corpus.binary_class)
     bio_converter = BIOConverter(binary_class=unlabeled_corpus.binary_class)
