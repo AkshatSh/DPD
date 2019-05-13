@@ -90,9 +90,9 @@ def sequential_corpus_generation(
     annotated_corpora = []
     for function, f_arg in zip(functions, function_args):
         annotated_corpora.append(single_function_corpus_generation(
-            function,
+            (function,
             train_data,
-            unlabeled_corpus,
+            unlabeled_corpus),
             *f_arg,
         ))
     return annotated_corpora
@@ -107,7 +107,7 @@ def build_weak_data(
     collator_type: str = 'union',
     contextual_word_embeddings: Optional[List[CachedTextFieldEmbedder]] = None,
     spacy_feature_extractor: Optional[SpaCyFeatureExtractor] = None,
-    parallelize: bool = True,
+    parallelize: bool = False,
     threshold: Optional[float] = 0.7,
 ) -> DatasetType:
     '''
@@ -193,7 +193,12 @@ def build_weak_data(
     annotated_corpora = [corpus for _, corpus in annotated_corpora_info]
     annotated_description = [desc for desc, _ in annotated_corpora_info]
 
-    fin_annotated_corpus = collator.collate(annotated_corpora, descriptions=annotated_description)
+    fin_annotated_corpus = collator.collate(
+        annotated_corpora,
+        descriptions=annotated_description,
+        train_data=train_data,
+    )
+
     bio_corpus = bio_converter.convert(fin_annotated_corpus)
     for i, item in enumerate(bio_corpus):
         item['weight'] = weight

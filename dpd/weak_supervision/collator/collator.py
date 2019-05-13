@@ -30,6 +30,7 @@ class Collator(object):
         annotations: List[AnnotatedDataType],
         should_verify: bool = False,
         descriptions: Optional[List[str]] = None,
+        train_data: Optional[AnnotatedDataType] = None,
     ) -> AnnotatedDataType:
         '''
         args:

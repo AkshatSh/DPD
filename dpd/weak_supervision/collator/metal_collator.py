@@ -18,6 +18,8 @@ from metal.label_model import LabelModel
 from metal.analysis import lf_summary
 from tqdm import tqdm
 
+from dpd.utils import TensorList
+
 from ..types import (
     AnnotatedDataType,
     AnnotationType,
@@ -90,7 +92,12 @@ class SnorkeMeTalCollator(Collator):
         output_res = np.concatenate(output_arrs, axis=0)
         return output_res, words_list, id_to_labels
     
-    def train_label_model(self, collated_labels: np.ndarray, descriptions: Optional[List[str]]):
+    def train_label_model(
+        self,
+        collated_labels: np.ndarray,
+        descriptions: Optional[List[str]],
+        train_data_np: Optional[np.ndarray],
+    ):
         sparse_labels = sparse.csr_matrix(collated_labels)
         if descriptions is not None:
             descriptions = [(i, desc) for i, desc in enumerate(descriptions)]
@@ -100,6 +107,7 @@ class SnorkeMeTalCollator(Collator):
             sparse_labels,
             n_epochs=self.num_epochs,
             log_train_every=self.log_train_every,
+            Y_dev=train_data_np,
         )
     
     def get_probabilistic_labels(self, collated_labels: np.ndarray) -> np.ndarray:
@@ -130,6 +138,7 @@ class SnorkeMeTalCollator(Collator):
         annotations: List[AnnotatedDataType],
         should_verify: bool = False,
         descriptions: Optional[List[str]] = None,
+        train_data: Optional[AnnotatedDataType] = None
     ) -> AnnotatedDataType:
         '''
         args:
@@ -141,8 +150,15 @@ class SnorkeMeTalCollator(Collator):
             # make sure the annotations are in the
             # proper format
             Collator.verify_annotations(annotations)
+        
+        train_data_np = None
+        if train_data:
+            # if train data specified, will be used by Snorkel to estimate class balanc
+            train_data_np, word_lists, id_to_labels = self.collate_np([train_data])
+            train_data_np = train_data_np.astype(int)
+            train_data_np = train_data_np.reshape(-1)
         collate_np, word_lists, id_to_labels = self.collate_np(annotations)
-        self.train_label_model(collated_labels=collate_np, descriptions=descriptions)
+        self.train_label_model(collated_labels=collate_np, descriptions=descriptions, train_data_np=train_data_np)
         y_train_probs = self.get_probabilistic_labels(collated_labels=collate_np,)
         tags = self.convert_to_tags(y_train_probs, word_list=word_lists, id_to_labels=id_to_labels)
         return tags
