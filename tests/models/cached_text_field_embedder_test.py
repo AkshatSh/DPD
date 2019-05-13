@@ -37,10 +37,10 @@ class CachecTextFieldEmbedderTest(unittest.TestCase):
     @classmethod
     def create_fake_data(cls, binary_class: Optional[str] = None) -> BIODataset:
         data = [
-            CachecTextFieldEmbedderTest.create_entry(['single'], ['B-Tag'], 0, 1.0),
-            CachecTextFieldEmbedderTest.create_entry(['single', 'double'], ['B-Tag', 'I-Tag'], 1, 1.0),
-            CachecTextFieldEmbedderTest.create_entry(['single', 'double', 'triple'], ['B-TTag', 'I-TTag', 'O'], 2, 1.0),
-            CachecTextFieldEmbedderTest.create_entry(['no_label'], ['O'], 3, 1.0),
+            cls.create_entry(['single'], ['B-Tag'], 0, 1.0),
+            cls.create_entry(['single', 'double'], ['B-Tag', 'I-Tag'], 1, 1.0),
+            cls.create_entry(['single', 'double', 'triple'], ['B-TTag', 'I-TTag', 'O'], 2, 1.0),
+            cls.create_entry(['no_label'], ['O'], 3, 1.0),
         ]
 
         dataset = BIODataset(0, 'fake_file.txt', binary_class)
