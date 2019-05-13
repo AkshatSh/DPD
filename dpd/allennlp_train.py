@@ -25,7 +25,7 @@ from allennlp.predictors import SentenceTaggerPredictor
 
 from dpd.dataset.bio_dataset import BIODataset
 from dpd.dataset.bio_dataloader import BIODatasetReader
-from dpd.models.allennlp_crf_tagger import CrfTagger
+from dpd.models.crf_tagger import CrfTagger
 from dpd.training.metrics import TagF1
 from dpd.constants import (
     CONLL2003_TRAIN,

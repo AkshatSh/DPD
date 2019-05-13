@@ -4,8 +4,8 @@ from typing import (
 
 from allennlp.models import Model
 from allennlp.data.vocabulary import Vocabulary
-from .weighted_crf import WeightedCRF
 from .allennlp_crf import ELMoCrfTagger, BERTCrfTagger
+from .multitask_tagger import MultiTaskTagger
 
 from .statistical_models import (
     construct_linear_classifier,

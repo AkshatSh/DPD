@@ -14,7 +14,7 @@ from allennlp.nn import InitializerApplicator, RegularizerApplicator
 import allennlp.nn.util as util
 from allennlp.training.metrics import CategoricalAccuracy, SpanBasedF1Measure
 from dpd.training.metrics import TagF1, AverageTagF1
-from dpd.models import WeightedCRF
+from dpd.models.modules import WeightedCRF
 
 class CrfTagger(Model):
     """
@@ -145,6 +145,41 @@ class CrfTagger(Model):
             check_dimensions_match(encoder.get_output_dim(), feedforward.get_input_dim(),
                                    "encoder output dim", "feedforward input dim")
         initializer(self)
+    
+    def forward_internal(
+        self,  # type: ignore
+        tokens: Dict[str, torch.LongTensor],
+        entry_id: Optional[torch.LongTensor] = None,
+        dataset_id: Optional[torch.LongTensor] = None,
+        tags: torch.LongTensor = None,
+        metadata: List[Dict[str, Any]] = None,
+        weight: torch.Tensor = None,
+        # pylint: disable=unused-argument
+        **kwargs,
+    ) -> Dict[str, torch.Tensor]:
+        if not self.cached_embeddings:
+            embedded_text_input = self.text_field_embedder(tokens)
+        else:
+            embedded_text_input = self.text_field_embedder(
+                tokens,
+                sentence_ids=entry_id,
+                dataset_ids=dataset_id,
+            )
+        mask = util.get_text_field_mask(tokens)
+
+        if self.dropout:
+            embedded_text_input = self.dropout(embedded_text_input)
+
+        encoded_text = self.encoder(embedded_text_input, mask)
+
+        if self.dropout:
+            encoded_text = self.dropout(encoded_text)
+
+        if self._feedforward is not None:
+            encoded_text = self._feedforward(encoded_text)
+
+        logits = self.tag_projection_layer(encoded_text)
+        return logits, mask
 
     @overrides
     def forward(self,  # type: ignore
@@ -187,28 +222,7 @@ class CrfTagger(Model):
         loss : ``torch.FloatTensor``, optional
             A scalar loss to be optimised. Only computed if gold label ``tags`` are provided.
         """
-        if not self.cached_embeddings:
-            embedded_text_input = self.text_field_embedder(tokens)
-        else:
-            embedded_text_input = self.text_field_embedder(
-                tokens,
-                sentence_ids=entry_id,
-                dataset_ids=dataset_id,
-            )
-        mask = util.get_text_field_mask(tokens)
-
-        if self.dropout:
-            embedded_text_input = self.dropout(embedded_text_input)
-
-        encoded_text = self.encoder(embedded_text_input, mask)
-
-        if self.dropout:
-            encoded_text = self.dropout(encoded_text)
-
-        if self._feedforward is not None:
-            encoded_text = self._feedforward(encoded_text)
-
-        logits = self.tag_projection_layer(encoded_text)
+        logits, mask = self.forward_internal(tokens, entry_id, dataset_id, tags, metadata, weight, **kwargs)
         best_paths = self.crf.viterbi_tags(logits, mask)
 
         # Just get the tags and ignore the score.

@@ -23,7 +23,7 @@ from allennlp.data.token_indexers import PretrainedBertIndexer
 # local imports
 from dpd.constants import CADEC_NER_ELMo, CADEC_BERT
 from dpd.utils import H5SaveFile
-from .allennlp_crf_tagger import CrfTagger
+from .crf_tagger import CrfTagger
 from .embedder import NERElmoTokenEmbedder, CachedTextFieldEmbedder
 
 
