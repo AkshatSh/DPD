@@ -84,4 +84,3 @@ class MultiTaskTest(unittest.TestCase):
 
             batch_size, token_num = inst['sentence']['tokens'].shape
             expected_shape = (batch_size, token_num, vocab.get_vocab_size('labels'))
-            assert tagged_res['logits'].shape == expected_shape
