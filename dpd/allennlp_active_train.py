@@ -16,6 +16,7 @@ from allennlp.models import Model
 from allennlp.data.vocabulary import Vocabulary
 from allennlp.data import DatasetReader
 from allennlp.data.token_indexers.elmo_indexer import ELMoTokenCharactersIndexer
+from allennlp.data.token_indexers import TokenIndexer, SingleIdTokenIndexer
 from allennlp.data.iterators import BucketIterator
 from allennlp.training.trainer import Trainer
 from allennlp.data.token_indexers import PretrainedBertIndexer
@@ -417,6 +418,7 @@ def construct_vocab(datasets: List[BIODataset]) -> Vocabulary:
         bio_dataset=bio_dataset,
         token_indexers={
             'tokens': ELMoTokenCharactersIndexer(),
+            'single_tokens': SingleIdTokenIndexer(), # including for future pipelines to use, one hot
         },
     ) for bio_dataset in datasets]
 
