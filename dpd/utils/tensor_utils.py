@@ -9,11 +9,14 @@ from typing import (
 import os
 import sys
 from overrides import overrides
+import logging
 
 import torch
 import numpy as np
 import scipy
 from scipy import sparse
+
+logger = logging.getLogger(name=__name__)
 
 TensorType = Union[
     np.ndarray,
@@ -109,11 +112,11 @@ class TensorList(object):
     
     def contains(self, item: TensorType) -> torch.Tensor:
         comp_np = (self.tensor_list - item).numpy()
-        search = np.where(~comp_np.any(axis=0))[0]
+        search = np.where(~comp_np.any(axis=1))[0]
         if len(search) == 0:
             return -1
         return search[0]
-    
+
     def __getattribute__(self, name):
         '''
         TODO: hacky, but overrides shape field
@@ -158,7 +161,7 @@ class SparseTensorList(TensorList):
     ):
         if device != 'cpu':
             raise ValueError(f'Sparse Tensors are only on CPU, unsupported device: {device}')
-        print('using sparse matrix')
+        logger.info('using sparse matrix')
         self.tensor_list: sparse.csr_matrix = SparseTensorList.create_sparse_tensor_list(
             tensor=None, 
             incoming_tensor=TensorList.create_tensor_from_list(tensor_list)
@@ -169,7 +172,7 @@ class SparseTensorList(TensorList):
     def contains(self, item: TensorType) -> torch.Tensor:
         item_np = numpy(item)
         comp_sparse = self.tensor_list - item_np
-        search = np.where(~comp_sparse.any(axis=0))[0]
+        search = np.where(~comp_sparse.any(axis=1))[0]
         if len(search) == 0:
             return -1
         return search[0]
@@ -180,7 +183,10 @@ class SparseTensorList(TensorList):
         tensor: TensorType,
     ):
         tensor = get_tensor(tensor).to(self.device)
-        self.tensor_list = SparseTensorList.create_sparse_tensor_list(tensor=self.tensor_list, incoming_tensor=tensor)
+        self.tensor_list = SparseTensorList.create_sparse_tensor_list(
+            tensor=self.tensor_list if len(self) != 0 else None,
+            incoming_tensor=tensor,
+        )
     
     def tensor_list(self) -> TensorList:
         tensor = self.tensor()

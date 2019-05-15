@@ -38,8 +38,16 @@ class WordFeatureExtractor(FeatureExtractor):
         word_i = self.vocab.get_token_index(word)
         tensor[word_i] = 1
         return tensor.view(1, -1)
-
     
+    def get_word_tensor(
+        self,
+        word: str
+    ) -> torch.Tensor:
+        # significantly faster for concat of word onehot
+        word_i = self.vocab.get_token_index(word)
+        tensor = torch.Tensor([word_i])
+        return tensor.view(1, -1)
+
     def get_features(
         self,
         dataset_id: int,
