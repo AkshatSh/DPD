@@ -44,7 +44,7 @@ from dpd.weak_supervision.feature_extractor import SpaCyFeatureExtractor
 from dpd.models import build_model
 from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.oracles import Oracle, GoldOracle
-from dpd.heuristics import RandomHeuristic
+from dpd.heuristics import RandomHeuristic, ClusteringHeuristic
 from dpd.weak_supervision import build_weak_data
 from dpd.utils import get_all_embedders, log_train_metrics
 from dpd.args import get_active_args
@@ -151,7 +151,7 @@ def active_train_fine_tune_iteration(
     device: str,
 ) -> Tuple[Model, Dict[str, object]]:
     # select new points from distribution
-    distribution = heuristic.evaluate(unlabeled_dataset)
+    distribution = heuristic.evaluate(unlabeled_dataset, sample_size)
     new_points = []
     sample_size = min(sample_size, len(distribution) - 1)
     if sample_strategy == 'sample':
@@ -260,7 +260,7 @@ def active_train_iteration(
 ) -> Tuple[Model, Dict[str, object]]:
     # select new points from distribution
     # distribution contains score for each index
-    distribution = heuristic.evaluate(unlabeled_dataset)
+    distribution = heuristic.evaluate(unlabeled_dataset, sample_size)
     new_points = []
 
     # sample the sample size from the distribution
@@ -353,7 +353,7 @@ def active_train(
     log_dir: str,
     model_name: str,
 ) -> Model:
-    heuristic = RandomHeuristic()
+    heuristic =  ClusteringHeuristic(model.word_embeddings, unlabeled_dataset) # RandomHeuristic()
 
     log_dir = os.path.join(log_dir, model_name)
     logger = Logger(logdir=log_dir)
