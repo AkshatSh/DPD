@@ -23,7 +23,6 @@ class RandomHeuristic(object):
     def evaluate(
         self,
         unlabeled_corpus: UnlabeledBIODataset,
-        sample_size: int,
         *args,
         **kwargs,
     ) -> torch.Tensor:
