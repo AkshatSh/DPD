@@ -58,7 +58,8 @@ class CWRkNN(WeakFunction):
                 dataset_id=dataset_id,
             )
             # assert shape is expected
-            assert cwr_embeddings.shape == (len(sentence), self.embedder.get_output_dim())
+            # TODO max position of BERT embedder may make this not true
+            # assert cwr_embeddings.shape == (len(sentence), self.embedder.get_output_dim())
             return cwr_embeddings
 
         return extract_features(
