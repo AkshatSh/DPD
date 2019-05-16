@@ -10,6 +10,7 @@ import os
 import sys
 from overrides import overrides
 import logging
+from enum import Enum
 
 import torch
 import numpy as np
@@ -22,6 +23,10 @@ TensorType = Union[
     np.ndarray,
     torch.Tensor
 ]
+
+class OperationMode(Enum):
+    FAST = 'fast'
+    MEMORY_EFFICENT = 'memory'
 
 def numpy(in_t: TensorType) -> np.ndarray:
     if type(in_t) == torch.Tensor:
@@ -73,7 +78,8 @@ class TensorList(object):
     def __init__(
         self,
         tensor_list: Optional[TensorType] = None,
-        device: str = 'cpu'
+        device: str = 'cpu',
+        operation_mode: OperationMode = OperationMode.MEMORY_EFFICENT,
     ):
         self.tensor_list = TensorList.create_tensor_list(
             tensor=None, 
@@ -81,6 +87,7 @@ class TensorList(object):
         )
         self.device = device
         self.tensor_list.to(device)
+        self.operation_mode = operation_mode
 
     def append(
         self,
@@ -110,12 +117,24 @@ class TensorList(object):
     def tensor(self) -> torch.Tensor:
         return self.tensor_list
     
-    def contains(self, item: TensorType) -> torch.Tensor:
-        comp_np = (self.tensor_list - item).numpy()
-        search = np.where(~comp_np.any(axis=1))[0]
+    def contains(self, item: TensorType) -> int:
+        if self.operation_mode == OperationMode.FAST:
+            return self._fast_contains(item)
+        else:
+            return self._memory_efficient_contains(item)
+    
+    def _fast_contains(self, item: TensorType) -> int:
+        search = ((self.tensor_list - item) == 0).all(dim=1).nonzero()
         if len(search) == 0:
             return -1
-        return search[0]
+        res = search[0].item()
+        return res
+    
+    def _memory_efficient_contains(self, item: TensorType) -> int:
+        for i, (tensor) in enumerate(self.tensor_list):
+            if (tensor == item).all():
+                return i
+        return -1
 
     def __getattribute__(self, name):
         '''

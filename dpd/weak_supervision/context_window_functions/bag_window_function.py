@@ -93,7 +93,7 @@ class BagWindowFunction(WindowFunction):
             parallel_res = pool.map(self._predict_probabilities, features)
             return list(parallel_res)
         else:
-            return list(map(self._predict_probabilities, tqdm(features)))
+            return list(map(self._predict_probabilities, features))
     
     @overrides
     def __str__(self):
