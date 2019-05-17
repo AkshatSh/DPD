@@ -18,7 +18,7 @@ During the past week, the main thing I have been focusing on is experimenting wi
 
 As a quick reminder (and since I created this image for my most recent in class update), the pipeline I am working with looks like the following:
 
-![DPD figure](figures/DPD_pipeline.png)
+![DPD figure](figures/dpd_pipeline.png)
 
 The steps are as follows:
 
