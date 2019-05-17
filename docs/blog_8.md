@@ -1,4 +1,4 @@
-# Advance Solution #2
+# Advanced Solution #2
 
 [Blog Main Page](README.md): has links to all the previous blog posts.
 
@@ -8,9 +8,9 @@
 
 One of the comments on my [last blog post](blog_7.md), was `does snorkel expect the +/- functions for a given word to be consistent with each other? (e.g., if the + function returns positive, then the corresponding - one should return void)`.
 
-* Snorkel assumes no relation between two labeling functions. Labeling functions disagree quite often, and they help snorkel learn. Predicting VOID for a label for a function, is mostly there to help convery uncertainty in the labeling function.
+* Snorkel assumes no relation between two labeling functions. Labeling functions disagree quite often, and they help snorkel learn. Predicting VOID for a label of a function, is mostly there to help convery uncertainty in the labeling function.
 
-## Continuing work on the Active Learning Environment
+## Continuing Work on the Active Learning Environment
 
 During the past week, the main thing I have been focusing on is experimenting with ways to improve the F1 performance given the current pipeline. I will go into the details of various things I have tried, am trying, and where I plan to go with the final weeks coming up.
 
@@ -46,10 +46,10 @@ Lucy also pointed out the use of `torch.multiprocessing`, and I have been trying
 
 To analyze our labeling functions, I take a look at a matrix of coverage, overlaps, conflicts, and polarity. I breifly described this in the [previous blog post](blog_7.md), but to reiterate
 
-* **coverage**: Perecent of dataset labeled with non void
-* **overlaps**: Percent of dataset labeled that another function has labeled as well
-* **conflicts**: Perecent of labels that conflict with anotehr labeling function
-* **polarity**: Classes predicted (1 means negative, 2 means positive)
+* **Coverage**: Perecent of dataset labeled with non void
+* **Overlaps**: Percent of dataset labeled that another function has labeled as well
+* **Conflicts**: Perecent of labels that conflict with another labeling function
+* **Polarity**: Classes predicted (1 means negative, 2 means positive)
 
 In the previous blog post, I showed the labeling functions and a series of them were predicting positive for every (or nearly every) word in the dataset. Digging into this further, I noticed some issues with the implementation of the one hot word feature extractor for bigram and trigram cases, that was making the predicitons garbage. Fixing this I ran into some issues where representing bigrams as a concatenation of one hot vectors or even bag of words (sum of one hot vectors) was taking up too much space to apply it in the scale I wanted with the compute I have. I did some investigations to implement the SVMs and store to utilize sparse matricies, however this did not help much, and there was not much gain from using these labeling functions so I dropped them.
 
@@ -82,7 +82,7 @@ lf_id    Polarity  Coverage  Overlaps  Conflicts
 22     [1.0, 2.0]  0.930478  0.930478   0.852885
 ```
 
-This table shows that our labeling functions are covering a good variety of our input and predicting different things. They also conflict with each other which is good since it provides additional signal to learn from. While there is most likely room for improvement, we fix this componenet of the pipeline and focus on other components instead.
+This table shows that our labeling functions are covering a good variety of our input and predicting different things. They also conflict with each other which is good since it provides additional signal to learn from. While there is most likely room for improvement, we leave this component of the pipeline and focus on other components instead.
 
 ### Structure Learning and Traditional Snorkel
 
