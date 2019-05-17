@@ -1,4 +1,4 @@
-# Advance Solution #2 (Kinda)
+# Advance Solution #2
 
 [Blog Main Page](README.md): has links to all the previous blog posts.
 
