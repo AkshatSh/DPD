@@ -19,7 +19,7 @@ import faiss
 from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction, AnnotatedDataType, AnnotationType
 from dpd.models.embedder import CachedTextFieldEmbedder
-from dpd.utils import TensorList
+from dpd.common import TensorList
 
 from ..utils import get_label_index, construct_train_data, extract_features, NEGATIVE_LABEL
 

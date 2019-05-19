@@ -16,7 +16,7 @@ import nltk
 
 from allennlp.data import Vocabulary
 
-from dpd.utils import TensorList
+from dpd.common import TensorList
 from dpd.dataset import BIODataset, BIODatasetReader
 from dpd.weak_supervision.feature_extractor import SpaCyFeatureExtractor, WordFeatureExtractor, GloVeFeatureExtractor, POSFeatureExtractor
 from dpd.constants import SPACY_NLP, GLOVE_DIR, SPACY_POS

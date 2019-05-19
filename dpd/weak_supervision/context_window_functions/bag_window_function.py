@@ -20,7 +20,7 @@ from torch import multiprocessing
 from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction, AnnotatedDataType, AnnotationType
 from dpd.models.embedder import CachedTextFieldEmbedder
-from dpd.utils import TensorList, SparseTensorList
+from dpd.common import TensorList, SparseTensorList
 from dpd.weak_supervision.feature_extractor import FeatureExtractor, FeatureCollator
 
 from ..utils import get_context_window, get_context_range, label_index, NEGATIVE_LABEL, ABSTAIN_LABEL, is_negative

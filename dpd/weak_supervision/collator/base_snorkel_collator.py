@@ -16,7 +16,7 @@ import scipy
 from scipy import sparse
 from tqdm import tqdm
 
-from dpd.utils import TensorList
+from dpd.common import TensorList
 
 from ..types import (
     AnnotatedDataType,

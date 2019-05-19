@@ -18,7 +18,7 @@ from metal.label_model import LabelModel
 from metal.analysis import lf_summary
 from tqdm import tqdm
 
-from dpd.utils import TensorList
+from dpd.common import TensorList
 
 from ..types import (
     AnnotatedDataType,

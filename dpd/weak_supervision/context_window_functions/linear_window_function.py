@@ -20,7 +20,8 @@ from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction, AnnotatedDataType, AnnotationType
 from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.models import LinearType, construct_linear_classifier
-from dpd.utils import TensorList, log_time
+from dpd.common import TensorList
+from dpd.utils import log_time
 from dpd.utils.model_utils import balance_dataset
 from dpd.weak_supervision.feature_extractor import FeatureExtractor, FeatureCollator
 

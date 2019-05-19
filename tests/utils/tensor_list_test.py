@@ -10,7 +10,7 @@ import sys
 
 import torch
 import numpy as np
-from dpd.utils import TensorList, SparseTensorList
+from dpd.common import TensorList, SparseTensorList
 
 import unittest
 

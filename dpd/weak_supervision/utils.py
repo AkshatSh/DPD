@@ -17,7 +17,8 @@ import allennlp
 import numpy as np
 
 from dpd.models.embedder import GloVeWordEmbeddingIndex
-from dpd.utils import TensorList, get_words, explain_labels
+from dpd.common import TensorList
+from dpd.utils import get_words, explain_labels
 from dpd.constants import STOP_WORDS
 from dpd.weak_supervision import AnnotatedDataType, AnnotationType
 

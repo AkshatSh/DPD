@@ -5,7 +5,7 @@ from typing import (
 import torch
 from torch import nn
 
-from dpd.utils import TensorList
+from dpd.common import TensorList
 from dpd.dataset import BIODataset, UnlabeledBIODataset
 
 from .cached_text_field_embedder import CachedTextFieldEmbedder
