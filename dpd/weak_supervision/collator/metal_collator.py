@@ -130,6 +130,7 @@ class SnorkeMeTalCollator(Collator):
                 'id': entry_id,
                 'input': words,
                 'output': labels,
+                'prob_labels': prob_labels,
             })
         return output
     

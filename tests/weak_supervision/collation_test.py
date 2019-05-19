@@ -3,6 +3,7 @@ from typing import (
     Tuple,
     Dict,
     Optional,
+    Any,
 )
 
 import unittest
@@ -65,6 +66,18 @@ class CollatorTest(unittest.TestCase):
                 ),
             ],
         ]
+    
+    @classmethod
+    def _verify_snorkel_result(cls, expected_data: Dict[str, Any], result: Dict[str, Any]):
+        assert len(expected_data) == len(result)
+        for expected_data_item, result_item in zip(expected_data, result):
+            for key in expected_data_item:
+                assert expected_data_item[key] == result_item[key]
+            
+            assert type(result_item['prob_labels']) == np.ndarray
+            prob_labels_shape = result_item['prob_labels'].shape
+            assert len(prob_labels_shape) == 2
+            assert prob_labels_shape[1] == 2
     
     @classmethod
     def _test_collator(cls, collator_construct, extra_data: list = [], **kwargs):
@@ -130,7 +143,8 @@ class CollatorTest(unittest.TestCase):
                 'output': ['Tag', 'O', 'O', 'O']
             }
         ]
-        assert snorkel_collation == expected_result
+        
+        CollatorTest._verify_snorkel_result(expected_data=expected_result, result=snorkel_collation)
     
     def test_snorkel_collator(self):
         try:
