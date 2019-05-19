@@ -16,6 +16,7 @@ from allennlp.models import Model
 from allennlp.data.vocabulary import Vocabulary
 from allennlp.data import DatasetReader
 from allennlp.data.token_indexers.elmo_indexer import ELMoTokenCharactersIndexer
+from allennlp.data.token_indexers import TokenIndexer, SingleIdTokenIndexer
 from allennlp.data.iterators import BucketIterator
 from allennlp.training.trainer import Trainer
 from allennlp.data.token_indexers import PretrainedBertIndexer
@@ -43,7 +44,7 @@ from dpd.weak_supervision.feature_extractor import SpaCyFeatureExtractor
 from dpd.models import build_model
 from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.oracles import Oracle, GoldOracle
-from dpd.heuristics import RandomHeuristic
+from dpd.heuristics import RandomHeuristic, ClusteringHeuristic
 from dpd.weak_supervision import build_weak_data
 from dpd.utils import get_all_embedders, log_train_metrics
 from dpd.args import get_active_args
@@ -119,6 +120,7 @@ def train(
         patience=patience,
         num_epochs=num_epochs,
         cuda_device=cuda_device,
+        validation_metric='f1-measure-overall',
     )
     metrics = trainer.train()
 
@@ -150,7 +152,7 @@ def active_train_fine_tune_iteration(
     device: str,
 ) -> Tuple[Model, Dict[str, object]]:
     # select new points from distribution
-    distribution = heuristic.evaluate(unlabeled_dataset)
+    distribution = heuristic.evaluate(unlabeled_dataset, sample_size)
     new_points = []
     sample_size = min(sample_size, len(distribution) - 1)
     if sample_strategy == 'sample':
@@ -259,7 +261,7 @@ def active_train_iteration(
 ) -> Tuple[Model, Dict[str, object]]:
     # select new points from distribution
     # distribution contains score for each index
-    distribution = heuristic.evaluate(unlabeled_dataset)
+    distribution = heuristic.evaluate(unlabeled_dataset, sample_size)
     new_points = []
 
     # sample the sample size from the distribution
@@ -352,7 +354,7 @@ def active_train(
     log_dir: str,
     model_name: str,
 ) -> Model:
-    heuristic = RandomHeuristic()
+    heuristic =  ClusteringHeuristic(model.word_embeddings, unlabeled_dataset) # RandomHeuristic()
 
     log_dir = os.path.join(log_dir, model_name)
     logger = Logger(logdir=log_dir)
@@ -417,6 +419,7 @@ def construct_vocab(datasets: List[BIODataset]) -> Vocabulary:
         bio_dataset=bio_dataset,
         token_indexers={
             'tokens': ELMoTokenCharactersIndexer(),
+            'single_tokens': SingleIdTokenIndexer(), # including for future pipelines to use, one hot
         },
     ) for bio_dataset in datasets]
 

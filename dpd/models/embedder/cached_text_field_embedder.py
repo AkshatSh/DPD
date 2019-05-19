@@ -32,11 +32,12 @@ from dpd.utils import SaveFile
 
 logger = logging.getLogger(name=__name__)
 
-class CachedDataset(object):
+class CachedDataset(nn.Module):
     def __init__(
         self,
         dataset_id: int,
     ):
+        super(CachedDataset, self).__init__()
         self.dataset_id = dataset_id
         self.index_to_sid: Dict[int, int] = {}
         self.sid_to_start: Dict[int, int] = {}

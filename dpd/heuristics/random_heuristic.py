@@ -15,12 +15,16 @@ from dpd.dataset import UnlabeledBIODataset
 class RandomHeuristic(object):
     def __init__(
         self,
+        *args,
+        **kwargs,
     ):
         pass
     
     def evaluate(
         self,
         unlabeled_corpus: UnlabeledBIODataset,
+        *args,
+        **kwargs,
     ) -> torch.Tensor:
         '''
         evaluate the random heuristic on every item and return the

@@ -6,6 +6,7 @@ from typing import (
 )
 
 import os
+import logging
 from collections import Counter
 import string
 import torch
@@ -22,10 +23,11 @@ from dpd.constants import (
     STOP_WORDS,
 )
 
-
 from ..utils import build_gold_dictionary, build_sklearn_train_data
 
-class GloveLinearFunction(object):
+logger = logging.getLogger(name=__name__)
+
+class GloveLinearFunction(WeakFunction):
     def __init__(
         self,
         binary_class: str,
@@ -33,6 +35,7 @@ class GloveLinearFunction(object):
         threshold: Optional[float] = None,
         **kwargs,
     ):
+        super(GloveLinearFunction, self).__init__(binary_class, threshold, **kwargs)
         self.word_embedding_index = GloVeWordEmbeddingIndex.instance()
         self.similar_words: Dict[str, Counter] = {}
         self.similar_phrases: Dict[str, Counter] = {}
@@ -42,7 +45,7 @@ class GloveLinearFunction(object):
         self.linear_classifier = construct_linear_classifier(
             linear_type=linear_function,
         )
-        self.threshold = threshold
+        #self.threshold = threshold
 
     def train(self, train_data: AnnotatedDataType):
         self.word_counter, self.phrase_counter = build_gold_dictionary(train_data, self.binary_class)
@@ -59,7 +62,7 @@ class GloveLinearFunction(object):
         self.similar_words = {'pos': Counter(), 'neg': Counter()}
         for i, (label, prob) in enumerate(zip(labels, probs)):
             if self.threshold is not None:
-                if prob[1] > threshold:
+                if prob[1] > self.threshold:
                     label = 1
                 else:
                     label = 0
@@ -82,7 +85,7 @@ class GloveLinearFunction(object):
             'neg': self.similar_words['neg'] + self.word_counter['neg'],
         }
 
-        self.keywords_func = KeywordMatchFunction(self.binary_class)
+        self.keywords_func = KeywordMatchFunction(self.binary_class, threshold=self.threshold)
         self.keywords_func.set_keywords(self.keywords)
     
     def evaluate(self, unlabeled_corpus: UnlabeledBIODataset) -> AnnotatedDataType:

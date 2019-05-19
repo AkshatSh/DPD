@@ -7,9 +7,13 @@ from typing import (
 
 import unittest
 import numpy as np
+import logging
 
 from dpd.dataset import BIODataset, UnlabeledBIODataset
-from dpd.weak_supervision.collator import Collator, UnionCollator, IntersectionCollator, SnorkeMeTalCollator
+from dpd.weak_supervision.collator import Collator, UnionCollator, IntersectionCollator, SnorkeMeTalCollator, SnorkelCollator
+from dpd.weak_supervision.utils import ABSTAIN_LABEL
+
+logger = logging.getLogger(name=__name__)
 
 def create_entry(input: List[str], output: List[str], in_id: int) -> Dict[str, List[str]]:
     assert len(input) == len(output)
@@ -63,8 +67,8 @@ class CollatorTest(unittest.TestCase):
         ]
     
     @classmethod
-    def _test_collator(cls, collator_construct, **kwargs):
-        sample_data = cls.sample_data()
+    def _test_collator(cls, collator_construct, extra_data: list = [], **kwargs):
+        sample_data = cls.sample_data() + extra_data
         collator = collator_construct(positive_label='Tag', **kwargs)
         return collator.collate(sample_data, should_verify=True)
 
@@ -101,18 +105,63 @@ class CollatorTest(unittest.TestCase):
         ]
         assert intersect_collation == expected_result
 
-    def test_snorkel_collator(self):
-        snorkel_collation = CollatorTest._test_collator(collator_construct=SnorkeMeTalCollator, seed=123)
+    def test_snorkel_metal_collator(self):
+        abstain_point = [
+            create_entry(
+                input=['This', 'is', 'a', 'sentence'],
+                output=[ABSTAIN_LABEL, 'O', 'Tag', 'Tag'],
+                in_id=1,
+            ),
+            create_entry(
+                input=['This', 'is', 'a', 'word'],
+                output=['Tag', ABSTAIN_LABEL, ABSTAIN_LABEL, 'O'],
+                in_id=2,
+            ),
+        ]
+        snorkel_collation = CollatorTest._test_collator(collator_construct=SnorkeMeTalCollator, extra_data=[abstain_point], seed=123)
         expected_result = [
             {
                 'id': 1,
                 'input': ['This', 'is', 'a', 'sentence'],
-                'output': ['O', 'Tag', 'O', 'Tag'],
-            },
+                'output': ['O', 'O', 'Tag', 'Tag']},
             {
                 'id': 2,
                 'input': ['This', 'is', 'a', 'word'],
-                'output': ['O', 'Tag', 'O', 'O'],
-            },
+                'output': ['Tag', 'O', 'O', 'O']
+            }
+        ]
+        assert snorkel_collation == expected_result
+    
+    def test_snorkel_collator(self):
+        try:
+            import snorkel
+        except Exception:
+            # snorkel module not located
+            logger.warn(f'Not running Snorkel Collation Test because `snorkel` not installed properly')
+            return
+
+        abstain_point = [
+            create_entry(
+                input=['This', 'is', 'a', 'sentence'],
+                output=[ABSTAIN_LABEL, 'O', 'Tag', 'Tag'],
+                in_id=1,
+            ),
+            create_entry(
+                input=['This', 'is', 'a', 'word'],
+                output=['Tag', ABSTAIN_LABEL, ABSTAIN_LABEL, 'O'],
+                in_id=2,
+            ),
+        ]
+        snorkel_collation = CollatorTest._test_collator(collator_construct=SnorkelCollator, extra_data=[abstain_point], seed=123)
+        expected_result = [
+            {
+                'id': 1,
+                'input': ['This', 'is', 'a', 'sentence'],
+                'output': ['O', 'Tag', 'Tag', 'Tag']},
+            {
+                'id': 2,
+                'input': ['This', 'is', 'a', 'word'],
+                'output': ['Tag', 'O', 'O', 'O']
+            }
         ]
         assert snorkel_collation == expected_result

@@ -51,21 +51,21 @@ def single_function_corpus_generation(
     train_arg,
     *args,
     **kwargs,
-) -> AnnotatedDataType:
+) -> Tuple[str, AnnotatedDataType]:
     function, train_data, unlabeled_corpus = train_arg[:3]
     train_args = train_arg[3:]
     logger.info(f'Parallel Training: {function}')
     function.train(train_data, *train_args)
     logger.info(f'Parallel Evaluating: {function}')
     annotated_corpus = function.evaluate(unlabeled_corpus)
-    return annotated_corpus
+    return str(function), annotated_corpus
 
 def parallel_corpus_generation(
     functions: List[WeakFunction],
     train_data: AnnotatedDataType,
     unlabeled_corpus: UnlabeledBIODataset,
     function_args: List[Any],
-) -> List[AnnotatedDataType]:
+) -> List[Tuple[str, AnnotatedDataType]]:
     # set pool size
     pool: mp.Pool = mp.Pool(processes=5, maxtasksperchild=2)
     annotated_corpora = pool.imap(
@@ -88,13 +88,12 @@ def sequential_corpus_generation(
     function_args: List[Any],
 ):
     annotated_corpora = []
-    for function, f_arg, f_kwargs in zip(functions, function_args, function_kwargs):
+    for function, f_arg in zip(functions, function_args):
         annotated_corpora.append(single_function_corpus_generation(
-            function,
+            (function,
             train_data,
-            unlabeled_corpus,
+            unlabeled_corpus),
             *f_arg,
-            **f_kwargs,
         ))
     return annotated_corpora
 
@@ -108,7 +107,8 @@ def build_weak_data(
     collator_type: str = 'union',
     contextual_word_embeddings: Optional[List[CachedTextFieldEmbedder]] = None,
     spacy_feature_extractor: Optional[SpaCyFeatureExtractor] = None,
-    parallelize: bool = True,
+    parallelize: bool = False,
+    threshold: Optional[float] = 0.7,
 ) -> DatasetType:
     '''
     This constructs a weak dataset
@@ -129,40 +129,46 @@ def build_weak_data(
         ``DatasetType``
             the weak dataset that can be used along side training
     '''
+    if parallelize and contextual_word_embeddings is not None:
+        # ensure the CWR modules are moved to shared memory
+        for cwr in contextual_word_embeddings:
+            cwr.share_memory()
     dict_functions: List[WeakFunction] = []
     cwr_functions: List[WeakFunction] = []
     window_functions: List[WeakFunction] = []
     for f in function_types:
         if f in DICTIONARY_FUNCTION_IMPL:
-            dict_functions.append(DICTIONARY_FUNCTION_IMPL[f](unlabeled_corpus.binary_class))
+            dict_functions.append(DICTIONARY_FUNCTION_IMPL[f](unlabeled_corpus.binary_class, threshold=threshold))
         elif f in CONTEXTUAL_FUNCTIONS_IMPL and contextual_word_embeddings is not None:
             for contextual_word_embedding in contextual_word_embeddings:
-                cwr_functions.append(CONTEXTUAL_FUNCTIONS_IMPL[f](unlabeled_corpus.binary_class, contextual_word_embedding))
+                cwr_functions.append(CONTEXTUAL_FUNCTIONS_IMPL[f](unlabeled_corpus.binary_class, contextual_word_embedding, threshold=threshold))
         elif f.startswith('context_window'):
             # format
-            # context_window-{window}-{extractor}-{collator}
-            window, extractor, collator = f.split('-')[1:]
+            # context_window-{window}-{extractor}-{collator}-{type}
+            window, extractor, collator, window_type = f.split('-')[1:]
+            constructor = WINDOW_FUNCITON_IMPL[window_type]
             window = int(window)
-            for constructor in WINDOW_FUNCITON_IMPL.values():
-                if extractor == 'cwr':
-                    for embedder in contextual_word_embeddings:
-                        window_functions.append(
-                            constructor(
-                                positive_label=unlabeled_corpus.binary_class,
-                                context_window=window,
-                                feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab, embedder=embedder),
-                                feature_summarizer=FeatureCollator.get(collator),
-                            )
-                        )
-                else:
+            if extractor == 'cwr':
+                for embedder in contextual_word_embeddings:
                     window_functions.append(
                         constructor(
                             positive_label=unlabeled_corpus.binary_class,
                             context_window=window,
-                            feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab, spacy_module=spacy_feature_extractor),
+                            feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab, embedder=embedder),
                             feature_summarizer=FeatureCollator.get(collator),
+                            threshold=threshold,
                         )
                     )
+            else:
+                window_functions.append(
+                    constructor(
+                        positive_label=unlabeled_corpus.binary_class,
+                        context_window=window,
+                        feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab, spacy_module=spacy_feature_extractor),
+                        feature_summarizer=FeatureCollator.get(collator),
+                        threshold=threshold,
+                    )
+                )
 
     collator = COLLATOR_IMPLEMENTATION[collator_type](positive_label=unlabeled_corpus.binary_class)
     bio_converter = BIOConverter(binary_class=unlabeled_corpus.binary_class)
@@ -177,14 +183,22 @@ def build_weak_data(
 
     corpus_generation_func = parallel_corpus_generation if parallelize else sequential_corpus_generation
 
-    annotated_corpora = list(corpus_generation_func(
+    annotated_corpora_info = list(corpus_generation_func(
         functions=functions,
         train_data=train_data,
         unlabeled_corpus=unlabeled_corpus,
         function_args=function_args,
     ))
 
-    fin_annotated_corpus = collator.collate(annotated_corpora)
+    annotated_corpora = [corpus for _, corpus in annotated_corpora_info]
+    annotated_description = [desc for desc, _ in annotated_corpora_info]
+
+    fin_annotated_corpus = collator.collate(
+        annotated_corpora,
+        descriptions=annotated_description,
+        train_data=train_data,
+    )
+
     bio_corpus = bio_converter.convert(fin_annotated_corpus)
     for i, item in enumerate(bio_corpus):
         item['weight'] = weight

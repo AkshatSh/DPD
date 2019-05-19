@@ -22,8 +22,9 @@ from dpd.dataset import BIODataset, BIODatasetReader
 from dpd.models.embedder import NERElmoTokenEmbedder, CachedTextFieldEmbedder
 from dpd.models import LinearType
 from dpd.weak_supervision.contextual_functions import CWRLinear, CWRkNN
+from dpd.constants import GLOVE_DIR
 
-SHOULD_RUN = False
+SHOULD_RUN = os.path.exists(GLOVE_DIR)
 
 class CWRFuncTest(unittest.TestCase):
     @classmethod
@@ -108,7 +109,8 @@ class CWRFuncTest(unittest.TestCase):
                 positive_label='Tag',
                 embedder=embedder,
                 k=5,
-                resolve_mode='weighted'
+                resolve_mode='weighted',
+                threshold=0.7,
             )
             cwr_linear.train(dataset, dataset_id=dataset.dataset_id)
             annotations = cwr_linear.evaluate(dataset)

@@ -11,6 +11,9 @@ from collections import Counter
 from dpd.dataset import BIODataset, UnlabeledBIODataset
 from dpd.weak_supervision.dictionary_functions import KeywordMatchFunction
 from dpd.weak_supervision import BIOConverter
+from dpd.weak_supervision.utils import NEGATIVE_LABEL, ABSTAIN_LABEL
+
+IGNORE_CLASSES = [NEGATIVE_LABEL, ABSTAIN_LABEL]
 
 class KeywordFunctionTest(unittest.TestCase):
     @classmethod
@@ -42,11 +45,11 @@ class KeywordFunctionTest(unittest.TestCase):
     def _verify_bio_scheme(self, predictions: List[str], class_tag: str) -> bool:
         for i, p_i in enumerate(predictions):
             if i == 0:
-                if p_i != 'O' and p_i != f'B-{class_tag}':
+                if p_i not in IGNORE_CLASSES and p_i != f'B-{class_tag}':
                     return False
                 continue
 
-            if p_i == 'O':
+            if p_i in IGNORE_CLASSES:
                 pass
             elif p_i == f'B-{class_tag}':
                 pass

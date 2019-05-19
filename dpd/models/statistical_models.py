@@ -5,12 +5,25 @@ from typing import (
     Optional,
 )
 
+import logging
+
 import torch
 import numpy as np
 import allennlp
 from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
 from enum import Enum
+
+logger = logging.getLogger(name=__name__)
+
+try:
+    from thundersvm import SVC
+except ModuleNotFoundError as e:
+    logger.warn('Unable to import ThunderSVM, using scikit learn instead')
+    from sklearn.svm import SVC
+except FileNotFoundError as e:
+    logger.warn('Broken ThunderSVM, using scikit learn instead')
+    logger.exception(e)
+    from sklearn.svm import SVC
 
 class LinearType(Enum):
     LOGISTIC_REGRESSION = 'lr'

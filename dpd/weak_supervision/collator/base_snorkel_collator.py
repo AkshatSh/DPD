@@ -8,13 +8,15 @@ from typing import (
 import os
 import sys
 import logging
-from tqdm import tqdm
 
 import torch
 import allennlp
 import numpy as np
 import scipy
 from scipy import sparse
+from tqdm import tqdm
+
+from dpd.utils import TensorList
 
 from ..types import (
     AnnotatedDataType,
@@ -24,16 +26,7 @@ from ..types import (
 from .collator import Collator
 from ..utils import NEGATIVE_LABEL, ABSTAIN_LABEL, is_negative, is_positive, is_abstain
 
-logger = logging.getLogger(name=__name__)
-
-DependencySelector = None
-try:
-    from snorkel.learning.structure import DependencySelector
-    from snorkel.learning import GenerativeModel
-except Exception as e:
-    logger.warn('Snorkel not installed, will not learn dependencies', e)
-
-class SnorkelCollator(Collator):
+class BaseSnorkelCollator(Collator):
     def __init__(
         self,
         positive_label: str,
@@ -41,25 +34,22 @@ class SnorkelCollator(Collator):
         num_epochs: int = 500,
         log_train_every: int = 50,
         seed: int = 123,
-        threshold: float = 0.5,
     ):
         self.positive_label = positive_label
         self.class_cardinality = class_cardinality
         self.num_epochs = num_epochs
         self.log_train_every = log_train_every
         self.seed = seed
-        self.ds = DependencySelector()
-        self.gen_model = GenerativeModel(lf_propensity=True)
-        self.threshold = threshold
+        self.label_model = LabelModel(k=self.class_cardinality, seed=seed)
     
     @classmethod
     def get_snorkel_index(cls, tag: str) -> int:
         if is_positive(tag):
-            return 1
+            return 2
         elif is_negative(tag):
-            return 0
+            return 1
         else:
-            return -1
+            return 0
 
     def get_tag(self, index: int) -> str:
         if index == 1:
@@ -87,7 +77,7 @@ class SnorkelCollator(Collator):
             output_arr = np.zeros((input_len, num_funcs))
             for i, output in enumerate(outputs):
                 for j, out_j in enumerate(output):
-                    output_arr[j, i] = SnorkelCollator.get_snorkel_index(out_j)
+                    output_arr[j, i] = BaseSnorkelCollator.get_snorkel_index(out_j)
             
             label_start = len(words_list)
             for word_i, word in enumerate(inputs[0]):
@@ -104,23 +94,11 @@ class SnorkelCollator(Collator):
         descriptions: Optional[List[str]],
         train_data_np: Optional[np.ndarray],
     ):
-        sparse_labels = sparse.csr_matrix(collated_labels.astype(int))
-        if descriptions is not None:
-            descriptions = [(i, desc) for i, desc in enumerate(descriptions)]
-            logger.warn(f'labeling function order: {descriptions}')
-        deps = self.ds.select(sparse_labels, threshold=0.05)
-        self.gen_model.train(
-            sparse_labels,
-            deps=deps,
-            decay=0.95,
-            step_size=0.1/sparse_labels.shape[0],
-            reg_param=0.0,
-            cardinality=self.class_cardinality,
-        )
+        raise NotImplementedError()
     
     def get_probabilistic_labels(self, collated_labels: np.ndarray) -> np.ndarray:
         sparse_labels = sparse.csr_matrix(collated_labels)
-        return self.gen_model.marginals(sparse_labels)
+        return self.label_model.predict_proba(sparse_labels)
 
     def convert_to_tags(
         self,
@@ -132,12 +110,7 @@ class SnorkelCollator(Collator):
         for entry_id, (label_start, label_end) in id_to_labels.items():
             words = word_list[label_start:label_end]
             prob_labels = train_probs[label_start:label_end]
-            if self.class_cardinality == 2:
-                # (m, ) marginals in prob labels
-                label_ids = (prob_labels > self.threshold).astype(int)
-            else:
-                # (m, k) marginals in prob labels
-                label_ids = prob_labels.argmax(axis=1)
+            label_ids = prob_labels.argmax(axis=1)
             labels = [self.get_tag(i) for i in label_ids]
             output.append({
                 'id': entry_id,

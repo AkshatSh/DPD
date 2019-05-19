@@ -2,6 +2,7 @@ from typing import (
     List,
     Tuple,
     Dict,
+    Optional,
 )
 
 import os
@@ -15,13 +16,15 @@ from dpd.weak_supervision.dictionary_functions import KeywordMatchFunction
 
 from ..utils import build_gold_dictionary
 
-class GlovekNNFunction(object):
+class GlovekNNFunction(WeakFunction):
     def __init__(
         self,
         binary_class: str,
         k: int = 5,
+        threshold: Optional[float] = 0.7,
         **kwargs,
     ):
+        super(GlovekNNFunction, self).__init__(binary_class, threshold, **kwargs)
         self.word_embedding_index = GloVeWordEmbeddingIndex.instance()
         self.similar_words: Dict[str, Counter] = {}
         self.similar_phrases: Dict[str, Counter] = {}
@@ -46,7 +49,7 @@ class GlovekNNFunction(object):
             # 'neg': self.similar_words['neg'] + self.word_counter['neg'],
         }
 
-        self.keywords_func = KeywordMatchFunction(self.binary_class)
+        self.keywords_func = KeywordMatchFunction(self.binary_class, threshold=self.threshold)
         self.keywords_func.set_keywords(self.keywords)
 
     

@@ -20,7 +20,7 @@ install:
   - conda create -q --name dpd python=$TRAVIS_PYTHON_VERSION
   - conda install faiss-cpu=1.4.0 -c pytorch --use-local
   - pip install -r deps/requirements.txt
-  - pip install snorkel-metal
+  - pip install snorkel-metal sqlalchemy treedlib numba numbskull
 
   # update spacy corpi
   - python -m spacy download en
