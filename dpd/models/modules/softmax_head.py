@@ -27,7 +27,6 @@ from allennlp.data.token_indexers import PretrainedBertIndexer
 from allennlp.modules import TimeDistributed
 import allennlp.nn.util as util
 
-
 # local imports
 from dpd.constants import CADEC_NER_ELMo, CADEC_BERT
 from dpd.utils import H5SaveFile

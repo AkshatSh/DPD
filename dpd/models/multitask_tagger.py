@@ -28,13 +28,19 @@ import allennlp.nn.util as util
 from allennlp.training.metrics import CategoricalAccuracy, SpanBasedF1Measure
 from allennlp.modules import TimeDistributed, TokenEmbedder
 
+# Probabilistic Loss Function
+# Soft Cross Entropy Loss: A cross entropy loss for probabilisitc
+# distributions. Defined here:
+# https://github.com/HazyResearch/metal/blob/master/metal/end_model/loss.py
+from metal.end_model.loss import SoftCrossEntropyLoss
+
 # local imports
 from dpd.constants import CADEC_NER_ELMo, CADEC_BERT
 from dpd.utils import H5SaveFile
 from dpd.training.metrics import TagF1, AverageTagF1
 from .crf_tagger import CrfTagger
 from .embedder import NERElmoTokenEmbedder, CachedTextFieldEmbedder
-from .modules import TaskBase, WeightedCRF
+from .modules import TaskBase, WeightedCRF, SoftmaxHead
 
 class MultiTaskTagger(Model):
     def __init__(

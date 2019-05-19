@@ -4,7 +4,13 @@ from typing import (
 
 from allennlp.models import Model
 from allennlp.data.vocabulary import Vocabulary
-from .allennlp_crf import ELMoCrfTagger, BERTCrfTagger
+
+from .allennlp_models import (
+    ELMoCrfTagger,
+    BERTCrfTagger,
+    ELMoLinearTagger,
+)
+
 from .multitask_tagger import MultiTaskTagger
 
 from .statistical_models import (
@@ -28,6 +34,13 @@ def build_model(
         )
     elif model_type == 'BERT_bilstm_crf':
         return BERTCrfTagger(
+            vocab=vocab,
+            hidden_dim=hidden_dim,
+            class_labels=class_labels,
+            cached=cached,
+        )
+    elif model_type == 'ELMo_linear':
+        return ELMoLinearTagger(
             vocab=vocab,
             hidden_dim=hidden_dim,
             class_labels=class_labels,
