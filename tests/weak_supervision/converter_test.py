@@ -3,10 +3,12 @@ from typing import (
     Tuple,
     Dict,
     Optional,
+    Any,
 )
 
 import unittest
 import numpy as np
+from numpy import array
 
 from dpd.dataset import BIODataset
 from dpd.constants import STOP_WORDS
@@ -20,6 +22,46 @@ def create_entry(input: List[str], output: List[str], in_id: int) -> Dict[str, L
         'id': in_id,
         'weight': 1.0,
     }
+
+def compare_lists(
+    expected: List[Any],
+    actual: List[Any],
+) -> bool:
+    if len(expected) != len(actual):
+        return False
+    for e_item, a_item in zip(expected, actual):
+        if not compare_items(e_item, a_item):
+            return False
+    return True
+
+def compare_dictionaries(
+    expected: Dict[str, Any],
+    actual: Dict[str, Any],
+) -> bool:
+    if expected.keys() != actual.keys():
+        return False
+    for key in expected.keys():
+        e_val = expected[key]
+        a_val = actual[key]
+        if not compare_items(e_val, a_val):
+            return False
+    return True
+
+def compare_items(
+    expected: Any,
+    actual: Any,
+) -> bool:
+    if type(expected) != type(actual):
+        return False
+
+    if type(expected) == list:
+        return compare_lists(expected, actual)
+    elif type(expected) == dict:
+        return compare_dictionaries(expected, actual)
+    elif type(expected) == np.ndarray:
+        return (expected==actual).all()
+    else:
+        return expected == actual
 
 class ConverterTest(unittest.TestCase):
     @classmethod
@@ -68,17 +110,24 @@ class ConverterTest(unittest.TestCase):
         dataset = ConverterTest.create_fake_data()
         converter = BIOConverter('ADR')
         bio = converter.convert(dataset)
-        assert bio == [
-            {
-                'input': ['this', 'is', 'an', 'reaction'],
-                'output': ['B-ADR', 'I-ADR', 'I-ADR', 'I-ADR'],
-                'id': 0,
-                'weight': 1.0,
-            },
-            {
-                'input': ['this', 'is', 'an', 'reaction', 'an', 'reaction'],
-                'output': ['O', 'O', 'O', 'O', 'B-ADR', 'I-ADR'],
-                'id': 1,
-                'weight': 1.0,
-            },
-        ]
+        res = all([compare_items(e, a) for (e, a) in zip(
+            bio, 
+            [
+                {
+                    'input': ['this', 'is', 'an', 'reaction'],
+                    'output': ['O', 'O', 'O', 'B-ADR'],
+                    'id': 0,
+                    'weight': 1.0,
+                    'prob_labels': [array([[1., 0., 0.]]), array([[1., 0., 0.]]), array([[1., 0., 0.]]), array([[0., 1., 0.]])],
+                },
+                {
+                    'input': ['this', 'is', 'an', 'reaction', 'an', 'reaction'],
+                    'output': ['O', 'O', 'O', 'O', 'O', 'B-ADR'],
+                    'id': 1,
+                    'weight': 1.0,
+                    'prob_labels': [array([[1., 0., 0.]]), array([[1., 0., 0.]]), array([[1., 0., 0.]]), array([[1., 0., 0.]]), array([[1., 0., 0.]]), array([[0., 1., 0.]])],
+                }
+            ]
+        )])
+
+        assert res
