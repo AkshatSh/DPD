@@ -127,12 +127,12 @@ class BIOConverter(object):
                 probabilities=data_entry['prob_labels'] if 'prob_labels' in data_entry else None,
             )
 
-            heuristic_output = self.stop_word_heuristic(
-                sentence=data_entry['input'],
-                predictions=heuristic_output,
-                class_tag=self.binary_class,
-                probabilities=prob_labels,
-            )
+            # heuristic_output = self.stop_word_heuristic(
+            #     sentence=data_entry['input'],
+            #     predictions=heuristic_output,
+            #     class_tag=self.binary_class,
+            #     probabilities=prob_labels,
+            # )
 
             data_entry['output'], data_entry['prob_labels'] = self.convert_to_bio(
                 data_entry['input'],
