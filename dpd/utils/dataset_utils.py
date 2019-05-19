@@ -6,8 +6,6 @@ from typing import (
 )
 import string
 
-from dpd.dataset import BIODataset, BIODatasetReader
-
 from dpd.constants import (
     STOP_WORDS,
     CONLL2003_TRAIN,

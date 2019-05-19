@@ -9,6 +9,7 @@ import os
 import sys
 import numpy as np
 
+from dpd.common import TensorList
 from dpd.constants import STOP_WORDS
 
 from .utils import is_negative, is_positive
@@ -84,13 +85,13 @@ class BIOConverter(object):
         predictions: List[str],
         class_tag: str,
         probabilities: List[np.ndarray],
-    ) -> Tuple[List[str], Optional[List[np.ndarray]]]:
+    ) -> Tuple[List[str], TensorList]:
         proc_pred = list(predictions) # create copy
         proc_probs = list(probabilities) # create copy
         for i, (w, p_i, prob_i) in enumerate(zip(sentence, predictions, probabilities)):
             # 0 => O, 1 => B-ADR, 2 => I-ADR
             new_prob = np.zeros((1,3))
-            new_prob[:, 0], new_prob[:, 1] = prob_i[:, 0], prob_i[:, 1]
+            new_prob[:, 0], new_prob[:, 1] = prob_i[0], prob_i[1]
             if i == 0:
                 if p_i == class_tag:
                     proc_pred[i] = f'B-{class_tag}'
