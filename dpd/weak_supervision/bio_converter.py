@@ -35,11 +35,11 @@ class BIOConverter(object):
             return probabilities
         
         def _get_probability(label: str) -> np.ndarray:
-            arr = np.zeros((1,2))
+            arr = np.zeros((2))
             if is_negative(label):
-                arr[:, 0] = 1.
+                arr[0] = 1.
             else:
-                arr[:, 1] = 1.
+                arr[1] = 1.
             return arr
         
         return list(map(_get_probability, predictions))
