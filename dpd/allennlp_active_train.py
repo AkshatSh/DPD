@@ -120,7 +120,7 @@ def train(
         patience=patience,
         num_epochs=num_epochs,
         cuda_device=cuda_device,
-        validation_metric='f1-measure-overall',
+        validation_metric='+f1-measure-overall',
     )
     metrics = trainer.train()
 

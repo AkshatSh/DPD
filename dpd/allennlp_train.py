@@ -25,8 +25,6 @@ from allennlp.predictors import SentenceTaggerPredictor
 
 from dpd.dataset.bio_dataset import BIODataset
 from dpd.dataset.bio_dataloader import BIODatasetReader
-from dpd.models.crf_tagger import CrfTagger
-from dpd.training.metrics import TagF1
 from dpd.constants import (
     CONLL2003_TRAIN,
     CONLL2003_VALID,
@@ -69,16 +67,17 @@ HIDDEN_DIM = 512
 # word_embeddings = BasicTextFieldEmbedder({"tokens": token_embedding})
 vocab = Vocabulary.from_instances(train_dataset + validation_dataset)
 # vocab = Vocabulary()
-elmo_embedder = NERElmoTokenEmbedder()
-word_embeddings = BasicTextFieldEmbedder({"tokens": elmo_embedder})
+# elmo_embedder = NERElmoTokenEmbedder()
+# word_embeddings = BasicTextFieldEmbedder({"tokens": elmo_embedder})
 
-lstm = PytorchSeq2SeqWrapper(torch.nn.LSTM(EMBEDDING_DIM, HIDDEN_DIM, bidirectional=True, batch_first=True))
+# lstm = PytorchSeq2SeqWrapper(torch.nn.LSTM(EMBEDDING_DIM, HIDDEN_DIM, bidirectional=True, batch_first=True))
 
 model = build_model(
-    model_type='ELMo_bilstm_crf',
+    model_type='ELMo_linear',
     vocab=vocab,
     hidden_dim=HIDDEN_DIM,
     class_labels=['B-ADR', 'I-ADR'],
+    cached=True,
 )
 
 if torch.cuda.is_available():
@@ -91,17 +90,14 @@ optimizer = optim.SGD(model.parameters(), lr=.01, weight_decay=1e-4)
 iterator = BucketIterator(batch_size=1, sorting_keys=[("sentence", "num_tokens")])
 iterator.index_with(vocab)
 
-
-for i in range(10):
-    trainer = Trainer(
-        model=model,
-        optimizer=optimizer,
-        iterator=iterator,
-        train_dataset=train_dataset,
-        validation_dataset=validation_dataset,
-        patience=10,
-        num_epochs=1,
-        cuda_device=cuda_device,
-    )
-    metrics = trainer.train()
-    # print(metrics)
+trainer = Trainer(
+    model=model,
+    optimizer=optimizer,
+    iterator=iterator,
+    train_dataset=train_dataset,
+    validation_dataset=validation_dataset,
+    patience=10,
+    num_epochs=15,
+    cuda_device=cuda_device,
+)
+metrics = trainer.train()
