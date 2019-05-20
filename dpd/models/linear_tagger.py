@@ -117,7 +117,7 @@ class LinearTagger(SimpleTagger):
 
         if tags is not None:
             if prob_labels is not None and self.use_probabillity_labels:
-                loss = self.prob_loss(logits, prob_labels, weight=mask.float())
+                loss = self.prob_loss(logits, prob_labels, mask=mask.float())
             else:
                 loss = sequence_cross_entropy_with_logits(logits, tags, mask)
             for metric in self.metrics.values():

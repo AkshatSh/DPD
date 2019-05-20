@@ -18,6 +18,8 @@ import torch.nn.functional as F
 def flatten(inp: Optional[torch.Tensor]) -> torch.Tensor:
     if inp is None:
         return None
+    if len(inp.shape) == 2:
+        return inp.view(-1)
     return inp.view(-1, inp.shape[-1])
 
 class SoftCrossEntropyLoss(nn.Module):
@@ -49,11 +51,13 @@ class SoftCrossEntropyLoss(nn.Module):
         self,
         input: torch.Tensor,
         target: torch.Tensor,
-        weight: Optional[torch.Tensor] = None,
+        mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
-        # input, target, weight = flatten(input), flatten(target), flatten(weight)
-        b, n, k = input.shape
-        flat_in, flat_targ = flatten(input), flatten(target)
+        # input: (batch, seq_len, num_classes)
+        # target: (batch, seq_len, num_classes)
+        # weight: (batch, seq_len)
+        flat_in, flat_targ, flat_mask = flatten(input), flatten(target), flatten(mask)
+        n, k = flat_in.shape
         # Note that t.new_zeros, t.new_full put tensor on same device as t
         cum_losses = input.new_zeros(n)
         for y in range(k):
@@ -61,7 +65,8 @@ class SoftCrossEntropyLoss(nn.Module):
             y_loss = F.cross_entropy(flat_in, cls_idx, reduction="none")
             if self.weight is not None:
                 y_loss = y_loss * self.weight[y]
-            cum_losses += flat_targ[:, y].float() * y_loss
+            # add the masked loss
+            cum_losses += ((flat_targ[:, y].float() * y_loss) * flat_mask)
         if self.reduction == "none":
             return cum_losses
         elif self.reduction == "mean":
