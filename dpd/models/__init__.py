@@ -9,6 +9,7 @@ from .allennlp_models import (
     ELMoCrfTagger,
     BERTCrfTagger,
     ELMoLinearTagger,
+    ELMoLinearTransformer,
 )
 
 from .multitask_tagger import MultiTaskTagger
@@ -41,6 +42,13 @@ def build_model(
         )
     elif model_type == 'ELMo_linear':
         return ELMoLinearTagger(
+            vocab=vocab,
+            hidden_dim=hidden_dim,
+            class_labels=class_labels,
+            cached=cached,
+        )
+    elif model_type == 'ELMo_linear_transformer':
+        return ELMoLinearTransformer(
             vocab=vocab,
             hidden_dim=hidden_dim,
             class_labels=class_labels,
