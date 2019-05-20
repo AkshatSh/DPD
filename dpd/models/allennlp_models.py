@@ -224,6 +224,7 @@ class ELMoLinearTagger(Model):
             sentence=sentence,
             tags=labels,
             weight=weight,
+            prob_labels=prob_labels,
         )
 
         return model_out
@@ -294,6 +295,7 @@ class BERTLinearTagger(Model):
             sentence=sentence,
             tags=labels,
             weight=weight,
+            prob_labels=prob_labels,
         )
 
         return model_out

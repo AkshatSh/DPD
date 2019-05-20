@@ -31,16 +31,11 @@ from allennlp.modules import TimeDistributed, TokenEmbedder
 from allennlp.models import SimpleTagger
 from allennlp.common.checks import check_dimensions_match, ConfigurationError
 
-# Probabilistic Loss Function
-# Soft Cross Entropy Loss: A cross entropy loss for probabilisitc
-# distributions. Defined here:
-# https://github.com/HazyResearch/metal/blob/master/metal/end_model/loss.py
-from metal.end_model.loss import SoftCrossEntropyLoss
-
 # local imports
 from dpd.constants import CADEC_NER_ELMo, CADEC_BERT
 from dpd.utils import H5SaveFile
 from dpd.training.metrics import TagF1, AverageTagF1
+from dpd.training.loss_functions import SoftCrossEntropyLoss
 
 class LinearTagger(SimpleTagger):
     def __init__(
@@ -55,9 +50,12 @@ class LinearTagger(SimpleTagger):
         initializer: InitializerApplicator = InitializerApplicator(),
         regularizer: Optional[RegularizerApplicator] = None,
         class_labels: Optional[List[str]] = None,
+        use_probabillity_labels: bool = True,
     ) -> None:
         super(SimpleTagger, self).__init__(vocab, regularizer)
 
+        self.use_probabillity_labels = use_probabillity_labels
+        self.prob_loss = SoftCrossEntropyLoss()
         self.label_namespace = label_namespace
         self.text_field_embedder = text_field_embedder
         self.num_classes = self.vocab.get_vocab_size(label_namespace)
@@ -97,6 +95,7 @@ class LinearTagger(SimpleTagger):
         tags: torch.LongTensor = None,
         weight: torch.Tensor = None,
         metadata: List[Dict[str, Any]] = None,
+        prob_labels: torch.Tensor = None,
         **kwargs,
     ) -> Dict[str, torch.Tensor]:
         embedded_text_input = self.text_field_embedder(sentence)
@@ -117,7 +116,10 @@ class LinearTagger(SimpleTagger):
         output_dict = {"logits": logits, "class_probabilities": class_probabilities}
 
         if tags is not None:
-            loss = sequence_cross_entropy_with_logits(logits, tags, mask)
+            if prob_labels is not None and self.use_probabillity_labels:
+                loss = self.prob_loss(logits, prob_labels, weight=mask.float())
+            else:
+                loss = sequence_cross_entropy_with_logits(logits, tags, mask)
             for metric in self.metrics.values():
                 metric(logits, tags, mask.float())
             if self._f1_metric is not None:
