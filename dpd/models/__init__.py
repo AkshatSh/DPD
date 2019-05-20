@@ -26,33 +26,20 @@ def build_model(
     class_labels: List[str],
     cached: bool,
 ) -> Model:
+    model_kwargs = dict(
+        vocab=vocab,
+        hidden_dim=hidden_dim,
+        class_labels=class_labels,
+        cached=cached,
+    )
+
     if model_type == 'ELMo_bilstm_crf':
-        return ELMoCrfTagger(
-            vocab=vocab,
-            hidden_dim=hidden_dim,
-            class_labels=class_labels,
-            cached=cached,
-        )
+        return ELMoCrfTagger(**model_kwargs)
     elif model_type == 'BERT_bilstm_crf':
-        return BERTCrfTagger(
-            vocab=vocab,
-            hidden_dim=hidden_dim,
-            class_labels=class_labels,
-            cached=cached,
-        )
+        return BERTCrfTagger(**model_kwargs)
     elif model_type == 'ELMo_linear':
-        return ELMoLinearTagger(
-            vocab=vocab,
-            hidden_dim=hidden_dim,
-            class_labels=class_labels,
-            cached=cached,
-        )
+        return ELMoLinearTagger(**model_kwargs)
     elif model_type == 'ELMo_linear_transformer':
-        return ELMoLinearTransformer(
-            vocab=vocab,
-            hidden_dim=hidden_dim,
-            class_labels=class_labels,
-            cached=cached,
-        )
+        return ELMoLinearTransformer(**model_kwargs)
     else:
         raise Exception(f'Unknown model type {model_type}')
