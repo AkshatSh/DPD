@@ -10,7 +10,9 @@ import unittest
 import numpy as np
 from numpy import array
 
-from dpd.dataset import BIODataset
+from allennlp.data import Vocabulary
+
+from dpd.dataset import BIODataset, BIODatasetReader
 from dpd.constants import STOP_WORDS
 from dpd.weak_supervision import BIOConverter
 
@@ -76,39 +78,50 @@ class ConverterTest(unittest.TestCase):
         # hack around reading a file
         dataset.data = data
 
-        return dataset
+        train_reader = BIODatasetReader(
+            bio_dataset=dataset,
+        )
+
+        train_data = train_reader.read('temp.txt')
+        vocab = Vocabulary.from_instances(train_data)
+
+        return dataset, vocab
 
     def test_stop_words(self):
+        _, vocab = ConverterTest.create_fake_data()
         sentence = ['this', 'is', 'an', 'reaction']
         tags = ['O', 'O', 'O', 'ADR']
-        conv = BIOConverter('ADR')
+        conv = BIOConverter('ADR', vocab=vocab)
         new_tags = conv.stop_word_heuristic(sentence, tags, 'ADR')
         assert new_tags == ['ADR', 'ADR', 'ADR', 'ADR']
 
     def test_stop_words_end(self):
+        _, vocab = ConverterTest.create_fake_data()
         sentence = ['this', 'is', 'an', 'reaction', 'an', 'reaction']
         tags = ['O', 'O', 'O', 'O', 'O', 'ADR']
-        conv = BIOConverter('ADR')
+        conv = BIOConverter('ADR', vocab=vocab)
         new_tags = conv.stop_word_heuristic(sentence, tags, 'ADR')
         assert new_tags == ['O', 'O', 'O', 'O', 'ADR', 'ADR']
 
     def test_no_stop_words(self):
+        _, vocab = ConverterTest.create_fake_data()
         sentence = ['this', 'is', 'an', 'reaction', 'an', 'reaction']
         tags = ['O', 'O', 'O', 'O', 'O', 'O']
-        conv = BIOConverter('ADR')
+        conv = BIOConverter('ADR', vocab=vocab)
         new_tags = conv.stop_word_heuristic(sentence, tags, 'ADR')
         assert new_tags == ['O', 'O', 'O', 'O', 'O', 'O']
 
     def test_post_stop_word(self):
+        _, vocab = ConverterTest.create_fake_data()
         sentence = ['this', 'is', 'temp', 'reaction', 'an', 'reaction']
         tags = ['O', 'O', 'O', 'ADR', 'O', 'O']
-        conv = BIOConverter('ADR')
+        conv = BIOConverter('ADR', vocab=vocab)
         new_tags = conv.stop_word_heuristic(sentence, tags, 'ADR')
         assert new_tags == ['O', 'O', 'O', 'ADR', 'ADR', 'O']
     
     def test_conversion(self):
-        dataset = ConverterTest.create_fake_data()
-        converter = BIOConverter('ADR')
+        dataset, vocab = ConverterTest.create_fake_data()
+        converter = BIOConverter('ADR', vocab=vocab)
         bio = converter.convert(dataset)
         res = all([compare_items(e, a) for (e, a) in zip(
             bio, 

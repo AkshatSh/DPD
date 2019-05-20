@@ -79,7 +79,7 @@ class KeywordFunctionTest(unittest.TestCase):
         assert expected_counter == func.keywords['pos']
         assert expected_neg_counter == func.keywords['neg']
 
-        converter = BIOConverter(binary_class='Tag')
+        converter = BIOConverter(binary_class='Tag', vocab=None)
         annotated_corpus = converter.convert(annotated_corpus)
         for ann_entry in annotated_corpus:
             assert self._verify_bio_scheme(ann_entry['output'], 'Tag')

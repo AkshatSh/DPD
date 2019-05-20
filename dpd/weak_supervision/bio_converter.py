@@ -9,6 +9,8 @@ import os
 import sys
 import numpy as np
 
+from allennlp.data import Vocabulary
+
 from dpd.common import TensorList
 from dpd.constants import STOP_WORDS
 
@@ -22,8 +24,10 @@ class BIOConverter(object):
     def __init__(
         self,
         binary_class: str,
+        vocab: Optional[Vocabulary] = None,
     ):
         self.binary_class = binary_class
+        self.vocab = vocab
     
     @classmethod
     def get_prob_labels(

@@ -171,7 +171,7 @@ def build_weak_data(
                 )
 
     collator = COLLATOR_IMPLEMENTATION[collator_type](positive_label=unlabeled_corpus.binary_class)
-    bio_converter = BIOConverter(binary_class=unlabeled_corpus.binary_class)
+    bio_converter = BIOConverter(binary_class=unlabeled_corpus.binary_class, vocab=vocab)
     logger.info(f'using {len(dict_functions) + len(cwr_functions) + len(window_functions)} weak functions ({len(dict_functions)} dict, {len(cwr_functions)} cwr, {len(window_functions)} window)')
     logger.info(f'using weak functions: {dict_functions}')
     annotated_corpora = []
