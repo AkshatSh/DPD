@@ -67,6 +67,25 @@ def compare_items(
 
 class ConverterTest(unittest.TestCase):
     @classmethod
+    def create_label_vocab(cls) -> Vocabulary:
+        data = [
+            create_entry(['A', 'A', 'A', 'A'], ['O', 'B-ADR', 'I-ADR', 'O'], 0),
+        ]
+
+        dataset = BIODataset(0, 'fake_file.txt', None)
+
+        # hack around reading a file
+        dataset.data = data
+
+        train_reader = BIODatasetReader(
+            bio_dataset=dataset,
+        )
+
+        train_data = train_reader.read('temp.txt')
+        vocab = Vocabulary.from_instances(train_data)
+
+        return vocab
+    @classmethod
     def create_fake_data(cls, binary_class: Optional[str] = None) -> BIODataset:
         data = [
             create_entry(['this', 'is', 'an', 'reaction'], ['O', 'O', 'O', 'ADR'], 0),
@@ -120,7 +139,8 @@ class ConverterTest(unittest.TestCase):
         assert new_tags == ['O', 'O', 'O', 'ADR', 'ADR', 'O']
     
     def test_conversion(self):
-        dataset, vocab = ConverterTest.create_fake_data()
+        dataset, _ = ConverterTest.create_fake_data()
+        vocab = ConverterTest.create_label_vocab()
         converter = BIOConverter('ADR', vocab=vocab)
         bio = converter.convert(dataset)
         res = all([compare_items(e, a) for (e, a) in zip(

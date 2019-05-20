@@ -25,9 +25,11 @@ class BIOConverter(object):
         self,
         binary_class: str,
         vocab: Optional[Vocabulary] = None,
+        label_namespace: Optional[str] = 'labels',
     ):
         self.binary_class = binary_class
         self.vocab = vocab
+        self.label_namespace = label_namespace
     
     @classmethod
     def get_prob_labels(
@@ -83,6 +85,24 @@ class BIOConverter(object):
                 proc_pred[i] = class_tag
         return proc_pred
     
+    def get_bio_probability(
+        self,
+        class_tag: str,
+        probabilities: np.ndarray,
+    ) -> np.ndarray:
+        if self.vocab is None:
+            return probabilities
+        # maps 0 => O, 1 => B-ADR, 2 => I-ADR
+        tags = ['O', f'B-{class_tag}', f'I-{class_tag}']
+        assert probabilities.shape == (1,3)
+        result_probs = np.zeros((1, self.vocab.get_vocab_size(self.label_namespace)))
+        for i, tag in enumerate(tags):
+            result_probs[
+                :, self.vocab.get_token_index(tag, namespace=self.label_namespace)
+            ] = probabilities[:, i]
+        
+        return result_probs
+    
     def convert_to_bio(
         self,
         sentence: List[str],
@@ -107,7 +127,7 @@ class BIOConverter(object):
                     proc_pred[i] = f'I-{class_tag}'
                     new_prob[:, 2] = new_prob[:, 1]
                     new_prob[:, 1] = 0.
-            proc_probs[i] = new_prob
+            proc_probs[i] = self.get_bio_probability(class_tag, new_prob)
         return proc_pred, proc_probs
     
     def convert(
