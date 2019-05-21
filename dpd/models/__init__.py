@@ -10,6 +10,7 @@ from .allennlp_models import (
     BERTCrfTagger,
     ELMoLinearTagger,
     ELMoLinearTransformer,
+    ELMoCRFTransformer,
 )
 
 from .multitask_tagger import MultiTaskTagger
@@ -41,5 +42,7 @@ def build_model(
         return ELMoLinearTagger(**model_kwargs)
     elif model_type == 'ELMo_linear_transformer':
         return ELMoLinearTransformer(**model_kwargs)
+    elif model_type == 'ELMo_crf_transformer':
+        return ELMoCRFTransformer(**model_kwargs)
     else:
         raise Exception(f'Unknown model type {model_type}')
