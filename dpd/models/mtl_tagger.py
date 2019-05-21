@@ -114,8 +114,8 @@ class MTLTagger(Model):
     ) -> Dict[str, torch.Tensor]:
         prev: bool = self.is_noisy
         self.is_noisy = prob_labels is not None
-        if prev != self.is_noisy:
-            logger.warn(f'Switching MTL mode noisy: {self.is_noisy}')
+        if prev != self.is_noisy and tags is not None:
+            logger.warn(f'Switching MTL train mode noisy: {self.is_noisy}')
 
         # allow random switching with low probability from noisy to gold
         # task head
@@ -139,6 +139,7 @@ class MTLTagger(Model):
                 weight=weight,
                 metadata=metadata,
                 prob_labels=prob_labels,
+                freeze_encoder=True,
                 **kwargs,
             )
 

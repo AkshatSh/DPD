@@ -1,4 +1,10 @@
-from typing import Dict, Optional, List, Any
+from typing import (
+    Dict,
+    Optional,
+    List,
+    Any,
+    Tuple,
+)
 
 from overrides import overrides
 import torch
@@ -79,10 +85,12 @@ class CrfTagger(Model):
         initializer: InitializerApplicator = InitializerApplicator(),
         regularizer: Optional[RegularizerApplicator] = None,
         cached_embeddings: Optional[bool] = None,
+        freeze_encoder: Optional[bool] = False,
     ) -> None:
         super().__init__(vocab, regularizer)
-        self.cached_embeddings = cached_embeddings
 
+        self.freeze_encoder = freeze_encoder
+        self.cached_embeddings = cached_embeddings
         self.label_namespace = label_namespace
         self.text_field_embedder = text_field_embedder
         self.num_tags = self.vocab.get_vocab_size(label_namespace)
@@ -146,17 +154,16 @@ class CrfTagger(Model):
                                    "encoder output dim", "feedforward input dim")
         initializer(self)
     
-    def forward_internal(
-        self,  # type: ignore
+    def base_forward(
+        self,
         tokens: Dict[str, torch.LongTensor],
         entry_id: Optional[torch.LongTensor] = None,
         dataset_id: Optional[torch.LongTensor] = None,
         tags: torch.LongTensor = None,
         metadata: List[Dict[str, Any]] = None,
         weight: torch.Tensor = None,
-        # pylint: disable=unused-argument
         **kwargs,
-    ) -> Dict[str, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         if not self.cached_embeddings:
             embedded_text_input = self.text_field_embedder(tokens)
         else:
@@ -177,6 +184,35 @@ class CrfTagger(Model):
 
         if self._feedforward is not None:
             encoded_text = self._feedforward(encoded_text)
+        
+        return encoded_text, mask
+
+    def forward_internal(
+        self,  # type: ignore
+        tokens: Dict[str, torch.LongTensor],
+        entry_id: Optional[torch.LongTensor] = None,
+        dataset_id: Optional[torch.LongTensor] = None,
+        tags: torch.LongTensor = None,
+        metadata: List[Dict[str, Any]] = None,
+        weight: torch.Tensor = None,
+        # pylint: disable=unused-argument
+        **kwargs,
+    ) -> Dict[str, torch.Tensor]:
+        base_forward_args = dict(
+            tokens=tokens,
+            entry_id=entry_id,
+            dataset_id=dataset_id,
+            tags=tags,
+            metadata=metadata,
+            weight=weight,
+            **kwargs,
+        )
+
+        if not self.freeze_encoder:
+            encoded_text, mask = self.base_forward(**base_forward_args)
+        else:
+            with torch.no_grad():
+                encoded_text, mask = self.base_forward(**base_forward_args)
 
         logits = self.tag_projection_layer(encoded_text)
         return logits, mask
