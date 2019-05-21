@@ -429,7 +429,7 @@ class ELMoCRFTransformer(Model):
         prob_labels: torch.Tensor = None,
     ) -> Dict[str, torch.Tensor]:
         model_out = self.model(
-            sentence=sentence,
+            tokens=sentence,
             tags=labels,
             weight=weight,
             prob_labels=prob_labels,
