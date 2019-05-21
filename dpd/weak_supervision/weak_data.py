@@ -107,7 +107,7 @@ def build_weak_data(
     collator_type: str = 'union',
     contextual_word_embeddings: Optional[List[CachedTextFieldEmbedder]] = None,
     spacy_feature_extractor: Optional[SpaCyFeatureExtractor] = None,
-    parallelize: bool = False,
+    parallelize: bool = True,
     threshold: Optional[float] = 0.7,
 ) -> DatasetType:
     '''
