@@ -8,6 +8,7 @@ from typing import (
 )
 
 from overrides import overrides
+import logging
 
 # PyTorch imports
 import torch
@@ -43,6 +44,8 @@ from dpd.utils import H5SaveFile
 from dpd.training.metrics import TagF1, AverageTagF1
 from .linear_tagger import LinearTagger
 from .crf_tagger import CrfTagger
+
+logger = logging.getLogger(name=__name__)
 
 class MTLTagger(Model):
     def __init__(
@@ -92,7 +95,7 @@ class MTLTagger(Model):
             **kwargs,
         )
 
-        self.noisy = False
+        self.is_noisy = False
 
     @overrides
     def forward(
@@ -106,7 +109,10 @@ class MTLTagger(Model):
         prob_labels: torch.Tensor = None,
         **kwargs,
     ) -> Dict[str, torch.Tensor]:
+        prev: bool = self.is_noisy
         self.is_noisy = prob_labels is not None
+        if prev != self.is_noisy:
+            logger.warn(f'Switching MTL mode noisy: {self.is_noisy}')
 
         if self.is_noisy:
             return self.noisy_tagger.forward(
