@@ -72,7 +72,7 @@ class ELMoCrfTagger(Model):
             self.seq2seq_model,
             label_encoding='BIO',
             calculate_span_f1=True,
-            # constrain_crf_decoding=True,
+            constrain_crf_decoding=True,
             verbose_metrics=False,
             class_labels=class_labels,
             cached_embeddings=cached,
@@ -142,7 +142,7 @@ class BERTCrfTagger(Model):
             self.seq2seq_model,
             label_encoding='BIO',
             calculate_span_f1=True,
-            # constrain_crf_decoding=True,
+            constrain_crf_decoding=True,
             verbose_metrics=False,
             class_labels=class_labels,
         )
