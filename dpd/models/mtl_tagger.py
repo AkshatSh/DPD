@@ -58,8 +58,9 @@ class MTLTagger(Model):
         regularizer: Optional[RegularizerApplicator] = None,
         class_labels: Optional[List[str]] = None,
         constrain_crf_decoding: bool = None,
+        **kwargs,
     ) -> None:
-        super(LinearTagger, self).__init__(vocab, regularizer)
+        super(MTLTagger, self).__init__(vocab, regularizer)
 
         self.noisy_tagger = LinearTagger(
             vocab=vocab,
@@ -73,6 +74,7 @@ class MTLTagger(Model):
             regularizer=regularizer,
             class_labels=class_labels,
             use_probabillity_labels=True,
+            **kwargs,
         )
 
         self.gold_tagger = CrfTagger(
@@ -87,6 +89,7 @@ class MTLTagger(Model):
             regularizer=regularizer,
             class_labels=class_labels,
             constrain_crf_decoding=constrain_crf_decoding,
+            **kwargs,
         )
 
         self.noisy = False

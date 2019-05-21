@@ -51,6 +51,7 @@ class LinearTagger(SimpleTagger):
         regularizer: Optional[RegularizerApplicator] = None,
         class_labels: Optional[List[str]] = None,
         use_probabillity_labels: bool = True,
+        **kwargs,
     ) -> None:
         super(SimpleTagger, self).__init__(vocab, regularizer)
 

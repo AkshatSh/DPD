@@ -498,7 +498,7 @@ class ELMoRNNMTL(Model):
         prob_labels: torch.Tensor = None,
     ) -> Dict[str, torch.Tensor]:
         model_out = self.model(
-            tokens=sentence,
+            sentence=sentence,
             tags=labels,
             weight=weight,
             dataset_id=dataset_id,
