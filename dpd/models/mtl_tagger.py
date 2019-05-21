@@ -9,6 +9,7 @@ from typing import (
 
 from overrides import overrides
 import logging
+import random
 
 # PyTorch imports
 import torch
@@ -61,9 +62,11 @@ class MTLTagger(Model):
         regularizer: Optional[RegularizerApplicator] = None,
         class_labels: Optional[List[str]] = None,
         constrain_crf_decoding: bool = None,
+        noisy_threshold: float = 0.8
         **kwargs,
     ) -> None:
         super(MTLTagger, self).__init__(vocab, regularizer)
+        self.noisy_threshold = noisy_threshold
 
         self.noisy_tagger = LinearTagger(
             vocab=vocab,
@@ -114,7 +117,9 @@ class MTLTagger(Model):
         if prev != self.is_noisy:
             logger.warn(f'Switching MTL mode noisy: {self.is_noisy}')
 
-        if self.is_noisy:
+        # allow random switching with low probability from noisy to gold
+        # task head
+        if self.is_noisy and random.random() < self.noisy_threshold:
             return self.noisy_tagger.forward(
                 sentence=sentence,
                 entry_id=entry_id,
