@@ -354,7 +354,8 @@ def active_train(
     log_dir: str,
     model_name: str,
 ) -> Model:
-    heuristic =  ClusteringHeuristic(model.word_embeddings, unlabeled_dataset) # RandomHeuristic()
+    # heuristic =  ClusteringHeuristic(model.word_embeddings, unlabeled_dataset)
+    heuristic = RandomHeuristic()
 
     log_dir = os.path.join(log_dir, model_name)
     logger = Logger(logdir=log_dir)
