@@ -62,7 +62,7 @@ class MTLTagger(Model):
         regularizer: Optional[RegularizerApplicator] = None,
         class_labels: Optional[List[str]] = None,
         constrain_crf_decoding: bool = None,
-        noisy_threshold: float = 0.8
+        noisy_threshold: float = 0.8,
         **kwargs,
     ) -> None:
         super(MTLTagger, self).__init__(vocab, regularizer)
