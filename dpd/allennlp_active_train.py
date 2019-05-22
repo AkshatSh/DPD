@@ -202,7 +202,7 @@ def active_train_fine_tune_iteration(
             vocab=vocab,
         )
 
-        model, _ = train(
+        model, weak_metrics = train(
             model=model,
             binary_class=unlabeled_dataset.binary_class,
             train_data=weak_data,
@@ -216,6 +216,8 @@ def active_train_fine_tune_iteration(
             num_epochs=num_epochs,
             device=device,
         )
+
+        log_train_metrics(logger, metrics, step=len(train_data), prefix='weak')
 
     model, metrics = train(
         model=model,
