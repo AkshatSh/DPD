@@ -150,6 +150,7 @@ def active_train_fine_tune_iteration(
     patience: int,
     num_epochs: int,
     device: str,
+    logger: Logger,
 ) -> Tuple[Model, Dict[str, object]]:
     # select new points from distribution
     distribution = heuristic.evaluate(unlabeled_dataset, sample_size)
@@ -217,7 +218,7 @@ def active_train_fine_tune_iteration(
             device=device,
         )
 
-        log_train_metrics(logger, metrics, step=len(train_data), prefix='weak')
+        log_train_metrics(logger, weak_metrics, step=len(train_data), prefix='weak')
 
     model, metrics = train(
         model=model,
@@ -260,6 +261,7 @@ def active_train_iteration(
     patience: int,
     num_epochs: int,
     device: str,
+    logger: Logger,
 ) -> Tuple[Model, Dict[str, object]]:
     # select new points from distribution
     # distribution contains score for each index
@@ -405,6 +407,7 @@ def active_train(
             patience=patience,
             num_epochs=num_epochs,
             device=device,
+            logger=logger,
         )
 
         if weak_fine_tune:
