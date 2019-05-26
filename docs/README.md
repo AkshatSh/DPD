@@ -10,6 +10,7 @@
 - [Advanced Solution #1](blog_6.md)
 - [Advanced Solution #1 (Continued)](blog_7.md)
 - [Advanced Solution #2](blog_8.md)
+- [Advanced Solution #2 (Continued)](blog_9.md)
 
 
 ### Some References
