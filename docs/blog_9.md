@@ -59,7 +59,7 @@ In the figure below I show the result from the various experiments I described a
 
 ![results](figures/blog_9_result.png)
 
-Looking at these results we can see that Probability training gives an increase on the `Token F1` but constrained CRF gives a much better `Span F1`. The MultiTask approach does better than the baseline in both `Token F1` and `Span F1`.
+Looking at these results we can see that Probability training gives an increase on the `Token F1` but constrained CRF gives a much better `Span F1`. This makes sense since the constrained CRF is able to reason about sequences of tags better and is dependent on previous tags. The Linear training with the soft labels is able to gather a greater coverage on the Tokens themselves and recognize more, but with a relatively small amount of labeled data, it is not able to properly form sequences. This lead me to build the MultiTask approach. The MultiTask approach does better than the baseline in both `Token F1` and `Span F1`, but worse than linear on `Token F1`, and worse then CRF on `Span F1`, which means there is still room for improvement. As I mention in my next steps, this may be able to get resolved by training a CRF on soft labels, since the model will be able to leverage the sequence constraints in the CRF and use the soft labels instead of the hard labels in the weak set.
 
 ## Next steps
 
