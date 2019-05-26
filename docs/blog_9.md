@@ -68,6 +68,7 @@ Now that there are some results for the dataset sizes I experimented with on the
 Also, the main reason I used the Linear task head was because training on soft labels for a CRF was quite confusing to me. However, after talking to Noah, I think I can implement a way to experiment with soft training for a CRF and hope to try that as well.
 
 ## References
+
 1. Snorkel: Rapid Training Data Creation with Weak Supervision
     - Alexander J. Ratner and Stephen H. Bach and Henry R. Ehrenberg and Jason Alan Fries and Sen Wu and Christopher R'e
     - 2017 VLDB
