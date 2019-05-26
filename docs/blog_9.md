@@ -40,7 +40,7 @@ I experimented with adding a few layers of Multihead Attention in place of the B
 
 ### Training on Soft Labels
 
-In our pipeline, the way we collate the labels from our weak classifiers is through a machine learning system called `Snorkel`. Snorkel is another machine learning model, and in previous experiments I have been the hard predictions (arg max) of this pipeline. However, now I experimented with using soft labels (they are represented as a discrete distribution), for example instead of getting the label `B` for a word, the system would give `[0.7, 0.2, 0.1]` correspoinding to `[B, I, O]`. The results here are interesting, showing that there is some improvement for `Token F1` but a loss in `Span F1`.
+In our pipeline, the way we collate the labels from our weak classifiers is through a machine learning system called `Snorkel`. Snorkel is another machine learning model, and in previous experiments I have been the hard predictions (arg max) of this pipeline. However, now I experimented with using soft labels (they are represented as a discrete distribution), for example instead of getting the label `B` for a word, the system would give `[0.7, 0.2, 0.1]` correspoinding to `[B, I, O]`. The results here are interesting, showing that there is some improvement for `Token F1` but a loss in `Span F1`. The intuition here is that the uncertainty in the predicted label can propogate to the label where as with using hard label this won't happen.
 
 In order to train a model on such distributions it was not trivial to me to use a `CRF`, so instead I used the Linear task head instead of the Constrained CRF.
 
