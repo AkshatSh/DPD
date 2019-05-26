@@ -40,7 +40,7 @@ I experimented with adding a few layers of Multihead Attention in place of the B
 
 ### Training on Soft Labels
 
-In our pipeline, the way we collate the labels from our weak classifiers is through a machine learning system called `Snorkel`. Snorkel is another machine learning model, and in previous experiments I have been the hard predictions (arg max) of this pipeline. However, now I experimented with using soft labels (they are represented as a discrete distribution), for example instead of getting the label `B` for a word, the system would give `[0.7, 0.2, 0.1]` correspoinding to `[B, I, O]`. The results here are interesting, showing that there is some improvement for `Token F1` but a loss in `Span F1`. The intuition here is that the uncertainty in the predicted label can propogate to the label where as with using hard label this won't happen.
+In our pipeline, the way we collate the labels from our weak classifiers is through a machine learning system called `Snorkel` [1 Ratner et al. 2017]. Snorkel is another machine learning model, and in previous experiments I have been the hard predictions (arg max) of this pipeline. However, now I experimented with using soft labels (they are represented as a discrete distribution), for example instead of getting the label `B` for a word, the system would give `[0.7, 0.2, 0.1]` correspoinding to `[B, I, O]`. The results here are interesting, showing that there is some improvement for `Token F1` but a loss in `Span F1`. The intuition here is that the uncertainty in the predicted label can propogate to the label where as with using hard label this won't happen.
 
 In order to train a model on such distributions it was not trivial to me to use a `CRF`, so instead I used the Linear task head instead of the Constrained CRF.
 
@@ -63,6 +63,17 @@ Looking at these results we can see that Probability training gives an increase 
 
 ## Next steps
 
-Now that there are some results for the dataset sizes I experimented with on the CADEC dataset (identifying adverse drug reactions). I will be focusing on making this pipeline general and ensuring I did not overfit to the task and dataset sizes at hand. As I work towards this, I will be dealing with any of the issues that come up when trying to generalize it.
+Now that there are some results for the dataset sizes I experimented with on the CADEC dataset (identifying adverse drug reactions) [2 Karimi et al. 2015]. I will be focusing on making this pipeline general and ensuring I did not overfit to the task and dataset sizes at hand. As I work towards this, I will be dealing with any of the issues that come up when trying to generalize it.
 
 Also, the main reason I used the Linear task head was because training on soft labels for a CRF was quite confusing to me. However, after talking to Noah, I think I can implement a way to experiment with soft training for a CRF and hope to try that as well.
+
+## References
+1. Snorkel: Rapid Training Data Creation with Weak Supervision
+    - Alexander J. Ratner and Stephen H. Bach and Henry R. Ehrenberg and Jason Alan Fries and Sen Wu and Christopher R'e
+    - 2017 VLDB
+    - [Project Website](https://hazyresearch.github.io/snorkel/)
+    - [Paper](https://arxiv.org/abs/1711.10160)
+2. Cadec: A corpus of adverse drug event annotation
+    - Sarvnaz Karimi and Alejandro Metke-Jimenez and Madonna Kemp and Chen Wang
+    - 2015 Journal of biomedical informatics
+    - [Paper](https://www.ncbi.nlm.nih.gov/pubmed/25817970)
