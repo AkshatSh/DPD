@@ -49,7 +49,8 @@ from dpd.weak_supervision import build_weak_data
 from dpd.utils import get_all_embedders, log_train_metrics
 from dpd.args import get_active_args
 
-ORACLE_SAMPLES = [10, 40, 50, 400, 500]
+# ORACLE_SAMPLES = [10, 40, 50, 400, 500]
+ORACLE_SAMPLES = [100, 400, 500]
 
 logger = logging.getLogger(name=__name__)
 
