@@ -19,6 +19,7 @@ from dpd.weak_supervision import WeakFunction, AnnotatedDataType
 from dpd.weak_supervision.dictionary_functions import KeywordMatchFunction
 from dpd.models import construct_linear_classifier, LinearType
 from dpd.models.embedder import GloVeWordEmbeddingIndex
+from dpd.utils import log_time
 from dpd.constants import (
     STOP_WORDS,
 )
@@ -47,6 +48,7 @@ class GloveLinearFunction(WeakFunction):
         )
         #self.threshold = threshold
 
+    @log_time('glove_linear:train')
     def train(self, train_data: AnnotatedDataType):
         self.word_counter, self.phrase_counter = build_gold_dictionary(train_data, self.binary_class)
         x_train, y_train = build_sklearn_train_data(self.word_counter, self.word_embedding_index)
@@ -88,6 +90,7 @@ class GloveLinearFunction(WeakFunction):
         self.keywords_func = KeywordMatchFunction(self.binary_class, threshold=self.threshold)
         self.keywords_func.set_keywords(self.keywords)
     
+    @log_time('glove_linear:evaluate')
     def evaluate(self, unlabeled_corpus: UnlabeledBIODataset) -> AnnotatedDataType:
         return self.keywords_func.evaluate(unlabeled_corpus)
     
