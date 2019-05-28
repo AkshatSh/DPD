@@ -39,12 +39,15 @@ class CWRFeatureExtractor(WeakFunction):
         sentence_id: int,
         sentence: List[str],
     ) -> List[torch.Tensor]:
+        features = torch.zeros(len(sentence), self.embeddger.get_output_dim())
         cwr_embeddings: torch.Tensor = self.embedder.get_embedding(
             sentence_id=sentence_id,
             dataset_id=dataset_id,
         )
 
-        return list(map(lambda t: t.unsqueeze(0), cwr_embeddings))
+        features[:len(cwr_embeddings)] = cwr_embeddings
+
+        return list(map(lambda t: t.unsqueeze(0), features))
 
     def __str__(self):
         return f'CWR({self.embedder})'
