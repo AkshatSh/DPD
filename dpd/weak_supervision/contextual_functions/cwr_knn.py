@@ -20,6 +20,7 @@ from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction, AnnotatedDataType, AnnotationType
 from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.common import TensorList
+from dpd.utils import balance_dataset, log_time
 
 from ..utils import get_label_index, construct_train_data, extract_features, NEGATIVE_LABEL
 
@@ -153,6 +154,7 @@ class CWRkNN(WeakFunction):
         else:
             raise Exception(f'Unknown mode: {mode}')
 
+    @log_time(function_prefix='cwr_knn:train')
     def train(self, train_data: AnnotatedDataType, dataset_id: int = 0):
         '''
         Train the keyword matching function on the training data
@@ -163,13 +165,14 @@ class CWRkNN(WeakFunction):
         train the function on the specified training data
         '''
         x_train, y_train = self._prepare_train_data(train_data=train_data, dataset_id=dataset_id, shuffle=False)
+        x_train, y_train = balance_dataset(x_train, y_train)
         self.index_np = x_train.astype('float32')
         self.labels = y_train
         self.faiss_index = faiss.IndexFlatIP(self.index_np.shape[1])
         faiss.normalize_L2(self.index_np)
         self.faiss_index.add(self.index_np)
 
-    
+    @log_time(function_prefix='cwr_knn:evaluate')
     def evaluate(self, unlabeled_corpus: UnlabeledBIODataset) -> AnnotatedDataType:
         '''
         evalaute the keyword function on the unlabeled corpus

@@ -19,6 +19,7 @@ from dpd.weak_supervision import WeakFunction, AnnotatedDataType, AnnotationType
 from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.models import construct_linear_classifier, LinearType
 from dpd.common import TensorList
+from dpd.utils import balance_dataset, log_time
 
 from ..utils import get_label_index, construct_train_data, extract_features, NEGATIVE_LABEL, ABSTAIN_LABEL
 
@@ -60,6 +61,7 @@ class CWRLinear(WeakFunction):
             feature_extractor=_feature_extractor,
         )
 
+    @log_time(function_prefix='cwr_linear:train')
     def train(self, train_data: AnnotatedDataType, dataset_id: int = 0):
         '''
         Train the keyword matching function on the training data
@@ -70,9 +72,11 @@ class CWRLinear(WeakFunction):
         train the function on the specified training data
         '''
         x_train, y_train = self._prepare_train_data(train_data=train_data, dataset_id=dataset_id, shuffle=True)
+        x_train, y_train = balance_dataset(x_train, y_train)
         self.linear_model.fit(x_train, y_train)
 
     
+    @log_time(function_prefix='linear_window:predict')
     def evaluate(self, unlabeled_corpus: UnlabeledBIODataset) -> AnnotatedDataType:
         '''
         evalaute the keyword function on the unlabeled corpus

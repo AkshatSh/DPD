@@ -57,7 +57,7 @@ class LinearWindowFunction(WindowFunction):
         self.feature_summarizer = feature_summarizer
         self.linear_model = construct_linear_classifier(linear_type=linear_type)
     
-    @log_time(function_prefix='linear_window_train')
+    @log_time(function_prefix='linear_window:train')
     def _train_model(self, training_data: List[Tuple[List[str], List[Any], str]]):
         for i, (sentence_window, feature_window, label) in enumerate(training_data):
             window_summary = self.feature_summarizer(feature_window)
@@ -78,14 +78,14 @@ class LinearWindowFunction(WindowFunction):
         confidence: np.ndarray = self.linear_model.decision_function(feature_summary)
         return confidence.item()
 
-    @log_time(function_prefix='linear_window_snorkel_predict')
+    @log_time(function_prefix='linear_window_snorkel:predict')
     def _batch_probabilities(self, features: List[List[torch.Tensor]]) -> List[float]:
         feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
         batch_np: np.ndarray = TensorList(feature_summaries).numpy()
         confidence_batch: np.ndarray = self.linear_model.decision_function(batch_np)
         return list(map(lambda conf: conf.item(), TensorList([confidence_batch]).to_list()))
 
-    @log_time(function_prefix='linear_window_predict')
+    @log_time(function_prefix='linear_window:predict')
     def _batch_predict(self, features: List[List[torch.Tensor]]) -> List[int]:
         feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
         batch_np: np.ndarray = TensorList(feature_summaries).numpy()
