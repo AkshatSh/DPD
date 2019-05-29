@@ -21,6 +21,7 @@ from dpd.weak_supervision import WeakFunction, AnnotatedDataType, AnnotationType
 from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.common import TensorList
 from dpd.utils import balance_dataset, log_time
+from dpd.weak_supervision.feature_extractor import FeatureExtractor
 
 from ..utils import get_label_index, construct_train_data, extract_features, NEGATIVE_LABEL
 
@@ -31,7 +32,7 @@ class CWRkNN(WeakFunction):
     def __init__(
         self,
         positive_label: str,
-        embedder: CachedTextFieldEmbedder,
+        feature_extractor: FeatureExtractor,
         resolve_mode: str = 'weighted',
         k: int = 10,
         threshold: Optional[float] = 0.7,
@@ -39,7 +40,7 @@ class CWRkNN(WeakFunction):
     ):
         super(CWRkNN, self).__init__(positive_label, threshold, **kwargs)
         self.positive_label = positive_label
-        self.embedder = embedder
+        self.feature_extractor = feature_extractor
         self.index_np: np.ndarray = None
         self.faiss_index: faiss.IndexFlatIP = None
         self.k = k
@@ -54,13 +55,13 @@ class CWRkNN(WeakFunction):
 
         def _feature_extractor(entry: AnnotationType) -> torch.Tensor:
             s_id, sentence = entry['id'], entry['input']
-            cwr_embeddings: torch.Tensor = self.embedder.get_embedding(
+            features = self.feature_extractor.get_features(
                 sentence_id=s_id,
                 dataset_id=dataset_id,
+                sentence=sentence,
             )
-            # assert shape is expected
-            # TODO max position of BERT embedder may make this not true
-            # assert cwr_embeddings.shape == (len(sentence), self.embedder.get_output_dim())
+            cwr_embeddings: torch.Tensor = TensorList(features).tensor()
+            assert cwr_embeddings.shape == (len(sentence), self.feature_extractor.get_output_dim())
             return cwr_embeddings
 
         return extract_features(
@@ -186,10 +187,13 @@ class CWRkNN(WeakFunction):
         annotated_data = []
         for entry in unlabeled_corpus:
             s_id, sentence = entry['id'], entry['input']
-            cwr_embeddings: torch.Tensor = self.embedder.get_embedding(
+            features: List[torch.Tensor] = self.feature_extractor.get_features(
                 sentence_id=s_id,
                 dataset_id=unlabeled_corpus.dataset_id,
+                sentence=sentence,
             )
+
+            cwr_embeddings: torch.Tensor = TensorList(features).tensor()
 
             distances, indexes = self.faiss_index.search(cwr_embeddings.detach().cpu().numpy(), self.k)
             resolved_labels = self.resolve_label(indexes, distances, mode=self.resolve_mode)
@@ -206,7 +210,7 @@ class CWRkNN(WeakFunction):
         return annotated_data
 
     def __str__(self):
-        return f'CWRkNN({self.embedder})'
+        return f'CWRkNN({self.feature_extractor})'
     
     def __repr__(self):
         return self.__str__()
