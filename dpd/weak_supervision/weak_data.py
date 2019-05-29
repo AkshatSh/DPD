@@ -143,7 +143,7 @@ def build_weak_data(
             for contextual_word_embedding in contextual_word_embeddings:
                 cwr_functions.append(CONTEXTUAL_FUNCTIONS_IMPL[f](
                         unlabeled_corpus.binary_class,
-                        FEATURE_EXTRACTOR_IMPL['cwr'](vocab=vocab, embedder=contextual_word_embeddings),
+                        FEATURE_EXTRACTOR_IMPL['cwr'](vocab=vocab, embedder=contextual_word_embedding),
                         threshold=threshold
                     ),
                 )
