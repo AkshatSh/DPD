@@ -13,6 +13,7 @@ import logging
 from enum import Enum
 
 import torch
+from torch import nn
 import numpy as np
 import scipy
 from scipy import sparse
@@ -85,16 +86,38 @@ class TensorList(object):
             tensor=None, 
             incoming_tensor=TensorList.create_tensor_from_list(tensor_list)
         )
+        self.size = len(self.tensor_list)
         self.device = device
         self.tensor_list.to(device)
         self.operation_mode = operation_mode
+    
+    def preallocate(
+        self,
+        size: Tuple[int, int]
+    ):
+        prev_size = self.size
+        self.append(torch.zeros(size))
+        self.size = prev_size
 
     def append(
         self,
         tensor: TensorType,
     ):
         tensor = get_tensor(tensor).to(self.device)
-        self.tensor_list = TensorList.create_tensor_list(tensor=self.tensor_list, incoming_tensor=tensor)
+        new_size = len(tensor)
+
+        # amount of space that needs to be allocated
+        overflow = max((self.size + new_size) - len(self.tensor_list), 0)
+        
+        # amount of space that is already allocated
+        preallocated = min(len(self.tensor_list) - self.size, new_size)
+        if preallocated > 0:
+            self.tensor_list[self.size:self.size+preallocated] = tensor[:preallocated]
+        self.tensor_list = TensorList.create_tensor_list(
+            tensor=self.tensor_list, 
+            incoming_tensor=tensor[preallocated:preallocated+overflow],
+        )
+        self.size += new_size
     
     def extend(
         self,
@@ -109,13 +132,13 @@ class TensorList(object):
         self.device = device
     
     def to_list(self) -> List[torch.Tensor]:
-        return list(map(lambda t: t.unsqueeze(0), self.tensor_list))
+        return list(map(lambda t: t.unsqueeze(0), self.tensor_list[:self.size]))
     
     def numpy(self) -> np.ndarray:
-        return self.tensor_list.cpu().detach().numpy()
+        return self.tensor_list[:self.size].cpu().detach().numpy()
 
     def tensor(self) -> torch.Tensor:
-        return self.tensor_list
+        return self.tensor_list[:self.size]
     
     def contains(self, item: TensorType) -> int:
         if self.operation_mode == OperationMode.FAST:
@@ -124,14 +147,14 @@ class TensorList(object):
             return self._memory_efficient_contains(item)
     
     def _fast_contains(self, item: TensorType) -> int:
-        search = ((self.tensor_list - item) == 0).all(dim=1).nonzero()
+        search = ((self.tensor_list[:self.size] - item) == 0).all(dim=1).nonzero()
         if len(search) == 0:
             return -1
         res = search[0].item()
         return res
     
     def _memory_efficient_contains(self, item: TensorType) -> int:
-        for i, (tensor) in enumerate(self.tensor_list):
+        for i, (tensor) in enumerate(self.tensor_list[:self.size]):
             if (tensor == item).all():
                 return i
         return -1
@@ -141,11 +164,11 @@ class TensorList(object):
         TODO: hacky, but overrides shape field
         '''
         if name == 'shape':
-            return self.tensor_list.shape
+            return (self.size, self.tensor_list.shape[-1]) if self.size != 0 else (0,)
         return super().__getattribute__(name)
     
     def __len__(self) -> int:
-        return len(self.tensor_list)
+        return self.size
     
     def __get_item__(self, idx: int) -> torch.Tensor:
         return self.tensor_list[idx]

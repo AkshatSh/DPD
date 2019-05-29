@@ -53,6 +53,7 @@ class SparseTensorList(TensorList):
             tensor=None, 
             incoming_tensor=TensorList.create_tensor_from_list(tensor_list)
         )
+        self.size = self.tensor_list.shape[0]
         self.device = device
     
     @overrides
@@ -70,10 +71,13 @@ class SparseTensorList(TensorList):
         tensor: TensorType,
     ):
         tensor = get_tensor(tensor).to(self.device)
+        new_size = tensor.shape[0]
         self.tensor_list = SparseTensorList.create_sparse_tensor_list(
             tensor=self.tensor_list if len(self) != 0 else None,
             incoming_tensor=tensor,
         )
+
+        self.size += new_size
     
     def tensor_list(self) -> TensorList:
         tensor = self.tensor()
@@ -89,7 +93,7 @@ class SparseTensorList(TensorList):
 
     @overrides
     def numpy(self) -> np.ndarray:
-        return np.array(self.tensor_list.todense())
+        return np.array(self.tensor_list[:self.size].todense())
 
     @overrides
     def tensor(self) -> torch.Tensor:

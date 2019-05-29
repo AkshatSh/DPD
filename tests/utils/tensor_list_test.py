@@ -21,6 +21,37 @@ class TensorListTest(unittest.TestCase):
         tl = TensorList()
         assert len(tl) == 0
         assert tl.shape == (0,)
+
+    def test_preallocation(self):
+        tl = TensorList()
+        tl.preallocate((5, 10))
+        assert len(tl) == 0
+        assert tl.shape == (0,)
+        assert tl.tensor_list.shape == (5, 10)
+    
+    def test_preallocation_append(self):
+        tl = TensorList()
+        tl.preallocate((5, 10))
+        assert len(tl) == 0
+        assert tl.shape == (0,)
+        assert tl.tensor_list.shape == (5, 10)
+
+        tensor_1 = torch.zeros((4, 10)).fill_(1)
+        tensor_2 = torch.zeros((4, 10)).fill_(2)
+        tl.append(tensor_1)
+
+        assert len(tl) == 4
+        assert tl.shape == (4, 10)
+        assert tl.tensor_list.shape == (5, 10)
+        assert (tl.tensor() == tensor_1).all()
+
+        tl.append(tensor_2)
+        assert len(tl) == 8
+        assert tl.shape == (8, 10)
+        assert tl.tensor_list.shape == (8, 10)
+
+        assert (tl.tensor() == torch.cat([tensor_1, tensor_2])).all()
+
     
     def test_constructor_tensor(self):
         tl = TensorList(tensor_list=[
