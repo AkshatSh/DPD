@@ -78,7 +78,7 @@ class CWRLinear(WeakFunction):
         self.linear_model.fit(x_train, y_train)
 
     
-    @log_time(function_prefix='linear_window:predict')
+    @log_time(function_prefix='cwr_linear:predict')
     def evaluate(self, unlabeled_corpus: UnlabeledBIODataset) -> AnnotatedDataType:
         '''
         evalaute the keyword function on the unlabeled corpus
