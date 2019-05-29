@@ -66,7 +66,7 @@ class LinearWindowFunction(WindowFunction):
             output_dim *= len(training_data[0][1])
         
         self.dictionary = torch.zeros(len(training_data), output_dim)
-        self.labels = torch.zeros(len(training_data), 1)
+        self.labels = torch.zeros(len(training_data))
         for i, (sentence_window, feature_window, label) in enumerate(training_data):
             window_summary = self.feature_summarizer(feature_window)
             self.dictionary[i] = window_summary
