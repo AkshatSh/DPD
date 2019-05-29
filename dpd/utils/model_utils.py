@@ -82,13 +82,12 @@ def get_all_embedders() -> List[CachedTextFieldEmbedder]:
     ]
 
 def balance_dataset(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-    pos_idx = np.where(y == 1)
-    neg_idx = np.where(y == 0)
+    pos_idx = np.where(y == 1)[0]
+    neg_idx = np.where(y == 0)[0]
     if len(neg_idx) <= len(pos_idx):
         return x, y
 
     smaller_negative: np.ndarray = np.random.choice(neg_idx, len(pos_idx))
 
     training_idxes = np.concatenate((pos_idx, smaller_negative))
-
     return x[training_idxes], y[training_idxes]
