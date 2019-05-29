@@ -68,7 +68,7 @@ def parallel_corpus_generation(
 ) -> List[Tuple[str, AnnotatedDataType]]:
     # set pool size
     pool: mp.Pool = mp.Pool(processes=5, maxtasksperchild=2)
-    annotated_corpora = pool.imap(
+    annotated_corpora = pool.imap_unordered(
         func=single_function_corpus_generation,
         iterable=[(function, train_data, unlabeled_corpus) for function, f_arg in zip(functions, function_args)],
     )
@@ -141,7 +141,12 @@ def build_weak_data(
             dict_functions.append(DICTIONARY_FUNCTION_IMPL[f](unlabeled_corpus.binary_class, threshold=threshold))
         elif f in CONTEXTUAL_FUNCTIONS_IMPL and contextual_word_embeddings is not None:
             for contextual_word_embedding in contextual_word_embeddings:
-                cwr_functions.append(CONTEXTUAL_FUNCTIONS_IMPL[f](unlabeled_corpus.binary_class, contextual_word_embedding, threshold=threshold))
+                cwr_functions.append(CONTEXTUAL_FUNCTIONS_IMPL[f](
+                        unlabeled_corpus.binary_class,
+                        FEATURE_EXTRACTOR_IMPL['cwr'](vocab=vocab, embedder=contextual_word_embeddings),
+                        threshold=threshold
+                    ),
+                )
         elif f.startswith('context_window'):
             # format
             # context_window-{window}-{extractor}-{collator}-{type}
