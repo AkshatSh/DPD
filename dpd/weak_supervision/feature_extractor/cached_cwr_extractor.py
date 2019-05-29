@@ -33,6 +33,9 @@ class CWRFeatureExtractor(WeakFunction):
     ):
         self.embedder = embedder
     
+    def get_output_dim(self) -> int:
+        return self.embedder.get_output_dim()
+    
     def get_features(
         self,
         dataset_id: int,
