@@ -80,9 +80,10 @@ def train(
     patience: int,
     num_epochs: int,
     device: str,
+    dataset_name: str,
 ) -> Tuple[Model, MetricsType]:
     train_reader = BIODatasetReader(
-        ActiveBIODataset(train_data, dataset_id=0, binary_class=binary_class),
+        ActiveBIODataset(train_data, dataset_id=0, binary_class=binary_class, dataset_name=dataset_name),
         token_indexers={
             'tokens': ELMoTokenCharactersIndexer(),
         },
@@ -217,6 +218,7 @@ def active_train_fine_tune_iteration(
             patience=patience,
             num_epochs=num_epochs,
             device=device,
+            dataset_name=unlabeled_dataset.dataset_name,
         )
 
         log_train_metrics(logger, weak_metrics, step=len(train_data), prefix='weak')
