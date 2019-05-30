@@ -57,9 +57,18 @@ class SparseTensorList(TensorList):
         self.device = device
     
     @overrides
+    def preallocate(
+        self,
+        size: Tuple[int, int]
+    ):
+        # TODO implement
+        # right now this is a no-op
+        pass
+    
+    @overrides
     def contains(self, item: TensorType) -> torch.Tensor:
         item_np = numpy(item)
-        comp_sparse = self.tensor_list - item_np
+        comp_sparse = self.tensor_list[:self.size] - item_np
         search = np.where(~comp_sparse.any(axis=1))[0]
         if len(search) == 0:
             return -1
@@ -72,9 +81,18 @@ class SparseTensorList(TensorList):
     ):
         tensor = get_tensor(tensor).to(self.device)
         new_size = tensor.shape[0]
+
+        # amount of space that needs to be allocated
+        overflow = max((self.size + new_size) - self.tensor_list.shape[0], 0)
+        
+        # amount of space that is already allocated
+        preallocated = min(self.tensor_list.shape[0] - self.size, new_size)
+        if preallocated > 0:
+            self.tensor_list[self.size:self.size+preallocated] = tensor[:preallocated]
+
         self.tensor_list = SparseTensorList.create_sparse_tensor_list(
             tensor=self.tensor_list if len(self) != 0 else None,
-            incoming_tensor=tensor,
+            incoming_tensor=tensor[preallocated:preallocated+overflow],
         )
 
         self.size += new_size
@@ -101,7 +119,7 @@ class SparseTensorList(TensorList):
     
     @overrides
     def __len__(self) -> int:
-        return self.tensor_list.shape[0] if self.tensor_list.shape[1] != 0 else 0
+        return self.size if self.tensor_list.shape[1] != 0 else 0
     
     @overrides
     def __str__(self) -> str:

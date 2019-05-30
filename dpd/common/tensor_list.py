@@ -80,7 +80,7 @@ class TensorList(object):
         self,
         tensor_list: Optional[TensorType] = None,
         device: str = 'cpu',
-        operation_mode: OperationMode = OperationMode.MEMORY_EFFICENT,
+        operation_mode: OperationMode = OperationMode.FAST,
     ):
         self.tensor_list = TensorList.create_tensor_list(
             tensor=None, 
@@ -95,7 +95,7 @@ class TensorList(object):
         self,
         size: Tuple[int, int]
     ):
-        prev_size = self.size
+        prev_size = len(self)
         self.append(torch.zeros(size))
         self.size = prev_size
 

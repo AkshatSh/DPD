@@ -59,6 +59,12 @@ class BagWindowFunction(WindowFunction):
 
     @log_time(function_prefix='bag_window:train')
     def _train_model(self, training_data: List[Tuple[List[str], List[Any], str]]):
+        output_dim = training_data[0][1][0].shape[-1]
+        if self.feature_summarizer != FeatureCollator.sum:
+            output_dim *= len(training_data[0][1])
+        
+        self.dictionary.preallocate((len(training_data), output_dim))
+        self.labels.preallocate((len(training_data),1))
         for i, (sentence_window, feature_window, label) in enumerate(training_data):
             if is_negative(label):
                 continue
