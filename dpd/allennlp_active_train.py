@@ -236,6 +236,7 @@ def active_train_fine_tune_iteration(
         patience=patience,
         num_epochs=num_epochs,
         device=device,
+        dataset_name=unlabeled_dataset.dataset_name,
     )
 
     return model, metrics
@@ -335,6 +336,7 @@ def active_train_iteration(
         patience=patience,
         num_epochs=num_epochs,
         device=device,
+        dataset_name=unlabeled_dataset.dataset_name,
     )
 
     return model, metrics
