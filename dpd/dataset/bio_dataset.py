@@ -41,7 +41,7 @@ class BIODataset(object):
         self.tags = Counter()
         self.binary_class = binary_class
         self.dataset_id = dataset_id
-        self.dataset_name = dataset_name.lower()
+        self.dataset_name = dataset_name.lower() if dataset_name is not None else None
 
     def __len__(self) -> int:
         return len(self.data)
