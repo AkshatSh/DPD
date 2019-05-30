@@ -36,7 +36,7 @@ from dpd.utils import (
 )
 
 from dpd.constants import (
-    CADEC_SPACY,
+    SPACY_file,
 )
 
 from dpd.weak_supervision.feature_extractor import SpaCyFeatureExtractor
@@ -50,7 +50,7 @@ from dpd.utils import get_all_embedders, log_train_metrics
 from dpd.args import get_active_args
 
 # ORACLE_SAMPLES = [10, 40, 50, 400, 500]
-ORACLE_SAMPLES = [100, 400, 500]
+ORACLE_SAMPLES = [10, 100, 400, 500]
 
 logger = logging.getLogger(name=__name__)
 
@@ -379,9 +379,9 @@ def active_train(
         },
     )
 
-    cached_text_field_embedders: List[CachedTextFieldEmbedder] = get_all_embedders()
+    cached_text_field_embedders: List[CachedTextFieldEmbedder] = get_all_embedders(unlabeled_dataset.dataset_name, share_memory=True)
     spacy_feature_extractor: SpaCyFeatureExtractor = SpaCyFeatureExtractor.setup(dataset_ids=[0, 1])
-    spacy_feature_extractor.load(save_file=PickleSaveFile(CADEC_SPACY))
+    spacy_feature_extractor.load(save_file=PickleSaveFile(SPACY_file[unlabeled_dataset.dataset_name]))
 
     for i, sample_size in enumerate(ORACLE_SAMPLES):
         active_iteration_kwargs = dict(
@@ -455,6 +455,7 @@ def main():
         dataset_id=0,
         file_name=train_file,
         binary_class=args.binary_class,
+        dataset_name=args.dataset,
     )
 
     train_bio.parse_file()
@@ -465,6 +466,7 @@ def main():
         dataset_id=1,
         file_name=valid_file if not args.test else test_file,
         binary_class=args.binary_class,
+        dataset_name=args.dataset,
     )
 
     valid_bio.parse_file()
@@ -482,6 +484,7 @@ def main():
         hidden_dim=args.hidden_dim,
         class_labels=class_labels,
         cached=args.cached,
+        dataset_name=args.dataset.lower(),
     )
 
     oracle = GoldOracle(train_bio)

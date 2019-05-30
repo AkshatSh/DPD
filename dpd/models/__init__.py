@@ -27,12 +27,14 @@ def build_model(
     hidden_dim: int,
     class_labels: List[str],
     cached: bool,
+    dataset_name: str,
 ) -> Model:
     model_kwargs = dict(
         vocab=vocab,
         hidden_dim=hidden_dim,
         class_labels=class_labels,
         cached=cached,
+        dataset_name=dataset_name,
     )
 
     if model_type == 'ELMo_bilstm_crf':

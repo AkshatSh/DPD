@@ -32,7 +32,6 @@ from allennlp.models import SimpleTagger
 from allennlp.common.checks import check_dimensions_match, ConfigurationError
 
 # local imports
-from dpd.constants import CADEC_NER_ELMo, CADEC_BERT
 from dpd.utils import H5SaveFile
 from dpd.training.metrics import TagF1, AverageTagF1
 from dpd.training.loss_functions import SoftCrossEntropyLoss

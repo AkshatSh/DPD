@@ -34,6 +34,7 @@ class WindowFunction(WeakFunction):
         padder: FeaturePadder = FeaturePadder.zero_tensor,
         use_batch: bool = True,
         threshold: Optional[float] = 0.7,
+        **kwargs,
     ):
         super(WindowFunction, self).__init__(positive_label, threshold)
         self.positive_label = positive_label

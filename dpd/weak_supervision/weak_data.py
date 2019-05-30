@@ -162,6 +162,7 @@ def build_weak_data(
                             feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab, embedder=embedder),
                             feature_summarizer=FeatureCollator.get(collator),
                             threshold=threshold,
+                            memory_efficent=True,
                         )
                     )
             else:
@@ -172,6 +173,7 @@ def build_weak_data(
                         feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab, spacy_module=spacy_feature_extractor),
                         feature_summarizer=FeatureCollator.get(collator),
                         threshold=threshold,
+                        memory_efficent=True,
                     )
                 )
 

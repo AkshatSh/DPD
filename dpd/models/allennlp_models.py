@@ -22,7 +22,7 @@ from allennlp.data.token_indexers import PretrainedBertIndexer
 
 
 # local imports
-from dpd.constants import CADEC_NER_ELMo, CADEC_BERT
+from dpd.constants import NER_ELMo_file, BERT_file
 from dpd.utils import H5SaveFile
 from .crf_tagger import CrfTagger
 from .embedder import NERElmoTokenEmbedder, CachedTextFieldEmbedder
@@ -40,6 +40,7 @@ class ELMoCrfTagger(Model):
         hidden_dim: int,
         class_labels: List[str],
         cached: bool,
+        dataset_name: str,
     ) -> None:
         super().__init__(vocab)
         elmo_embedder = NERElmoTokenEmbedder()
@@ -56,7 +57,7 @@ class ELMoCrfTagger(Model):
             self.word_embeddings.setup_cache(dataset_id=0)
             self.word_embeddings.setup_cache(dataset_id=1)
 
-            self.word_embeddings.load(save_file=H5SaveFile(CADEC_NER_ELMo))
+            self.word_embeddings.load(save_file=H5SaveFile(NER_ELMo_file[dataset_name]))
 
         self.seq2seq_model = PytorchSeq2SeqWrapper(
             torch.nn.LSTM(
@@ -109,6 +110,7 @@ class BERTCrfTagger(Model):
         hidden_dim: int,
         class_labels: List[str],
         cached: bool,
+        dataset_name: str,
     ) -> None:
         super().__init__(vocab)
         self.vocab = vocab
@@ -126,7 +128,7 @@ class BERTCrfTagger(Model):
             self.word_embeddings = CachedTextFieldEmbedder(
                 text_field_embedder=self.word_embeddings,
             )
-            self.word_embeddings.load(save_file=H5SaveFile(CADEC_BERT))
+            self.word_embeddings.load(save_file=H5SaveFile(BERT_file[dataset_name]))
 
         self.seq2seq_model = PytorchSeq2SeqWrapper(
             torch.nn.LSTM(
@@ -176,6 +178,7 @@ class ELMoLinearTagger(Model):
         hidden_dim: int,
         class_labels: List[str],
         cached: bool,
+        dataset_name: str,
     ) -> None:
         super().__init__(vocab)
         elmo_embedder = NERElmoTokenEmbedder()
@@ -192,7 +195,7 @@ class ELMoLinearTagger(Model):
             self.word_embeddings.setup_cache(dataset_id=0)
             self.word_embeddings.setup_cache(dataset_id=1)
 
-            self.word_embeddings.load(save_file=H5SaveFile(CADEC_NER_ELMo))
+            self.word_embeddings.load(save_file=H5SaveFile(NER_ELMo_file[dataset_name]))
 
         self.seq2seq_model = PytorchSeq2SeqWrapper(
             torch.nn.LSTM(
@@ -242,6 +245,7 @@ class BERTLinearTagger(Model):
         hidden_dim: int,
         class_labels: List[str],
         cached: bool,
+        dataset_name: str,
     ) -> None:
         super().__init__(vocab)
         self.vocab = vocab
@@ -263,7 +267,7 @@ class BERTLinearTagger(Model):
             self.word_embeddings.setup_cache(dataset_id=0)
             self.word_embeddings.setup_cache(dataset_id=1)
 
-            self.word_embeddings.load(save_file=H5SaveFile(CADEC_NER_ELMo))
+            self.word_embeddings.load(save_file=H5SaveFile(NER_ELMo_file[dataset_name]))
 
         self.seq2seq_model = PytorchSeq2SeqWrapper(
             torch.nn.LSTM(
@@ -314,6 +318,7 @@ class ELMoLinearTransformer(Model):
         hidden_dim: int,
         class_labels: List[str],
         cached: bool,
+        dataset_name: str,
     ) -> None:
         super().__init__(vocab)
         elmo_embedder = NERElmoTokenEmbedder()
@@ -330,7 +335,7 @@ class ELMoLinearTransformer(Model):
             self.word_embeddings.setup_cache(dataset_id=0)
             self.word_embeddings.setup_cache(dataset_id=1)
 
-            self.word_embeddings.load(save_file=H5SaveFile(CADEC_NER_ELMo))
+            self.word_embeddings.load(save_file=H5SaveFile(NER_ELMo_file[dataset_name]))
 
         self.seq2seq_model = StackedSelfAttentionEncoder(
             input_dim=self.word_embeddings.get_output_dim(),
@@ -381,6 +386,7 @@ class ELMoCRFTransformer(Model):
         hidden_dim: int,
         class_labels: List[str],
         cached: bool,
+        dataset_name: str,
     ) -> None:
         super().__init__(vocab)
         elmo_embedder = NERElmoTokenEmbedder()
@@ -397,7 +403,7 @@ class ELMoCRFTransformer(Model):
             self.word_embeddings.setup_cache(dataset_id=0)
             self.word_embeddings.setup_cache(dataset_id=1)
 
-            self.word_embeddings.load(save_file=H5SaveFile(CADEC_NER_ELMo))
+            self.word_embeddings.load(save_file=H5SaveFile(NER_ELMo_file[dataset_name]))
 
         self.seq2seq_model = StackedSelfAttentionEncoder(
             input_dim=self.word_embeddings.get_output_dim(),
@@ -449,6 +455,7 @@ class ELMoRNNMTL(Model):
         hidden_dim: int,
         class_labels: List[str],
         cached: bool,
+        dataset_name: str,
     ) -> None:
         super().__init__(vocab)
         elmo_embedder = NERElmoTokenEmbedder()
@@ -465,7 +472,7 @@ class ELMoRNNMTL(Model):
             self.word_embeddings.setup_cache(dataset_id=0)
             self.word_embeddings.setup_cache(dataset_id=1)
 
-            self.word_embeddings.load(save_file=H5SaveFile(CADEC_NER_ELMo))
+            self.word_embeddings.load(save_file=H5SaveFile(NER_ELMo_file[dataset_name]))
 
         self.seq2seq_model = PytorchSeq2SeqWrapper(
             torch.nn.LSTM(

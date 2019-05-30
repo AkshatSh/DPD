@@ -3,6 +3,7 @@ from typing import (
     Tuple,
     Dict,
     Iterator,
+    Optional,
 )
 
 from collections import Counter
@@ -27,13 +28,20 @@ class BIODataset(object):
     Arguments:
         file_name: the name of the BIO encoded file
     '''
-    def __init__(self, dataset_id: int, file_name: str, binary_class: str = None):
+    def __init__(
+        self,
+        dataset_id: int,
+        file_name: str,
+        binary_class: Optional[str] = None,
+        dataset_name: Optional[str] = None,
+    ):
         self.file_name = file_name
         self.data = []
         self.word_list = Counter()
         self.tags = Counter()
         self.binary_class = binary_class
         self.dataset_id = dataset_id
+        self.dataset_name = dataset_name.lower()
 
     def __len__(self) -> int:
         return len(self.data)
@@ -93,11 +101,13 @@ class ActiveBIODataset(BIODataset):
         data: List[Dict[str, object]],
         dataset_id: int,
         binary_class: str,
+        dataset_name: str,
     ):
         super().__init__(
             dataset_id=dataset_id,
             file_name='temp.txt',
             binary_class=binary_class,
+            dataset_name=dataset_name,
         )
         self.dataset_id = dataset_id
         self.data = data
@@ -112,6 +122,7 @@ class UnlabeledBIODataset(BIODataset):
             dataset_id=dataset_id,
             file_name='temp.txt',
             binary_class=bio_data.binary_class,
+            dataset_name=bio_data.dataset_name,
         )
 
         self.data = [

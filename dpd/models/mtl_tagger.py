@@ -40,7 +40,6 @@ from allennlp.common.checks import check_dimensions_match, ConfigurationError
 from metal.end_model.loss import SoftCrossEntropyLoss
 
 # local imports
-from dpd.constants import CADEC_NER_ELMo, CADEC_BERT
 from dpd.utils import H5SaveFile
 from dpd.training.metrics import TagF1, AverageTagF1
 from .linear_tagger import LinearTagger

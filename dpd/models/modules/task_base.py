@@ -28,7 +28,7 @@ import allennlp.nn.util as util
 
 
 # local imports
-from dpd.constants import CADEC_NER_ELMo, CADEC_BERT
+from dpd.constants import NER_ELMo_file, BERT_file
 from dpd.utils import H5SaveFile
 from ..embedder import NERElmoTokenEmbedder, CachedTextFieldEmbedder
 
@@ -43,6 +43,7 @@ class TaskBase(nn.Module):
         word_embedder: TokenEmbedder,
         label_namespace: str = 'labels',
         dropout: Optional[float] = None,
+        dataset_name: Optional[str] = None,
     ):
         super().__init__()
         self.vocab = vocab
@@ -60,7 +61,7 @@ class TaskBase(nn.Module):
             self.word_embeddings.setup_cache(dataset_id=0)
             self.word_embeddings.setup_cache(dataset_id=1)
 
-            self.word_embeddings.load(save_file=H5SaveFile(CADEC_NER_ELMo))
+            self.word_embeddings.load(save_file=H5SaveFile(NER_ELMo_file[dataset_name]))
 
         self.seq2seq_model = PytorchSeq2SeqWrapper(
             torch.nn.LSTM(
