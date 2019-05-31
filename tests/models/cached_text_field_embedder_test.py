@@ -142,3 +142,28 @@ class CachecTextFieldEmbedderTest(unittest.TestCase):
     
     def test_cache_forward_minibatch(self):
         self.test_cache_forward(batch_size=CachecTextFieldEmbedderTest.MINIBATCH_SIZE)
+    
+    def test_cache_share_memory(self):
+        bio_dataset = CachecTextFieldEmbedderTest.create_fake_data()
+        reader = BIODatasetReader(
+            bio_dataset=bio_dataset,
+        )
+
+        instances = reader.read('fake_file.txt')
+        vocab = Vocabulary.from_instances(instances)
+        token_embedding = Embedding(
+            num_embeddings=vocab.get_vocab_size('tokens'),
+            embedding_dim=CachecTextFieldEmbedderTest.EMBEDDING_DIM,
+        )
+        word_embeddings = BasicTextFieldEmbedder({"tokens": token_embedding})
+        cached_embedder = CachedTextFieldEmbedder(
+            text_field_embedder=word_embeddings,
+        )
+
+        cached_embedder.cache(
+            dataset_id=bio_dataset.dataset_id,
+            dataset=instances,
+            vocab=vocab,
+        )
+
+        cached_embedder.share_memory()

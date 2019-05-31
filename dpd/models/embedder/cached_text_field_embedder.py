@@ -109,6 +109,11 @@ class CachedDataset(nn.Module):
         self.embedded_dataset = save_file.load_np(key=f'{key}/embedded_dataset')
     
     @overrides
+    def share_memory(self):
+        self.embedded_dataset = torch.Tensor(embedded_dataset)
+        super(CachedDataset, self).share_memory()
+    
+    @overrides
     def __str__(self) -> str:
         return f'CachedDataset({self.embedded_dataset.shape})'
     
