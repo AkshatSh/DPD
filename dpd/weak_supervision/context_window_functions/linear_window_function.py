@@ -104,7 +104,7 @@ class LinearWindowFunction(WindowFunction):
             return self.linear_model.decision_function(batch_np)
 
         confidence_batch: np.ndarray = _pred(batch_np)
-        return list(map(lambda conf: conf.item(), TensorList([confidence_batch]).to_list()))
+        return list(map(lambda conf: conf.item(), confidence_batch))
 
     @log_time(function_prefix='linear_window:predict')
     def _batch_predict(self, features: List[List[torch.Tensor]]) -> List[int]:
@@ -112,7 +112,7 @@ class LinearWindowFunction(WindowFunction):
         batch_np: np.ndarray = TensorList(feature_summaries).numpy()
         del feature_summaries
         label_batch: np.ndarray = self.linear_model.predict(batch_np)
-        return list(map(lambda label: label.item(), TensorList([label_batch]).to_list()))
+        return list(map(lambda label: label.item(), label_batch))
 
     @overrides
     def __str__(self):
