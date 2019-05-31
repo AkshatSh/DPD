@@ -70,11 +70,39 @@ class TensorList(object):
     def create_tensor_from_list(
         cls,
         tensor_list: Optional[List[TensorType]],
+        operation_mode: OperationMode = OperationMode.MEMORY_EFFICENT,
     ):
         if tensor_list is None:
             return torch.Tensor()
-        tensor_list = [get_tensor(t) for t in tensor_list]
-        return torch.cat(tensor_list, dim=0)
+
+        if tensor_list is None or len(tensor_list) == 0:
+            return torch.Tensor()
+        
+        if operation_mode == OperationMode.MEMORY_EFFICENT:
+            def _get_batch(tensor: torch.Tensor) -> int:
+                shp = tensor.shape
+                if len(shp) == 1:
+                    return 1
+                elif len(shp) == 2:
+                    return shp[0]
+                else:
+                    raise ValueError(f'Unsupport shape: {shp}')
+            
+            dim1 = 0
+            for item in tensor_list:
+                dim1 += _get_batch(item)
+
+            tensor = torch.zeros(dim1, tensor_list[0].shape[-1])
+            start = 0
+            for i, inc_tensor in enumerate(tensor_list):
+                end = start + _get_batch(inc_tensor)
+                tensor[start:end] = get_tensor(inc_tensor)
+                start = end
+            # return tensor
+            return tensor
+        
+        temp = list(map(lambda t: get_tensor(t), tensor_list))
+        return torch.cat(temp, dim=0)
 
     def __init__(
         self,

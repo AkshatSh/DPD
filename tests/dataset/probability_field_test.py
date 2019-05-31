@@ -25,3 +25,4 @@ class ProbabilisticLabelFieldTest(unittest.TestCase):
         padding_lengths = sequence_label_field.get_padding_lengths()
         tensor = sequence_label_field.as_tensor(padding_lengths).detach().cpu().numpy()
         np.testing.assert_array_almost_equal(tensor, prob_tags.numpy())
+        assert tensor.shape == prob_tags.numpy().shape
