@@ -96,6 +96,7 @@ class LinearWindowFunction(WindowFunction):
     def _batch_probabilities(self, features: List[List[torch.Tensor]]) -> List[float]:
         feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
         batch_np: np.ndarray = TensorList(feature_summaries).numpy()
+        del feature_summaries
         confidence_batch: np.ndarray = self.linear_model.decision_function(batch_np)
         return list(map(lambda conf: conf.item(), TensorList([confidence_batch]).to_list()))
 
@@ -103,6 +104,7 @@ class LinearWindowFunction(WindowFunction):
     def _batch_predict(self, features: List[List[torch.Tensor]]) -> List[int]:
         feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
         batch_np: np.ndarray = TensorList(feature_summaries).numpy()
+        del feature_summaries
         label_batch: np.ndarray = self.linear_model.predict(batch_np)
         return list(map(lambda label: label.item(), TensorList([label_batch]).to_list()))
 
