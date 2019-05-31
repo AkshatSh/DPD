@@ -99,3 +99,7 @@ def token_tokenizer(tokens):
 
 if USE_TOKEN_TOKENIZER:
     SPACY_NLP.tokenizer = token_tokenizer
+
+# MEMORY MANAGEMENT
+MAX_RETRY: int = 3
+MEMORY_WAIT: float = 7.

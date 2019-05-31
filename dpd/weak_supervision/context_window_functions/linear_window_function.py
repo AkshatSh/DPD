@@ -24,6 +24,7 @@ from dpd.common import TensorList
 from dpd.utils import log_time
 from dpd.utils.model_utils import balance_dataset
 from dpd.weak_supervision.feature_extractor import FeatureExtractor, FeatureCollator
+from dpd.utils.memory_management import memory_retry
 
 from ..utils import get_context_window, get_context_range, label_index, NEGATIVE_LABEL
 from .window_function import WindowFunction
@@ -97,7 +98,12 @@ class LinearWindowFunction(WindowFunction):
         feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
         batch_np: np.ndarray = TensorList(feature_summaries).numpy()
         del feature_summaries
-        confidence_batch: np.ndarray = self.linear_model.decision_function(batch_np)
+
+        @memory_retry
+        def _pred(batch_np: np.ndarray) -> np.ndarray:
+            return self.linear_model.decision_function(batch_np)
+
+        confidence_batch: np.ndarray = _pred(batch_np)
         return list(map(lambda conf: conf.item(), TensorList([confidence_batch]).to_list()))
 
     @log_time(function_prefix='linear_window:predict')
