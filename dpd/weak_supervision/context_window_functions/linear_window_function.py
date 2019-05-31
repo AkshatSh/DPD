@@ -92,19 +92,41 @@ class LinearWindowFunction(WindowFunction):
         feature_summary = self.feature_summarizer(features).numpy()
         confidence: np.ndarray = self.linear_model.decision_function(feature_summary)
         return confidence.item()
+    
+    def _block_execute(
+        self,
+        features: List[List[torch.Tensor]],
+        predictor: Callable[[np.ndarray], np.ndarray],
+        block_size: int = 10000,
+    ) -> List[np.ndarray]:
+        num_blocks = len(features) // block_size + 1
+        results: List[np.ndarray] = []
+        for i in range(num_blocks):
+            start: int = i * num_blocks
+            end: int = min(start + block_size, len(features))
+            block = features[start:end]
+            feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), block))
+            feature_summaries: np.ndarray = TensorList(feature_summaries).numpy()
+            np_result: np.ndarray = predictor(feature_summaries)
+            results.append(np_result)
+        return results
+
 
     @log_time(function_prefix='linear_window_snorkel:predict')
     def _batch_probabilities(self, features: List[List[torch.Tensor]]) -> List[float]:
-        feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
-        batch_np: np.ndarray = TensorList(feature_summaries).numpy()
-        del feature_summaries
+        # feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
+        # batch_np: np.ndarray = TensorList(feature_summaries).numpy()
+        # del feature_summaries
 
         @memory_retry
         def _pred(batch_np: np.ndarray) -> np.ndarray:
             return self.linear_model.decision_function(batch_np)
 
-        confidence_batch: np.ndarray = _pred(batch_np)
-        return list(map(lambda conf: conf.item(), confidence_batch))
+        # confidence_batch: np.ndarray = _pred(batch_np)
+
+        confidence_batch_list: List[np.nddary] = self._block_execute(features, _pred)
+        flatten = lambda l: [item for sublist in l for item in sublist]
+        return list(map(lambda conf: conf.item(), flatten(confidence_batch_list)))
 
     @log_time(function_prefix='linear_window:predict')
     def _batch_predict(self, features: List[List[torch.Tensor]]) -> List[int]:
