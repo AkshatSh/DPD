@@ -111,22 +111,27 @@ class LinearWindowFunction(WindowFunction):
             results.append(np_result)
         return results
 
-
     @log_time(function_prefix='linear_window_snorkel:predict')
     def _batch_probabilities(self, features: List[List[torch.Tensor]]) -> List[float]:
         # feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
         # batch_np: np.ndarray = TensorList(feature_summaries).numpy()
         # del feature_summaries
 
-        @memory_retry
-        def _pred(batch_np: np.ndarray) -> np.ndarray:
-            return self.linear_model.decision_function(batch_np)
+        # @memory_retry
+        # def _pred(batch_np: np.ndarray) -> np.ndarray:
+        #     return self.linear_model.decision_function(batch_np)
 
-        # confidence_batch: np.ndarray = _pred(batch_np)
+        # # confidence_batch: np.ndarray = _pred(batch_np)
 
-        confidence_batch_list: List[np.nddary] = self._block_execute(features, _pred)
-        flatten = lambda l: [item for sublist in l for item in sublist]
-        return list(map(lambda conf: conf.item(), flatten(confidence_batch_list)))
+        # confidence_batch_list: List[np.nddary] = self._block_execute(features, _pred)
+        # flatten = lambda l: [item for sublist in l for item in sublist]
+        # return list(map(lambda conf: conf.item(), flatten(confidence_batch_list)))
+
+        feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
+        batch_np: np.ndarray = TensorList(feature_summaries).numpy()
+        del feature_summaries
+        confidence_batch: np.ndarray = _pred(batch_np)
+        return list(map(lambda conf: conf.item(), flatten(confidence_batch)))
 
     @log_time(function_prefix='linear_window:predict')
     def _batch_predict(self, features: List[List[torch.Tensor]]) -> List[int]:
