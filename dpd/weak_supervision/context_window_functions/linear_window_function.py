@@ -10,6 +10,7 @@ from typing import (
 import os
 import sys
 import time
+import math
 
 import torch
 import allennlp
@@ -97,50 +98,58 @@ class LinearWindowFunction(WindowFunction):
         self,
         features: List[List[torch.Tensor]],
         predictor: Callable[[np.ndarray], np.ndarray],
-        block_size: int = 10000,
+        block_size: int,
     ) -> List[np.ndarray]:
-        num_blocks = len(features) // block_size + 1
+        num_blocks: int = math.ceil(len(features) / block_size)
         results: List[np.ndarray] = []
         for i in range(num_blocks):
-            start: int = i * num_blocks
+            start: int = i * block_size
             end: int = min(start + block_size, len(features))
             block = features[start:end]
             feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), block))
             feature_summaries: np.ndarray = TensorList(feature_summaries).numpy()
+            if feature_summaries.shape == (1,):
+                feature_summaries = feature_summaries.reshape(-1, 1)
             np_result: np.ndarray = predictor(feature_summaries)
             results.append(np_result)
         return results
+    
+    def block_execute_scikit(
+        self,
+        features: List[List[torch.Tensor]],
+        predictor: Callable[[np.ndarray], np.ndarray],
+        block_size: int = 10000,
+    ) -> List[float]:
+        batch_list: List[np.nddary] = self._block_execute(features, predictor, block_size)
+        flatten = lambda l: [item for sublist in l for item in sublist]
+        return list(map(lambda val: val.item(), flatten(batch_list)))
+    
+    @memory_retry
+    def _pred_label(self, batch_np: np.ndarray) -> np.ndarray:
+        return self.linear_model.predict(batch_np)
+    
+    @memory_retry
+    def _pred_probability(self, batch_np: np.ndarray) -> np.ndarray:
+        return self.linear_model.decision_function(batch_np)
 
     @log_time(function_prefix='linear_window_snorkel:predict')
     def _batch_probabilities(self, features: List[List[torch.Tensor]]) -> List[float]:
+        return self.block_execute_scikit(features, self._pred_probability)
         # feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
         # batch_np: np.ndarray = TensorList(feature_summaries).numpy()
         # del feature_summaries
-
-        @memory_retry
-
-        def _pred(batch_np: np.ndarray) -> np.ndarray:
-            return self.linear_model.decision_function(batch_np)
-
-        # # confidence_batch: np.ndarray = _pred(batch_np)
-
-        # confidence_batch_list: List[np.nddary] = self._block_execute(features, _pred)
-        # flatten = lambda l: [item for sublist in l for item in sublist]
-        # return list(map(lambda conf: conf.item(), flatten(confidence_batch_list)))
-
-        feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
-        batch_np: np.ndarray = TensorList(feature_summaries).numpy()
-        del feature_summaries
-        confidence_batch: np.ndarray = _pred(batch_np)
-        return list(map(lambda conf: conf.item(), confidence_batch))
+        # confidence_batch: np.ndarray = self._pred_probability(batch_np)
+        # print(confidence_batch)
+        # return list(map(lambda conf: conf.item(), confidence_batch))
 
     @log_time(function_prefix='linear_window:predict')
     def _batch_predict(self, features: List[List[torch.Tensor]]) -> List[int]:
-        feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
-        batch_np: np.ndarray = TensorList(feature_summaries).numpy()
-        del feature_summaries
-        label_batch: np.ndarray = self.linear_model.predict(batch_np)
-        return list(map(lambda label: label.item(), label_batch))
+        # feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
+        # batch_np: np.ndarray = TensorList(feature_summaries).numpy()
+        # del feature_summaries
+        # label_batch: np.ndarray = self.linear_model.predict(batch_np)
+        # return list(map(lambda label: label.item(), label_batch))
+        return self.block_execute_scikit(features, self._pred_label)
 
     @overrides
     def __str__(self):
