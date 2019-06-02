@@ -31,7 +31,7 @@ try:
     from snorkel.learning.structure import DependencySelector
     from snorkel.learning import GenerativeModel
 except Exception as e:
-    logger.warn('Snorkel not installed, will not learn dependencies', e)
+    logger.warning('Snorkel not installed, will not learn dependencies', e)
 
 class SnorkelCollator(Collator):
     def __init__(
@@ -107,7 +107,7 @@ class SnorkelCollator(Collator):
         sparse_labels = sparse.csr_matrix(collated_labels.astype(int))
         if descriptions is not None:
             descriptions = [(i, desc) for i, desc in enumerate(descriptions)]
-            logger.warn(f'labeling function order: {descriptions}')
+            logger.warning(f'labeling function order: {descriptions}')
         deps = self.ds.select(sparse_labels, threshold=0.05)
         self.gen_model.train(
             sparse_labels,

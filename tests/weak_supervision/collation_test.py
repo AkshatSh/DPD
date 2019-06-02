@@ -151,7 +151,7 @@ class CollatorTest(unittest.TestCase):
             import snorkel
         except Exception:
             # snorkel module not located
-            logger.warn(f'Not running Snorkel Collation Test because `snorkel` not installed properly')
+            logger.warning(f'Not running Snorkel Collation Test because `snorkel` not installed properly')
             return
 
         abstain_point = [

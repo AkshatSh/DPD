@@ -27,7 +27,7 @@ def memory_retry(function: callable) -> callable:
                 return res
             except MemoryError as e:
                 retry_count += 1
-                logger.warn(f'encountered memory error, retrying {retry_count} / {MAX_RETRY}')
+                logger.warning(f'encountered memory error, retrying {retry_count} / {MAX_RETRY}')
                 time.sleep(MEMORY_WAIT)
         raise MemoryRetryError()
     return _wrapper

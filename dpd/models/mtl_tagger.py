@@ -114,7 +114,7 @@ class MTLTagger(Model):
         prev: bool = self.is_noisy
         self.is_noisy = prob_labels is not None
         if prev != self.is_noisy and tags is not None:
-            logger.warn(f'Switching MTL train mode noisy: {self.is_noisy}')
+            logger.warning(f'Switching MTL train mode noisy: {self.is_noisy}')
 
         # allow random switching with low probability from noisy to gold
         # task head
