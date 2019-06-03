@@ -88,7 +88,7 @@ def get_all_embedders(dataset_name: str, share_memory: Optional[bool] = False) -
     ]
 
     if share_memory:
-        map(lambda e: e.share_memory(), embedders)
+        list(map(lambda e: e.share_memory(), embedders))
 
     return embedders
 
@@ -98,7 +98,9 @@ def balance_dataset(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarra
     if len(neg_idx) <= len(pos_idx):
         return x, y
 
-    smaller_negative: np.ndarray = np.random.choice(neg_idx, len(pos_idx))
+    negative_sample_size = min(len(neg_idx), len(pos_idx) * 2)
+
+    smaller_negative: np.ndarray = np.random.choice(neg_idx, negative_sample_size)
 
     training_idxes = np.concatenate((pos_idx, smaller_negative))
     return x[training_idxes], y[training_idxes]
