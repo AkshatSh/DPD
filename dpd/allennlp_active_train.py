@@ -8,6 +8,7 @@ from typing import (
 import os
 import argparse
 import logging
+import copy
 
 import torch
 from torch import optim
@@ -49,8 +50,8 @@ from dpd.weak_supervision import build_weak_data
 from dpd.utils import get_all_embedders, log_train_metrics
 from dpd.args import get_active_args
 
-# ORACLE_SAMPLES = [10, 40, 50, 400, 500]
-ORACLE_SAMPLES = [10, 100, 400, 500]
+ORACLE_SAMPLES = [10, 40, 50, 400, 500]
+# ORACLE_SAMPLES = [10, 100, 400, 500]
 
 logger = logging.getLogger(name=__name__)
 
@@ -387,6 +388,8 @@ def active_train(
     spacy_feature_extractor: SpaCyFeatureExtractor = SpaCyFeatureExtractor.setup(dataset_ids=[0, 1])
     spacy_feature_extractor.load(save_file=PickleSaveFile(SPACY_file[unlabeled_dataset.dataset_name]))
 
+    start_model = model
+
     for i, sample_size in enumerate(ORACLE_SAMPLES):
         active_iteration_kwargs = dict(
             heuristic=heuristic,
@@ -396,7 +399,7 @@ def active_train(
             oracle=oracle,
             train_data=train_data,
             valid_reader=valid_reader,
-            model=model,
+            model=copy.deepcopy(start_model),
             cached_text_field_embedders=cached_text_field_embedders,
             spacy_feature_extractor=spacy_feature_extractor,
             vocab=vocab,
