@@ -68,7 +68,7 @@ def parallel_corpus_generation(
     function_args: List[Any],
 ) -> List[Tuple[str, AnnotatedDataType]]:
     # set pool size
-    executing: Set[str] = set(map(lambda f: str(f), functions))
+    executing: List[str] = list(map(lambda f: str(f), functions))
     pool: mp.Pool = mp.Pool(processes=5, maxtasksperchild=2)
     annotated_corpora = pool.imap_unordered(
         func=single_function_corpus_generation,
