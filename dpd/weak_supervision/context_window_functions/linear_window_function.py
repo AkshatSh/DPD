@@ -144,12 +144,12 @@ class LinearWindowFunction(WindowFunction):
 
     @log_time(function_prefix='linear_window:predict')
     def _batch_predict(self, features: List[List[torch.Tensor]]) -> List[int]:
+        return self.block_execute_scikit(features, self._pred_label)
         # feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
         # batch_np: np.ndarray = TensorList(feature_summaries).numpy()
         # del feature_summaries
         # label_batch: np.ndarray = self.linear_model.predict(batch_np)
         # return list(map(lambda label: label.item(), label_batch))
-        return self.block_execute_scikit(features, self._pred_label)
 
     @overrides
     def __str__(self):

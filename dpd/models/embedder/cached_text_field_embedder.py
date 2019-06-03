@@ -32,6 +32,12 @@ from dpd.utils import SaveFile
 
 logger = logging.getLogger(name=__name__)
 
+def no_grad(function: callable) -> callable:
+    def _wrapper(*args, **kwargs) -> Any:
+        with torch.no_grad():
+            return function(*args, **kwargs)
+    return _wrapper
+
 class CachedDataset(nn.Module):
     def __init__(
         self,
@@ -65,6 +71,7 @@ class CachedDataset(nn.Module):
         self.index_to_sid[index] = s_id
         self.sid_to_end[s_id] = len(self.embedded_dataset)
     
+    @no_grad
     def get_embedding(self, s_id: int) -> Optional[torch.Tensor]:
         if s_id not in self.sid_to_start:
             return None
@@ -161,6 +168,7 @@ class CachedTextFieldEmbedder(nn.Module):
     def get_output_dim(self) -> int:
         return self.text_field_embedder.get_output_dim()
     
+    @no_grad
     def get_embedding(
         self,
         sentence_id: int,
@@ -168,6 +176,7 @@ class CachedTextFieldEmbedder(nn.Module):
     ) -> torch.Tensor:
         return self.cached_datasets[dataset_id].get_embedding(sentence_id)
     
+    @no_grad
     def forward(
         self,
         sentence: Optional[Dict[str, torch.Tensor]] = None, # (batch_size, seq_len)
