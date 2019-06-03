@@ -5,6 +5,7 @@ from typing import (
     Union,
     Optional,
     Any,
+    Set,
 )
 
 import logging
@@ -67,6 +68,7 @@ def parallel_corpus_generation(
     function_args: List[Any],
 ) -> List[Tuple[str, AnnotatedDataType]]:
     # set pool size
+    executing: Set[str] = set(map(lambda f: str(f), functions))
     pool: mp.Pool = mp.Pool(processes=5, maxtasksperchild=2)
     annotated_corpora = pool.imap_unordered(
         func=single_function_corpus_generation,
@@ -78,6 +80,10 @@ def parallel_corpus_generation(
     res = []
     for corpus in tqdm(annotated_corpora, total=len(functions)):
         res.append(corpus)
+        func_name = corpus[0]
+        executing.remove(func_name)
+        logger.warn(f'{len(executing)} functions still running')
+        logger.warn(f'{executing}')
 
     return res
 
