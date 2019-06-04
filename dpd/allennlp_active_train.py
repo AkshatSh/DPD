@@ -423,6 +423,7 @@ def active_train(
         else:
             model, metrics = active_train_iteration(**active_iteration_kwargs)
 
+        logger.save_model(model=model, step=len(train_data))
         log_train_metrics(logger, metrics, step=len(train_data))
 
         print(f'Finished experiment on training set size: {len(train_data)}')
