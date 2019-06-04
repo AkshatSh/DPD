@@ -29,14 +29,9 @@ from allennlp.modules.token_embedders.token_embedder import TokenEmbedder
 from allennlp.nn.util import get_text_field_mask, move_to_device
 
 from dpd.utils import SaveFile
+from dpd.common import no_grad
 
 logger = logging.getLogger(name=__name__)
-
-def no_grad(function: callable) -> callable:
-    def _wrapper(*args, **kwargs) -> Any:
-        with torch.no_grad():
-            return function(*args, **kwargs)
-    return _wrapper
 
 class CachedDataset(nn.Module):
     def __init__(
