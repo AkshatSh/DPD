@@ -388,8 +388,6 @@ def active_train(
     spacy_feature_extractor: SpaCyFeatureExtractor = SpaCyFeatureExtractor.setup(dataset_ids=[0, 1])
     spacy_feature_extractor.load(save_file=PickleSaveFile(SPACY_file[unlabeled_dataset.dataset_name]))
 
-    start_model = model
-
     for i, sample_size in enumerate(ORACLE_SAMPLES):
         active_iteration_kwargs = dict(
             heuristic=heuristic,
@@ -399,7 +397,7 @@ def active_train(
             oracle=oracle,
             train_data=train_data,
             valid_reader=valid_reader,
-            model=copy.deepcopy(start_model),
+            model=model,
             cached_text_field_embedders=cached_text_field_embedders,
             spacy_feature_extractor=spacy_feature_extractor,
             vocab=vocab,
