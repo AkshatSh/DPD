@@ -39,6 +39,8 @@ def build_model(
 
     if model_type == 'ELMo_bilstm_crf':
         return ELMoCrfTagger(**model_kwargs)
+    elif model_type == 'soft_ELMo_bilstm_crf':
+        return ELMoCrfTagger(use_soft_label_training=True, **model_kwargs)
     elif model_type == 'BERT_bilstm_crf':
         return BERTCrfTagger(**model_kwargs)
     elif model_type == 'ELMo_linear':

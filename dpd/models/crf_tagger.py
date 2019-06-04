@@ -86,6 +86,7 @@ class CrfTagger(Model):
         regularizer: Optional[RegularizerApplicator] = None,
         cached_embeddings: Optional[bool] = None,
         freeze_encoder: Optional[bool] = False,
+        use_soft_label_training: Optional[bool] = False,
     ) -> None:
         super().__init__(vocab, regularizer)
 
@@ -129,7 +130,9 @@ class CrfTagger(Model):
 
         self.include_start_end_transitions = include_start_end_transitions
         self.crf = WeightedCRF(
-                self.num_tags, constraints,
+                self.num_tags,
+                constraints,
+                use_soft_label_training=use_soft_label_training,
                 include_start_end_transitions=include_start_end_transitions
         )
 
@@ -225,6 +228,7 @@ class CrfTagger(Model):
                 tags: torch.LongTensor = None,
                 metadata: List[Dict[str, Any]] = None,
                 weight: torch.Tensor = None,
+                prob_labels: torch.Tensor = None,
                 # pylint: disable=unused-argument
                 **kwargs,
         ) -> Dict[str, torch.Tensor]:
@@ -268,7 +272,7 @@ class CrfTagger(Model):
 
         if tags is not None:
             # Add negative log-likelihood as loss
-            log_likelihood = self.crf(logits, tags, mask, weight=weight)
+            log_likelihood = self.crf(logits, tags, mask, weight=weight, prob_labels=prob_labels)
             output["loss"] = -log_likelihood
 
             # Represent viterbi tags as "class probabilities" that we can

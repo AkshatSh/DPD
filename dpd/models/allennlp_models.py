@@ -41,6 +41,7 @@ class ELMoCrfTagger(Model):
         class_labels: List[str],
         cached: bool,
         dataset_name: str,
+        use_soft_label_training: bool=False
     ) -> None:
         super().__init__(vocab)
         elmo_embedder = NERElmoTokenEmbedder()
@@ -78,6 +79,7 @@ class ELMoCrfTagger(Model):
             verbose_metrics=False,
             class_labels=class_labels,
             cached_embeddings=cached,
+            use_soft_label_training=use_soft_label_training,
         )
     
     def forward(
