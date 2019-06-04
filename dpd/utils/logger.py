@@ -39,7 +39,7 @@ class Logger(object):
         summary_file.close()
         logger.info(f'wrote summary file: {file_name}')
     
-    def log_model(self, model: nn.Module, step: int):
+    def save_model(self, model: nn.Module, step: int):
         model_path: str = os.path.join(self.log_dir, f'model_checkpoint_{step}.ckpt')
         with open(model_path, 'wb') as f:
             torch.save(model.state_dict(), f)
