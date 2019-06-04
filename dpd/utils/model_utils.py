@@ -98,7 +98,7 @@ def balance_dataset(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarra
     if len(neg_idx) <= len(pos_idx):
         return x, y
 
-    negative_sample_size = min(len(neg_idx), len(pos_idx) * 2)
+    negative_sample_size = min(len(neg_idx), len(pos_idx) * 2, 5000)
 
     smaller_negative: np.ndarray = np.random.choice(neg_idx, negative_sample_size)
 
