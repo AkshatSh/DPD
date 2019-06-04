@@ -56,7 +56,7 @@ class ProbabilisticLabelField(Field[torch.Tensor]):
     @overrides
     def as_tensor(self, padding_lengths: Dict[str, int]) -> torch.Tensor:
         desired_num_tokens = padding_lengths['num_tokens']
-        padded_tags = pad_sequence_to_length(self._indexed_labels, desired_num_tokens)
+        padded_tags = pad_sequence_to_length(self._indexed_labels, desired_num_tokens, default_value=lambda: torch.zeros(self._indexed_labels[0].shape))
         tensor = TensorList(padded_tags).tensor()
         return tensor
 
