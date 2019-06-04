@@ -39,7 +39,7 @@ class CRFTest(unittest.TestCase):
         self.transitions_to_end = torch.Tensor([-0.1, -0.2, 0.3, -0.4, -0.4])
 
         # Use the CRF Module with fixed transitions to compute the log_likelihood
-        self.crf = WeightedCRF(5)
+        self.crf = WeightedCRF(5, use_soft_label_training=True)
         self.crf.transitions = torch.nn.Parameter(self.transitions)
         self.crf.start_transitions = torch.nn.Parameter(self.transitions_from_start)
         self.crf.end_transitions = torch.nn.Parameter(self.transitions_to_end)
@@ -132,4 +132,32 @@ class CRFTest(unittest.TestCase):
             manual_log_likelihood += numerator - denominator
 
         # The manually computed log likelihood should equal the result of crf.forward.
+        assert manual_log_likelihood.item() == approx(log_likelihood)
+    
+    def test_forward_with_simple_soft_labels(self):
+        weight = torch.Tensor([1, 1])
+        prob_labels = torch.zeros((*self.tags.shape, 5))
+        for batch in range(self.tags.shape[0]):
+            for i, seq in enumerate(self.tags[batch]):
+                prob_labels[batch][i][seq] = 1
+
+        # ensure the normal CRF API is still consistent
+        log_likelihood = self.crf(self.logits, self.tags, weight=weight, prob_labels=prob_labels).item()
+        # Now compute the log-likelihood manually
+        manual_log_likelihood = 0.0
+
+        # For each instance, manually compute the numerator
+        # (which is just the score for the logits and actual tags)
+        # and the denominator
+        # (which is the log-sum-exp of the scores for the logits across all possible tags)
+        for logits_i, tags_i in zip(self.logits, self.tags):
+            numerator = self.score(logits_i.detach(), tags_i.detach())
+            all_scores = [self.score(logits_i.detach(), tags_j)
+                          for tags_j in itertools.product(range(5), repeat=3)]
+            denominator = math.log(sum(math.exp(score) for score in all_scores))
+            # And include them in the manual calculation.
+            manual_log_likelihood += numerator - denominator
+
+        # The manually computed log likelihood should equal the result of crf.forward.
+        # print(log_likelihood, manual_log_likelihood)
         assert manual_log_likelihood.item() == approx(log_likelihood)
