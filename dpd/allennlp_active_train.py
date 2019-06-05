@@ -52,6 +52,7 @@ from dpd.heuristics import RandomHeuristic, ClusteringHeuristic
 from dpd.weak_supervision import build_weak_data
 from dpd.utils import get_all_embedders, log_train_metrics
 from dpd.args import get_active_args
+from dpd.training.allennlp_trainer import AllenNLPTrainer
 
 ORACLE_SAMPLES = [10, 40, 50]
 # ORACLE_SAMPLES = [10, 100, 400, 500]
@@ -118,7 +119,7 @@ def train(
 
     iterator.index_with(vocab)
 
-    trainer = Trainer(
+    trainer = AllenNLPTrainer(
         model=model,
         optimizer=optimizer,
         iterator=iterator,
