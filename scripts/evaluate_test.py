@@ -232,7 +232,7 @@ def main():
             results.append([trial, dataset_size, metrics['f1-measure-overall'], metrics['tag_f1']])
             summary_writer.writerow([trial, dataset_size, metrics['f1-measure-overall'], metrics['tag_f1']])
 
-    with open(os.path.join(model_path, f'results_test_{args.test}'), 'wb') as handle:
+    with open(os.path.join(args.model_path, f'results_test_{args.test}'), 'wb') as handle:
         pickle.dump(checkpoint_info, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
 
