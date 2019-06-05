@@ -358,7 +358,7 @@ def active_train_iteration(
         num_epochs=num_epochs,
         device=device,
         dataset_name=unlabeled_dataset.dataset_name,
-        serialization_dir=os.path.join(logger.log_dir, 'saved_models', len(train_data))
+        serialization_dir=os.path.join(logger.log_dir, 'saved_models', f'{len(train_data)}')
     )
 
     return model, metrics
