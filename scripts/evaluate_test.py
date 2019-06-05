@@ -144,7 +144,7 @@ def evalaute_checkpoint(model, instances, iterator, cuda_device, model_path):
     with open(model_path, 'rb') as f:
         model.load_state_dict(torch.load(f))
     metrics = evaluate(model, instances, iterator, cuda_device, "")
-    return simple_metrics(metrics)
+    return simple_metrics(metrics), metrics
 
 def main():
     args = get_active_args()
@@ -226,11 +226,11 @@ def main():
         summary_writer.writerow(['trial', 'dataset_size', 'span_f1', 'token_f1'])
         for ckpt in tqdm(checkpoint_info):
             dataset_size, trial, experiment_name, model_path = ckpt['dataset_size'], ckpt['trial'], ckpt['experiment_name'], ckpt['full_path']
-            metrics = evalaute_checkpoint(model, instances, iterator, cuda_device, model_path)
+            metrics, csv_metrics = evalaute_checkpoint(model, instances, iterator, cuda_device, model_path)
             ckpt['metrics'] = metrics
 
-            results.append([trial, dataset_size, metrics['f1-measure-overall'], metrics['tag_f1']])
-            summary_writer.writerow([trial, dataset_size, metrics['f1-measure-overall'], metrics['tag_f1']])
+            results.append([trial, dataset_size, csv_metrics['f1-measure-overall'], csv_metrics['tag_f1']])
+            summary_writer.writerow([trial, dataset_size, csv_metrics['f1-measure-overall'], csv_metrics['tag_f1']])
 
     with open(os.path.join(args.model_path, f'results_test_{args.test}'), 'wb') as handle:
         pickle.dump(checkpoint_info, handle, protocol=pickle.HIGHEST_PROTOCOL)
