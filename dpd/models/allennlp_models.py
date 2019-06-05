@@ -97,6 +97,7 @@ class ELMoCrfTagger(Model):
             weight=weight,
             dataset_id=dataset_id,
             entry_id=entry_id,
+            prob_labels=prob_labels,
         )
 
         return model_out
