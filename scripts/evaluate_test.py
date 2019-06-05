@@ -3,10 +3,13 @@ from typing import (
     Tuple,
     Dict,
     Optional,
+    Any
 )
 
 import os
 import sys
+import pickle
+from tqdm import tqdm
 
 import torch
 import allennlp
@@ -70,6 +73,76 @@ def construct_vocab(datasets: List[BIODataset]) -> Vocabulary:
 
     return vocab
 
+def simple_metrics(metrics: dict):
+    def log_special_metrics(metric_name: str, metric_val: object) -> List[Tuple[str, int]]:
+        if type(metric_val) == int or type(metric_val) == float:
+            return [(metric_name, metric_val)]
+        elif type(metric_val) == list:
+            res = []
+            for metric_val_item in metric_val:
+                class_label = metric_val_item['class']
+                for metric_n, metric_v in metric_val_item.items():
+                    if metric_n == 'class':
+                        # skip class names
+                        continue
+                    res.append(
+                        (
+                            f'{metric_name}_{class_label}_{metric_n}',
+                            metric_v,
+                        )
+                    )
+            return res
+        else:
+            logging.warning(f'Unknown metric type: {type(metric_val)} for ({metric_name}, {metric_val})')
+            return []
+
+    metric_list = []
+    for metric, val in metrics.items():
+        metric_name = metric
+        set_name = 'train'
+        if metric_name.startswith('_'):
+            # ignore hidden
+            metric_name = metric_name[1:]
+        
+        full_metric_name = f'{metric_name}'
+
+        metric_list.extend(
+            filter(
+                lambda x: x is not None,
+                log_special_metrics(
+                    metric_name=full_metric_name,
+                    metric_val=val,
+                ),
+            ),
+        )
+
+    return metric_list
+
+def get_all_model_checkpoints(experiment_dir: str, experiment_name: str) -> List[Dict[str, Any]]: 
+    res = []
+    for trials in os.listdir(experiment_dir):
+        trial_dir = os.path.join(experiment_dir)
+        trial_num: int = int(trial_dir[-1])
+        for files in os.listdir(trial_dir):
+            for f in files:
+                file_name = os.path.splitext(f)[0]
+                model_prefix: str = "model_checkpoint_"
+                if file_name.startswith(model_prefix):
+                    dataset_size: int = int(file_name[len(model_prefix):])
+                    res.append({
+                        'experiment_name': experiment_name,
+                        'trial': trial_num,
+                        'dataset_size': dataset_size,
+                        'full_path': os.path.join(trial_dir, f)
+                    })
+    return res
+
+def evalaute_checkpoint(model, instances, iterator, cuda_device, model_path):
+    with open(model_path, 'rb') as f:
+        model.load_state_dict(torch.load(f))
+    metrics = evaluate(model, instances, iterator, cuda_device, "")
+    return simple_metrics(metrics)
+
 def main():
     args = get_active_args()
     args.add_argument('--model_path', type=str)
@@ -115,8 +188,6 @@ def main():
     )
 
     model.share_memory()
-    with open(args.model_path, 'rb') as f:
-        model.load_state_dict(torch.load(f))
     # return
     dataset_reader = BIODatasetReader(
         bio_dataset=valid_bio,
@@ -129,7 +200,7 @@ def main():
     instances = dataset_reader.read('temp.txt')
 
     iterator = BucketIterator(
-        batch_size=1,
+        batch_size=args.batch_size,
         sorting_keys=[("sentence", "num_tokens")],
     )
 
@@ -141,9 +212,16 @@ def main():
     else:
         cuda_device = -1
 
-    metrics = evaluate(model, instances, iterator, cuda_device, "")
 
-    print(metrics)
+    checkpoint_info = get_all_model_checkpoints(args.model_path)
+    results = []
+    for ckpt in tqdm(checkpoint_info):
+        dataset_size, trial, experiment_name, model_path = ckpt['dataset_size'], ckpt['tria'], ckpt['experiment_name'], ckpt['full_path']
+        metrics = evalaute_checkpoint(model, instances, iterator, cuda_device, model_path)
+        ckpt['metrics'] = metrics
+
+    with open(os.path.join(model_path, f'results_test_{args.text}'), 'wb') as handle:
+        pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
     main()
