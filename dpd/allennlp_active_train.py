@@ -219,7 +219,7 @@ def active_train_fine_tune_iteration(
             optimizer_weight_decay=optimizer_weight_decay,
             batch_size=batch_size,
             patience=patience,
-            num_epochs=num_epochs,
+            num_epochs=6,
             device=device,
             dataset_name=unlabeled_dataset.dataset_name,
         )
