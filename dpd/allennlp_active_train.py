@@ -226,6 +226,7 @@ def active_train_fine_tune_iteration(
             num_epochs=6,
             device=device,
             dataset_name=unlabeled_dataset.dataset_name,
+            serialization_dir=None,
         )
 
         log_train_metrics(logger, weak_metrics, step=len(train_data), prefix='weak')
@@ -244,7 +245,7 @@ def active_train_fine_tune_iteration(
         num_epochs=num_epochs,
         device=device,
         dataset_name=unlabeled_dataset.dataset_name,
-        serialization_dir=os.path.join(logger.log_dir, 'saved_models', len(train_data))
+        serialization_dir=os.path.join(logger.log_dir, 'saved_models', len(train_data)),
     )
 
     return model, metrics
