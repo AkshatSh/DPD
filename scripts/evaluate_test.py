@@ -225,7 +225,7 @@ def main():
         summary_writer = csv.writer(f)
         summary_writer.writerow(['trial', 'dataset_size', 'span_f1', 'token_f1'])
         for ckpt in tqdm(checkpoint_info):
-            dataset_size, trial, experiment_name, model_path = ckpt['dataset_size'], ckpt['tria'], ckpt['experiment_name'], ckpt['full_path']
+            dataset_size, trial, experiment_name, model_path = ckpt['dataset_size'], ckpt['trial'], ckpt['experiment_name'], ckpt['full_path']
             metrics = evalaute_checkpoint(model, instances, iterator, cuda_device, model_path)
             ckpt['metrics'] = metrics
 
