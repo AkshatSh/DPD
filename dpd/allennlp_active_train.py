@@ -9,8 +9,10 @@ import os
 import argparse
 import logging
 import copy
+import random
 
 import torch
+import numpy as np
 from torch import optim
 
 from allennlp.models import Model
@@ -479,9 +481,15 @@ def main():
 
     vocab = construct_vocab([train_bio, valid_bio])
 
+    if args.seed is not None:
+        print(f'seeding experiment to: {args.seed}')
+        random.seed(args.seed)
+        torch.torch.manual_seed(args.seed)
+        np.random.seed(args.seed)
     unlabeled_corpus = UnlabeledBIODataset(
         dataset_id=train_bio.dataset_id,
         bio_data=train_bio,
+        shuffle=args.seed is not None
     )
 
     model = build_model(

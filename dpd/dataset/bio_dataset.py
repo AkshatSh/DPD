@@ -15,6 +15,7 @@ import os
 import pickle
 import numpy as np
 from tqdm import tqdm
+import random
 
 BIODataEntry = Dict[str, object]
 
@@ -117,6 +118,7 @@ class UnlabeledBIODataset(BIODataset):
         self,
         bio_data: BIODataset,
         dataset_id: int,
+        shuffle: Optional[bool] = False
     ):
         super().__init__(
             dataset_id=dataset_id,
@@ -132,6 +134,9 @@ class UnlabeledBIODataset(BIODataset):
                 'weight': data['weight'],
             } for data in bio_data
         ]
+
+        if shuffle:
+            random.shuffle(self.data)
     
     def remove(self, query) -> None:
         s_id, s_in = query
