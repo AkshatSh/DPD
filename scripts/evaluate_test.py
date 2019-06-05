@@ -222,7 +222,7 @@ def main():
     results = []
     summary_file = os.path.join(args.model_path, f'evaluate_summary_test_{args.test}.csv')
     with open(summary_file, 'w') as f:
-        summary_writer = csv.writer(summary_file)
+        summary_writer = csv.writer(f)
         summary_writer.writerow(['trial', 'dataset_size', 'span_f1', 'token_f1'])
         for ckpt in tqdm(checkpoint_info):
             dataset_size, trial, experiment_name, model_path = ckpt['dataset_size'], ckpt['tria'], ckpt['experiment_name'], ckpt['full_path']
