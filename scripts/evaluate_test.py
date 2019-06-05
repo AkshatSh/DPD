@@ -124,7 +124,7 @@ def get_all_model_checkpoints(experiment_dir: str, experiment_name: str) -> List
     for trial in os.listdir(experiment_dir):
         if not trial.startswith('trial_'):
             continue
-        trial_dir = os.path.join(experiment_dir)
+        trial_dir = os.path.join(experiment_dir, trial)
         trial_num: int = int(trial[-1])
         for files in os.listdir(trial_dir):
             for f in [files]:
