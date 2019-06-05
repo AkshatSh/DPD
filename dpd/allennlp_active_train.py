@@ -23,6 +23,7 @@ from allennlp.data.token_indexers import TokenIndexer, SingleIdTokenIndexer
 from allennlp.data.iterators import BucketIterator
 from allennlp.training.trainer import Trainer
 from allennlp.data.token_indexers import PretrainedBertIndexer
+from allennlp.training.tensorboard_writer import TensorboardWriter
 
 from dpd.dataset import (
     ActiveBIODataset,
@@ -130,6 +131,16 @@ def train(
         serialization_dir=serialization_dir,
         num_serialized_models_to_keep=2,
     )
+
+    # HACK
+    trainer._tensorboard = TensorboardWriter(
+            get_batch_num_total=lambda: trainer._batch_num_total,
+            serialization_dir=None,
+            summary_interval=100,
+            histogram_interval=None,
+            should_log_parameter_statistics=False,
+            should_log_learning_rate=False
+    )
     metrics = trainer.train()
 
 
@@ -226,7 +237,7 @@ def active_train_fine_tune_iteration(
             num_epochs=6,
             device=device,
             dataset_name=unlabeled_dataset.dataset_name,
-            serialization_dir=None,
+            serialization_dir=f'/tmp/akshats/dpd/{random.random()}',
         )
 
         log_train_metrics(logger, weak_metrics, step=len(train_data), prefix='weak')
@@ -245,7 +256,7 @@ def active_train_fine_tune_iteration(
         num_epochs=num_epochs,
         device=device,
         dataset_name=unlabeled_dataset.dataset_name,
-        serialization_dir=os.path.join(logger.log_dir, 'saved_models', len(train_data)),
+        serialization_dir=os.path.join(logger.log_dir, 'saved_models', f'{len(train_data)}'),
     )
 
     return model, metrics
