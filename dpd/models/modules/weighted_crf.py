@@ -21,7 +21,7 @@ def _mask_mult(inc: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
     return (batch, num_tags)
     '''
     batch, num_tags = inc.shape
-    res = torch.Tensor(*inc.shape)
+    res = torch.Tensor(*inc.shape).to(inc.device)
     for i in range(batch):
         val: int = mask[i]
         res[i] = inc[i] * val
