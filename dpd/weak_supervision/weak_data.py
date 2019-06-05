@@ -227,7 +227,6 @@ def build_weak_data(
     bio_corpus = bio_converter.convert(fin_annotated_corpus)
     for i, item in enumerate(bio_corpus):
         item['weight'] = weight
-    with open(cached_weak_data_name) as f:
-        with open(cached_weak_data_name, 'wb') as f:
+    with open(cached_weak_data_name, 'wb') as f:
             pickle.dump(bio_corpus, f)
     return bio_corpus
