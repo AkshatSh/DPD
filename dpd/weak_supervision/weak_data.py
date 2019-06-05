@@ -8,6 +8,10 @@ from typing import (
     Set,
 )
 
+import os 
+import sys
+import pickle
+
 import logging
 from tqdm import tqdm
 
@@ -30,6 +34,10 @@ from dpd.weak_supervision.dictionary_functions import (
 
 from dpd.weak_supervision.contextual_functions import (
     CONTEXTUAL_FUNCTIONS_IMPL,
+)
+
+from dpd.constants import (
+    SAVE_DIR
 )
 
 from dpd.weak_supervision.collator import (
@@ -135,6 +143,10 @@ def build_weak_data(
         ``DatasetType``
             the weak dataset that can be used along side training
     '''
+    cached_weak_data_name: str = os.path.join(SAVE_DIR, f'{unlabeled_corpus.dataset_name}_{len(train_data)}')
+    if os.path.exists(cached_weak_data_name):
+        with open(cached_weak_data_name, 'rb') as f:
+            return pickle.load(f)
     if parallelize and contextual_word_embeddings is not None:
         # ensure the CWR modules are moved to shared memory
         for cwr in contextual_word_embeddings:
@@ -215,4 +227,7 @@ def build_weak_data(
     bio_corpus = bio_converter.convert(fin_annotated_corpus)
     for i, item in enumerate(bio_corpus):
         item['weight'] = weight
+    with open(cached_weak_data_name) as f:
+        with open(cached_weak_data_name, 'wb') as f:
+            pickle.dump(bio_corpus, f)
     return bio_corpus
