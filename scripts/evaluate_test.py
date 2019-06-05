@@ -10,6 +10,7 @@ import os
 import sys
 import pickle
 from tqdm import tqdm
+import csv
 
 import torch
 import allennlp
@@ -121,10 +122,12 @@ def simple_metrics(metrics: dict):
 def get_all_model_checkpoints(experiment_dir: str, experiment_name: str) -> List[Dict[str, Any]]: 
     res = []
     for trial in os.listdir(experiment_dir):
+        if not trial.startswith('trial_'):
+            continue
         trial_dir = os.path.join(experiment_dir)
-        trial_num: int = int(trail[-2])
+        trial_num: int = int(trial[-2])
         for files in os.listdir(trial_dir):
-            for f in files:
+            for f in [files]:
                 file_name = os.path.splitext(f)[0]
                 model_prefix: str = "model_checkpoint_"
                 if file_name.startswith(model_prefix):
@@ -147,6 +150,10 @@ def main():
     args = get_active_args()
     args.add_argument('--model_path', type=str)
     args = args.parse_args()
+
+    checkpoint_info = get_all_model_checkpoints(args.model_path, experiment_name=args.model_path)
+    print(f'{len(checkpoint_info)} checkpoints found')
+
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
 
@@ -212,16 +219,22 @@ def main():
     else:
         cuda_device = -1
 
-
-    checkpoint_info = get_all_model_checkpoints(args.model_path, experiment_name=args.model_path)
     results = []
-    for ckpt in tqdm(checkpoint_info):
-        dataset_size, trial, experiment_name, model_path = ckpt['dataset_size'], ckpt['tria'], ckpt['experiment_name'], ckpt['full_path']
-        metrics = evalaute_checkpoint(model, instances, iterator, cuda_device, model_path)
-        ckpt['metrics'] = metrics
+    summary_file = os.path.join(args.model_path, 'evaluate_summary.csv')
+    with open(summary_file) as f:
+        summary_writer = csv.writer(summary_file)
+        summary_writer.writerow(['trial', 'dataset_size', 'span_f1', 'token_f1'])
+        for ckpt in tqdm(checkpoint_info):
+            dataset_size, trial, experiment_name, model_path = ckpt['dataset_size'], ckpt['tria'], ckpt['experiment_name'], ckpt['full_path']
+            metrics = evalaute_checkpoint(model, instances, iterator, cuda_device, model_path)
+            ckpt['metrics'] = metrics
+
+            results.append([trial, dataset_size, metrics['f1-measure-overall'], metrics['tag_f1']])
+            summary_writer.writerow([trial, dataset_size, metrics['f1-measure-overall'], metrics['tag_f1']])
 
     with open(os.path.join(model_path, f'results_test_{args.text}'), 'wb') as handle:
-        pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(checkpoint_info, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    
 
 if __name__ == '__main__':
     main()
