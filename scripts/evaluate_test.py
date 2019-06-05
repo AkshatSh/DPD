@@ -213,7 +213,7 @@ def main():
         cuda_device = -1
 
 
-    checkpoint_info = get_all_model_checkpoints(args.model_path)
+    checkpoint_info = get_all_model_checkpoints(args.model_path, experiment_name=args.model_path)
     results = []
     for ckpt in tqdm(checkpoint_info):
         dataset_size, trial, experiment_name, model_path = ckpt['dataset_size'], ckpt['tria'], ckpt['experiment_name'], ckpt['full_path']
