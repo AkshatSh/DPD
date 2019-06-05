@@ -120,9 +120,9 @@ def simple_metrics(metrics: dict):
 
 def get_all_model_checkpoints(experiment_dir: str, experiment_name: str) -> List[Dict[str, Any]]: 
     res = []
-    for trials in os.listdir(experiment_dir):
+    for trial in os.listdir(experiment_dir):
         trial_dir = os.path.join(experiment_dir)
-        trial_num: int = int(trial_dir[-1])
+        trial_num: int = int(trail[-2])
         for files in os.listdir(trial_dir):
             for f in files:
                 file_name = os.path.splitext(f)[0]
