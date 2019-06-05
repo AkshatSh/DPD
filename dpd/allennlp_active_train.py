@@ -84,6 +84,7 @@ def train(
     num_epochs: int,
     device: str,
     dataset_name: str,
+    serialization_dir: str,
 ) -> Tuple[Model, MetricsType]:
     train_reader = BIODatasetReader(
         ActiveBIODataset(train_data, dataset_id=0, binary_class=binary_class, dataset_name=dataset_name),
@@ -126,8 +127,11 @@ def train(
         num_epochs=num_epochs,
         cuda_device=cuda_device,
         validation_metric='+f1-measure-overall',
+        serialization_dir=serialization_dir,
+        num_serialized_models_to_keep=2,
     )
     metrics = trainer.train()
+
 
     return model, metrics
 
@@ -240,6 +244,7 @@ def active_train_fine_tune_iteration(
         num_epochs=num_epochs,
         device=device,
         dataset_name=unlabeled_dataset.dataset_name,
+        serialization_dir=os.path.join(logger.log_dir, 'saved_models', len(train_data))
     )
 
     return model, metrics
@@ -340,6 +345,7 @@ def active_train_iteration(
         num_epochs=num_epochs,
         device=device,
         dataset_name=unlabeled_dataset.dataset_name,
+        serialization_dir=os.path.join(logger.log_dir, 'saved_models', len(train_data))
     )
 
     return model, metrics
