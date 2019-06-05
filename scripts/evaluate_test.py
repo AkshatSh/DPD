@@ -114,9 +114,10 @@ def main():
         dataset_name=args.dataset.lower(),
     )
 
+    model.share_memory()
     with open(args.model_path, 'rb') as f:
         model.load_state_dict(torch.load(f))
-
+    # return
     dataset_reader = BIODatasetReader(
         bio_dataset=valid_bio,
         token_indexers={
@@ -125,7 +126,7 @@ def main():
         },
     )
 
-    instances = dataset_reader.read()
+    instances = dataset_reader.read('temp.txt')
 
     iterator = BucketIterator(
         batch_size=1,
@@ -140,6 +141,9 @@ def main():
     else:
         cuda_device = -1
 
-    metrics = evaluate(model, instances, iterator, cuda_device)
+    metrics = evaluate(model, instances, iterator, cuda_device, "")
 
     print(metrics)
+
+if __name__ == '__main__':
+    main()
