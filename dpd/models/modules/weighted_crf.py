@@ -21,11 +21,12 @@ def _mask_mult(inc: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
     return (batch, num_tags)
     '''
     batch, num_tags = inc.shape
+    res = torch.Tensor(*inc.shape)
     for i in range(batch):
         val: int = mask[i]
-        inc[i] = inc[i] * val
+        res[i] = inc[i] * val
     
-    return inc
+    return res
 
 
 class WeightedCRF(ConditionalRandomField):
@@ -209,7 +210,7 @@ class WeightedCRF(ConditionalRandomField):
         # Transition from last state to "stop" state. To start with, we need to find the last tag
         # for each instance.
         last_tag_index = mask.sum(0).long() - 1
-        last_tags = probability_tags.gather(0, last_tag_index.view(1, batch_size, 1).repeat(1, 1, 5)).squeeze(0)
+        last_tags = probability_tags.gather(0, last_tag_index.view(1, batch_size, 1).repeat(1, 1, probability_tags.shape[-1])).squeeze(0)
         # (2, 5)
 
         # Compute score of transitioning to `stop_tag` from each "last tag".
@@ -221,7 +222,7 @@ class WeightedCRF(ConditionalRandomField):
         # Add the last input if it's not masked.
         last_inputs = logits[-1]                                         # (batch_size, num_tags)
         last_input_score = last_inputs * last_tags  # (batch_size, 1)
-        last_input_score = last_input_score.squeeze()                    # (batch_size,)
+        last_input_score = last_input_score                    # (batch_size,)
 
         # print(last_inputs.shape, last_input_score.shape, last_tags.shape, last_transition_score.shape, mask[-1].shape)
         score = score + last_transition_score + _mask_mult(last_input_score, mask[-1])
