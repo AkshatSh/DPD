@@ -220,7 +220,7 @@ def main():
         cuda_device = -1
 
     results = []
-    summary_file = os.path.join(args.model_path, 'evaluate_summary.csv')
+    summary_file = os.path.join(args.model_path, f'evaluate_summary_test_{args.test}.csv')
     with open(summary_file, 'w') as f:
         summary_writer = csv.writer(summary_file)
         summary_writer.writerow(['trial', 'dataset_size', 'span_f1', 'token_f1'])
@@ -232,7 +232,7 @@ def main():
             results.append([trial, dataset_size, metrics['f1-measure-overall'], metrics['tag_f1']])
             summary_writer.writerow([trial, dataset_size, metrics['f1-measure-overall'], metrics['tag_f1']])
 
-    with open(os.path.join(model_path, f'results_test_{args.text}'), 'wb') as handle:
+    with open(os.path.join(model_path, f'results_test_{args.test}'), 'wb') as handle:
         pickle.dump(checkpoint_info, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
 
