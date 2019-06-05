@@ -221,7 +221,7 @@ def main():
 
     results = []
     summary_file = os.path.join(args.model_path, 'evaluate_summary.csv')
-    with open(summary_file) as f:
+    with open(summary_file, 'w') as f:
         summary_writer = csv.writer(summary_file)
         summary_writer.writerow(['trial', 'dataset_size', 'span_f1', 'token_f1'])
         for ckpt in tqdm(checkpoint_info):
