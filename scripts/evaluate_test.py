@@ -59,7 +59,7 @@ def construct_vocab(datasets: List[BIODataset]) -> Vocabulary:
         bio_dataset=bio_dataset,
         token_indexers={
             'tokens': ELMoTokenCharactersIndexer(),
-            'single_tokens': SingleIdTokenIndexer(), # including for future pipelines to use, one hot
+            # 'single_tokens': SingleIdTokenIndexer(), # including for future pipelines to use, one hot
         },
     ) for bio_dataset in datasets]
 
@@ -168,7 +168,7 @@ def main():
     if args.test:
         print('using test set')
     valid_bio = BIODataset(
-        dataset_id=1,
+        dataset_id=2,
         file_name=valid_file if not args.test else test_file,
         binary_class=args.binary_class,
         dataset_name=args.dataset,
@@ -193,7 +193,7 @@ def main():
         bio_dataset=valid_bio,
         token_indexers={
             'tokens': ELMoTokenCharactersIndexer(),
-            'single_tokens': SingleIdTokenIndexer(), # including for future pipelines to use, one hot
+            # 'single_tokens': SingleIdTokenIndexer(), # including for future pipelines to use, one hot
         },
     )
 
