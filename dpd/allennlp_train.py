@@ -30,6 +30,7 @@ from dpd.constants import (
     CONLL2003_VALID,
     CADEC_TRAIN,
     CADEC_VALID,
+    CADEC_TEST,
 )
 
 from dpd.models.embedder.ner_elmo import NERElmoTokenEmbedder
@@ -42,9 +43,7 @@ def setup_reader(d_id: int, file_name: str, binary_class: str) -> DatasetReader:
         file_name=file_name,
         binary_class=binary_class,
     )
-
     bio_dataset.parse_file()
-
     return BIODatasetReader(
         bio_dataset=bio_dataset,
         token_indexers={
@@ -59,25 +58,17 @@ train_dataset = train_reader.read(cached_path(CONLL2003_TRAIN))
 validation_dataset = valid_reader.read(cached_path(CONLL2003_VALID))
 
 EMBEDDING_DIM = 1024
-HIDDEN_DIM = 512
+HIDDEN_DIM = 1024
 
-
-# token_embedding = Embedding(num_embeddings=vocab.get_vocab_size('tokens'),
-#                             embedding_dim=EMBEDDING_DIM)
-# word_embeddings = BasicTextFieldEmbedder({"tokens": token_embedding})
 vocab = Vocabulary.from_instances(train_dataset + validation_dataset)
-# vocab = Vocabulary()
-# elmo_embedder = NERElmoTokenEmbedder()
-# word_embeddings = BasicTextFieldEmbedder({"tokens": elmo_embedder})
-
-# lstm = PytorchSeq2SeqWrapper(torch.nn.LSTM(EMBEDDING_DIM, HIDDEN_DIM, bidirectional=True, batch_first=True))
 
 model = build_model(
-    model_type='ELMo_linear',
+    model_type='ELMo_bilstm_crf',
     vocab=vocab,
     hidden_dim=HIDDEN_DIM,
     class_labels=['B-ADR', 'I-ADR'],
     cached=True,
+    dataset='cadec',
 )
 
 if torch.cuda.is_available():
@@ -86,7 +77,7 @@ if torch.cuda.is_available():
 else:
     cuda_device = -1
 
-optimizer = optim.SGD(model.parameters(), lr=.01, weight_decay=1e-4)
+optimizer = optim.SGD(model.parameters(), lr=0.01, weight_decay=1e-4)
 iterator = BucketIterator(batch_size=1, sorting_keys=[("sentence", "num_tokens")])
 iterator.index_with(vocab)
 
@@ -97,7 +88,18 @@ trainer = Trainer(
     train_dataset=train_dataset,
     validation_dataset=validation_dataset,
     patience=10,
-    num_epochs=15,
+    num_epochs=25,
     cuda_device=cuda_device,
+    serialization_dir='/tmp/akshats/dpd/models',
 )
 metrics = trainer.train()
+print(metrics)
+iterator = BucketIterator(
+    batch_size=4,
+    sorting_keys=[("sentence", "num_tokens")],
+)
+test_reader = setup_reader(2, CADEC_TEST, 'ADR')
+iterator.index_with(vocab)
+instances = test_reader.read('temp.txt')
+metrics = evaluate(model, instances, iterator, cuda_device, "")
+print(metrics)
