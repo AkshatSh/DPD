@@ -22,6 +22,7 @@ from allennlp.training.metrics import SpanBasedF1Measure
 from allennlp.data.iterators import BucketIterator
 from allennlp.training.trainer import Trainer
 from allennlp.predictors import SentenceTaggerPredictor
+from allennlp.training.tensorboard_writer import TensorboardWriter
 
 from dpd.dataset.bio_dataset import BIODataset
 from dpd.dataset.bio_dataloader import BIODatasetReader
@@ -68,7 +69,7 @@ model = build_model(
     hidden_dim=HIDDEN_DIM,
     class_labels=['B-ADR', 'I-ADR'],
     cached=True,
-    dataset='cadec',
+    dataset_name='cadec',
 )
 
 if torch.cuda.is_available():
@@ -91,6 +92,14 @@ trainer = Trainer(
     num_epochs=25,
     cuda_device=cuda_device,
     serialization_dir='/tmp/akshats/dpd/models',
+)
+trainer._tensorboard = TensorboardWriter(
+    get_batch_num_total=lambda: trainer._batch_num_total,
+    serialization_dir=None,
+    summary_interval=100,
+    histogram_interval=None,
+    should_log_parameter_statistics=False,
+    should_log_learning_rate=False
 )
 metrics = trainer.train()
 print(metrics)
