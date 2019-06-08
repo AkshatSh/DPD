@@ -54,7 +54,7 @@ from dpd.utils import get_all_embedders, log_train_metrics
 from dpd.args import get_active_args
 from dpd.training.allennlp_trainer import AllenNLPTrainer
 
-ORACLE_SAMPLES = [10, 40, 50]
+ORACLE_SAMPLES = [10, 40, 50, 400]
 # ORACLE_SAMPLES = [10, 100, 400, 500]
 
 logger = logging.getLogger(name=__name__)
