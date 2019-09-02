@@ -22,6 +22,7 @@ from dpd.dataset import BIODataset, BIODatasetReader
 from dpd.models.embedder import NERElmoTokenEmbedder, CachedTextFieldEmbedder
 from dpd.models import LinearType
 from dpd.weak_supervision.contextual_functions import CWRLinear, CWRkNN
+from dpd.weak_supervision.feature_extractor import FeatureExtractor, CWRFeatureExtractor
 from dpd.constants import GLOVE_DIR
 
 SHOULD_RUN = os.path.exists(GLOVE_DIR)
@@ -58,7 +59,7 @@ class CWRFuncTest(unittest.TestCase):
         return dataset
 
     @classmethod
-    def setup_embedder(cls, cache: bool = True) -> CachedTextFieldEmbedder:
+    def setup_embedder(cls, cache: bool = True) -> FeatureExtractor:
         token_embedder, token_indexer = CWRFuncTest.get_embedder_info()
         train_bio = CWRFuncTest.create_fake_data('Tag')
         train_reader = BIODatasetReader(
@@ -81,7 +82,7 @@ class CWRFuncTest(unittest.TestCase):
             vocab=vocab,
         )
 
-        return cached_embedder
+        return CWRFeatureExtractor(cached_embedder)
 
     @classmethod
     def _exec_test(cls, test: callable):
@@ -94,7 +95,7 @@ class CWRFuncTest(unittest.TestCase):
             embedder = CWRFuncTest.setup_embedder()
             cwr_linear = CWRLinear(
                 positive_label='Tag',
-                embedder=embedder,
+                feature_extractor=embedder,
                 linear_type=LinearType.SVM_LINEAR,
             )
             cwr_linear.train(dataset, dataset_id=dataset.dataset_id)
@@ -107,7 +108,7 @@ class CWRFuncTest(unittest.TestCase):
             embedder = CWRFuncTest.setup_embedder()
             cwr_linear = CWRkNN(
                 positive_label='Tag',
-                embedder=embedder,
+                feature_extractor=embedder,
                 k=5,
                 resolve_mode='weighted',
                 threshold=0.7,

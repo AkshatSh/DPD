@@ -19,7 +19,13 @@ from allennlp.modules.token_embedders import ElmoTokenEmbedder
 
 from dpd.models.embedder import CachedTextFieldEmbedder, NERElmoTokenEmbedder
 from dpd.utils import SaveFile, H5SaveFile
-from dpd.constants import CADEC_NER_ELMo, CADEC_BERT, CADEC_ELMo, ELMO_OPTIONS_FILE, ELMO_WEIGHT_FILE
+from dpd.constants import (
+    ELMo_file,
+    BERT_file,
+    NER_ELMo_file,
+    ELMO_OPTIONS_FILE,
+    ELMO_WEIGHT_FILE,
+)
 
 def setup_embedder(text_field_embedder: BasicTextFieldEmbedder, save_file: SaveFile) -> CachedTextFieldEmbedder:
 
@@ -34,10 +40,10 @@ def setup_embedder(text_field_embedder: BasicTextFieldEmbedder, save_file: SaveF
 
     return word_embeddings
 
-def get_elmo_embedder() -> CachedTextFieldEmbedder:
+def get_elmo_embedder(dataset_file: str) -> CachedTextFieldEmbedder:
     elmo_embedder = ElmoTokenEmbedder(ELMO_OPTIONS_FILE, ELMO_WEIGHT_FILE)
 
-def get_ner_elmo_embedder() -> CachedTextFieldEmbedder:
+def get_ner_elmo_embedder(dataset_file: str) -> CachedTextFieldEmbedder:
     elmo_embedder = NERElmoTokenEmbedder()
     word_embeddings = BasicTextFieldEmbedder(
         {"tokens": elmo_embedder},
@@ -45,10 +51,10 @@ def get_ner_elmo_embedder() -> CachedTextFieldEmbedder:
 
     return setup_embedder(
         text_field_embedder=word_embeddings,
-        save_file=H5SaveFile(CADEC_NER_ELMo),
+        save_file=H5SaveFile(dataset_file),
     )
 
-def get_bert_embedder() -> CachedTextFieldEmbedder:
+def get_bert_embedder(dataset_file: str) -> CachedTextFieldEmbedder:
     bert_embedder = PretrainedBertEmbedder(
         pretrained_model="bert-base-uncased",
         top_layer_only=True, # conserve memory
@@ -63,32 +69,38 @@ def get_bert_embedder() -> CachedTextFieldEmbedder:
 
     return setup_embedder(
         text_field_embedder=word_embeddings,
-        save_file=H5SaveFile(CADEC_BERT),
+        save_file=H5SaveFile(dataset_file),
     )
 
-def get_cached_embedder(e_type: str) -> CachedTextFieldEmbedder:
+def get_cached_embedder(dataset_name: str, e_type: str) -> CachedTextFieldEmbedder:
     if e_type == 'elmo':
-        return get_elmo_embedder()
+        return get_elmo_embedder(ELMo_file[dataset_name])
     elif e_type == 'bert':
-        return get_bert_embedder()
+        return get_bert_embedder(BERT_file[dataset_name])
     elif e_type == 'ner_elmo':
-        return get_ner_elmo_embedder()
+        return get_ner_elmo_embedder(NER_ELMo_file[dataset_name])
     else:
         raise Exception(f'Unknown type: {e_type}')
 
-def get_all_embedders() -> List[CachedTextFieldEmbedder]:
-    return [
-        get_cached_embedder(e_type) for e_type in ['bert', 'ner_elmo']
+def get_all_embedders(dataset_name: str, share_memory: Optional[bool] = False) -> List[CachedTextFieldEmbedder]:
+    embedders = [
+        get_cached_embedder(dataset_name, e_type) for e_type in ['bert', 'ner_elmo']
     ]
 
+    if share_memory:
+        list(map(lambda e: e.share_memory(), embedders))
+
+    return embedders
+
 def balance_dataset(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-    pos_idx = np.where(y == 1)
-    neg_idx = np.where(y == 0)
+    pos_idx = np.where(y == 1)[0]
+    neg_idx = np.where(y == 0)[0]
     if len(neg_idx) <= len(pos_idx):
         return x, y
 
-    smaller_negative: np.ndarray = np.random.choice(neg_idx, len(pos_idx))
+    negative_sample_size = min(len(neg_idx), len(pos_idx) * 2, 5000)
+
+    smaller_negative: np.ndarray = np.random.choice(neg_idx, negative_sample_size)
 
     training_idxes = np.concatenate((pos_idx, smaller_negative))
-
     return x[training_idxes], y[training_idxes]

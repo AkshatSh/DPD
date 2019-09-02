@@ -18,7 +18,7 @@ def time_metric(function: callable) -> callable:
         start_time: float = time.time()
         res = function(*args, **kwargs)
         end_time: float = time.time()
-        logger.debug(f'{function.__name__}: {end_time - start_time} seconds')
+        logger.warning(f'{function.__name__}: {end_time - start_time} seconds')
         return res
     return _wrapper
 
@@ -28,7 +28,7 @@ def log_time(function_prefix: str) -> callable:
             start_time: float = time.time()
             res = function(*args, **kwargs)
             end_time: float = time.time()
-            logger.debug(f'{function_prefix}: {end_time - start_time} seconds')
+            logger.warning(f'{function_prefix}: {end_time - start_time} seconds')
             return res
         return _wrapper
     return _decorator

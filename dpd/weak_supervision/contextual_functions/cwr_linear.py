@@ -18,7 +18,9 @@ from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction, AnnotatedDataType, AnnotationType
 from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.models import construct_linear_classifier, LinearType
-from dpd.utils import TensorList
+from dpd.common import TensorList
+from dpd.utils import balance_dataset, log_time
+from dpd.weak_supervision.feature_extractor import FeatureExtractor
 
 from ..utils import get_label_index, construct_train_data, extract_features, NEGATIVE_LABEL, ABSTAIN_LABEL
 
@@ -26,14 +28,14 @@ class CWRLinear(WeakFunction):
     def __init__(
         self,
         positive_label: str,
-        embedder: CachedTextFieldEmbedder,
+        feature_extractor: FeatureExtractor,
         linear_type: LinearType = LinearType.SVM_LINEAR,
         threshold: float = 0.7,
         **kwargs,
     ):
         super(CWRLinear, self).__init__(positive_label, threshold, **kwargs)
         self.positive_label = positive_label
-        self.embedder = embedder
+        self.feature_extractor = feature_extractor
         self.linear_model = construct_linear_classifier(linear_type=linear_type)
     
     def _prepare_train_data(
@@ -45,12 +47,13 @@ class CWRLinear(WeakFunction):
 
         def _feature_extractor(entry: AnnotationType) -> torch.Tensor:
             s_id, sentence = entry['id'], entry['input']
-            cwr_embeddings: torch.Tensor = self.embedder.get_embedding(
+            features = self.feature_extractor.get_features(
                 sentence_id=s_id,
                 dataset_id=dataset_id,
+                sentence=sentence,
             )
-            # assert shape is expected
-            assert cwr_embeddings.shape == (len(sentence), self.embedder.get_output_dim())
+            cwr_embeddings: torch.Tensor = TensorList(features).tensor()
+            assert cwr_embeddings.shape == (len(sentence), self.feature_extractor.get_output_dim())
             return cwr_embeddings
 
         return extract_features(
@@ -60,6 +63,7 @@ class CWRLinear(WeakFunction):
             feature_extractor=_feature_extractor,
         )
 
+    @log_time(function_prefix='cwr_linear:train')
     def train(self, train_data: AnnotatedDataType, dataset_id: int = 0):
         '''
         Train the keyword matching function on the training data
@@ -70,9 +74,11 @@ class CWRLinear(WeakFunction):
         train the function on the specified training data
         '''
         x_train, y_train = self._prepare_train_data(train_data=train_data, dataset_id=dataset_id, shuffle=True)
+        x_train, y_train = balance_dataset(x_train, y_train)
         self.linear_model.fit(x_train, y_train)
 
     
+    @log_time(function_prefix='cwr_linear:predict')
     def evaluate(self, unlabeled_corpus: UnlabeledBIODataset) -> AnnotatedDataType:
         '''
         evalaute the keyword function on the unlabeled corpus
@@ -86,10 +92,13 @@ class CWRLinear(WeakFunction):
         annotated_data = []
         for entry in unlabeled_corpus:
             s_id, sentence = entry['id'], entry['input']
-            cwr_embeddings: torch.Tensor = self.embedder.get_embedding(
+            features: List[torch.Tensor] = self.feature_extractor.get_features(
                 sentence_id=s_id,
                 dataset_id=unlabeled_corpus.dataset_id,
+                sentence=sentence,
             )
+
+            cwr_embeddings: torch.Tensor = TensorList(features).tensor()
 
             # (sentence_len, 1)
             if self.threshold is not None:
@@ -107,7 +116,7 @@ class CWRLinear(WeakFunction):
         return annotated_data
 
     def __str__(self):
-        return f'CWRLinear({self.embedder})'
+        return f'CWRLinear({self.feature_extractor})'
     
     def __repr__(self):
         return self.__str__()

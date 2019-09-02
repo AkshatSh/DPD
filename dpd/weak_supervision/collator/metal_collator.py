@@ -18,7 +18,7 @@ from metal.label_model import LabelModel
 from metal.analysis import lf_summary
 from tqdm import tqdm
 
-from dpd.utils import TensorList
+from dpd.common import TensorList
 
 from ..types import (
     AnnotatedDataType,
@@ -101,8 +101,8 @@ class SnorkeMeTalCollator(Collator):
         sparse_labels = sparse.csr_matrix(collated_labels)
         if descriptions is not None:
             descriptions = [(i, desc) for i, desc in enumerate(descriptions)]
-            logger.warn(f'labeling function order: {descriptions}')
-        logger.warn(lf_summary(sparse_labels))
+            logger.warning(f'labeling function order: {descriptions}')
+        logger.warning(lf_summary(sparse_labels))
         self.label_model.train_model(
             sparse_labels,
             n_epochs=self.num_epochs,
@@ -130,6 +130,7 @@ class SnorkeMeTalCollator(Collator):
                 'id': entry_id,
                 'input': words,
                 'output': labels,
+                'prob_labels': prob_labels,
             })
         return output
     

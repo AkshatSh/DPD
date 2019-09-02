@@ -11,6 +11,9 @@ except ImportError:
     from io import BytesIO         # Python 3.x
 logger = logging.getLogger(name=__name__)
 
+import torch
+from torch import nn
+
 class Logger(object):
     '''
     Logger object for tensorboard with the option to produce a summary csv file
@@ -35,6 +38,11 @@ class Logger(object):
                 summary_writer.writerow([tag, value, step])
         summary_file.close()
         logger.info(f'wrote summary file: {file_name}')
+    
+    def save_model(self, model: nn.Module, step: int):
+        model_path: str = os.path.join(self.log_dir, f'model_checkpoint_{step}.ckpt')
+        with open(model_path, 'wb') as f:
+            torch.save(model.state_dict(), f)
 
 
     def scalar_summary(self, tag: str, value: float, step: int):

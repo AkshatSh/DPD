@@ -34,7 +34,7 @@ The aim of this project is to figure out: how can we augment our training data t
 │   ├── __init__.py
 │   ├── __pycache__
 │   ├── allennlp_crf.py
-│   ├── allennlp_crf_tagger.py
+│   ├── crf_tagger.py
 │   ├── crf.py
 │   ├── elmo_bilstm_crf.py
 │   ├── embedder

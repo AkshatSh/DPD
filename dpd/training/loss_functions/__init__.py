@@ -1,1 +1,2 @@
 from .tsa_loss import TSALoss, TrainingScheduler, TrainingSchedulerType
+from .soft_cross_entropy_loss import SoftCrossEntropyLoss

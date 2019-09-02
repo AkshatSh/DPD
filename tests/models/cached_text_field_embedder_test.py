@@ -37,10 +37,10 @@ class CachecTextFieldEmbedderTest(unittest.TestCase):
     @classmethod
     def create_fake_data(cls, binary_class: Optional[str] = None) -> BIODataset:
         data = [
-            CachecTextFieldEmbedderTest.create_entry(['single'], ['B-Tag'], 0, 1.0),
-            CachecTextFieldEmbedderTest.create_entry(['single', 'double'], ['B-Tag', 'I-Tag'], 1, 1.0),
-            CachecTextFieldEmbedderTest.create_entry(['single', 'double', 'triple'], ['B-TTag', 'I-TTag', 'O'], 2, 1.0),
-            CachecTextFieldEmbedderTest.create_entry(['no_label'], ['O'], 3, 1.0),
+            cls.create_entry(['single'], ['B-Tag'], 0, 1.0),
+            cls.create_entry(['single', 'double'], ['B-Tag', 'I-Tag'], 1, 1.0),
+            cls.create_entry(['single', 'double', 'triple'], ['B-TTag', 'I-TTag', 'O'], 2, 1.0),
+            cls.create_entry(['no_label'], ['O'], 3, 1.0),
         ]
 
         dataset = BIODataset(0, 'fake_file.txt', binary_class)
@@ -142,3 +142,28 @@ class CachecTextFieldEmbedderTest(unittest.TestCase):
     
     def test_cache_forward_minibatch(self):
         self.test_cache_forward(batch_size=CachecTextFieldEmbedderTest.MINIBATCH_SIZE)
+    
+    def test_cache_share_memory(self):
+        bio_dataset = CachecTextFieldEmbedderTest.create_fake_data()
+        reader = BIODatasetReader(
+            bio_dataset=bio_dataset,
+        )
+
+        instances = reader.read('fake_file.txt')
+        vocab = Vocabulary.from_instances(instances)
+        token_embedding = Embedding(
+            num_embeddings=vocab.get_vocab_size('tokens'),
+            embedding_dim=CachecTextFieldEmbedderTest.EMBEDDING_DIM,
+        )
+        word_embeddings = BasicTextFieldEmbedder({"tokens": token_embedding})
+        cached_embedder = CachedTextFieldEmbedder(
+            text_field_embedder=word_embeddings,
+        )
+
+        cached_embedder.cache(
+            dataset_id=bio_dataset.dataset_id,
+            dataset=instances,
+            vocab=vocab,
+        )
+
+        cached_embedder.share_memory()

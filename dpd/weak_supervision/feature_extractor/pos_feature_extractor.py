@@ -17,7 +17,7 @@ import nltk
 import torch
 import allennlp
 from allennlp.data import Instance, Vocabulary
-from dpd.utils import TensorList
+from dpd.common import TensorList
 from dpd.constants import SPACY_POS_INDEX
 
 from .feature_extractor import FeatureExtractor

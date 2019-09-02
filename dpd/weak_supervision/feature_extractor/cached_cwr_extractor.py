@@ -19,7 +19,7 @@ import faiss
 from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction, AnnotatedDataType, AnnotationType
 from dpd.models.embedder import CachedTextFieldEmbedder
-from dpd.utils import TensorList
+from dpd.common import TensorList
 
 class CWRFeatureExtractor(WeakFunction):
     '''
@@ -33,18 +33,24 @@ class CWRFeatureExtractor(WeakFunction):
     ):
         self.embedder = embedder
     
+    def get_output_dim(self) -> int:
+        return self.embedder.get_output_dim()
+    
     def get_features(
         self,
         dataset_id: int,
         sentence_id: int,
         sentence: List[str],
     ) -> List[torch.Tensor]:
+        features = torch.zeros(len(sentence), self.embedder.get_output_dim())
         cwr_embeddings: torch.Tensor = self.embedder.get_embedding(
             sentence_id=sentence_id,
             dataset_id=dataset_id,
         )
 
-        return list(map(lambda t: t.unsqueeze(0), cwr_embeddings))
+        features[:len(cwr_embeddings)] = cwr_embeddings
+
+        return list(map(lambda t: t.unsqueeze(0), features))
 
     def __str__(self):
         return f'CWR({self.embedder})'

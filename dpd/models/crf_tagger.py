@@ -1,4 +1,10 @@
-from typing import Dict, Optional, List, Any
+from typing import (
+    Dict,
+    Optional,
+    List,
+    Any,
+    Tuple,
+)
 
 from overrides import overrides
 import torch
@@ -14,7 +20,7 @@ from allennlp.nn import InitializerApplicator, RegularizerApplicator
 import allennlp.nn.util as util
 from allennlp.training.metrics import CategoricalAccuracy, SpanBasedF1Measure
 from dpd.training.metrics import TagF1, AverageTagF1
-from dpd.models import WeightedCRF
+from dpd.models.modules import WeightedCRF
 
 class CrfTagger(Model):
     """
@@ -79,10 +85,13 @@ class CrfTagger(Model):
         initializer: InitializerApplicator = InitializerApplicator(),
         regularizer: Optional[RegularizerApplicator] = None,
         cached_embeddings: Optional[bool] = None,
+        freeze_encoder: Optional[bool] = False,
+        use_soft_label_training: Optional[bool] = False,
     ) -> None:
         super().__init__(vocab, regularizer)
-        self.cached_embeddings = cached_embeddings
 
+        self.freeze_encoder = freeze_encoder
+        self.cached_embeddings = cached_embeddings
         self.label_namespace = label_namespace
         self.text_field_embedder = text_field_embedder
         self.num_tags = self.vocab.get_vocab_size(label_namespace)
@@ -121,7 +130,9 @@ class CrfTagger(Model):
 
         self.include_start_end_transitions = include_start_end_transitions
         self.crf = WeightedCRF(
-                self.num_tags, constraints,
+                self.num_tags,
+                constraints,
+                use_soft_label_training=use_soft_label_training,
                 include_start_end_transitions=include_start_end_transitions
         )
 
@@ -145,6 +156,69 @@ class CrfTagger(Model):
             check_dimensions_match(encoder.get_output_dim(), feedforward.get_input_dim(),
                                    "encoder output dim", "feedforward input dim")
         initializer(self)
+    
+    def base_forward(
+        self,
+        tokens: Dict[str, torch.LongTensor],
+        entry_id: Optional[torch.LongTensor] = None,
+        dataset_id: Optional[torch.LongTensor] = None,
+        tags: torch.LongTensor = None,
+        metadata: List[Dict[str, Any]] = None,
+        weight: torch.Tensor = None,
+        **kwargs,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        if not self.cached_embeddings:
+            embedded_text_input = self.text_field_embedder(tokens)
+        else:
+            embedded_text_input = self.text_field_embedder(
+                tokens,
+                sentence_ids=entry_id,
+                dataset_ids=dataset_id,
+            )
+        mask = util.get_text_field_mask(tokens)
+
+        if self.dropout:
+            embedded_text_input = self.dropout(embedded_text_input)
+
+        encoded_text = self.encoder(embedded_text_input, mask)
+
+        if self.dropout:
+            encoded_text = self.dropout(encoded_text)
+
+        if self._feedforward is not None:
+            encoded_text = self._feedforward(encoded_text)
+        
+        return encoded_text, mask
+
+    def forward_internal(
+        self,  # type: ignore
+        tokens: Dict[str, torch.LongTensor],
+        entry_id: Optional[torch.LongTensor] = None,
+        dataset_id: Optional[torch.LongTensor] = None,
+        tags: torch.LongTensor = None,
+        metadata: List[Dict[str, Any]] = None,
+        weight: torch.Tensor = None,
+        # pylint: disable=unused-argument
+        **kwargs,
+    ) -> Dict[str, torch.Tensor]:
+        base_forward_args = dict(
+            tokens=tokens,
+            entry_id=entry_id,
+            dataset_id=dataset_id,
+            tags=tags,
+            metadata=metadata,
+            weight=weight,
+            **kwargs,
+        )
+
+        if not self.freeze_encoder:
+            encoded_text, mask = self.base_forward(**base_forward_args)
+        else:
+            with torch.no_grad():
+                encoded_text, mask = self.base_forward(**base_forward_args)
+
+        logits = self.tag_projection_layer(encoded_text)
+        return logits, mask
 
     @overrides
     def forward(self,  # type: ignore
@@ -154,6 +228,7 @@ class CrfTagger(Model):
                 tags: torch.LongTensor = None,
                 metadata: List[Dict[str, Any]] = None,
                 weight: torch.Tensor = None,
+                prob_labels: torch.Tensor = None,
                 # pylint: disable=unused-argument
                 **kwargs,
         ) -> Dict[str, torch.Tensor]:
@@ -187,28 +262,7 @@ class CrfTagger(Model):
         loss : ``torch.FloatTensor``, optional
             A scalar loss to be optimised. Only computed if gold label ``tags`` are provided.
         """
-        if not self.cached_embeddings:
-            embedded_text_input = self.text_field_embedder(tokens)
-        else:
-            embedded_text_input = self.text_field_embedder(
-                tokens,
-                sentence_ids=entry_id,
-                dataset_ids=dataset_id,
-            )
-        mask = util.get_text_field_mask(tokens)
-
-        if self.dropout:
-            embedded_text_input = self.dropout(embedded_text_input)
-
-        encoded_text = self.encoder(embedded_text_input, mask)
-
-        if self.dropout:
-            encoded_text = self.dropout(encoded_text)
-
-        if self._feedforward is not None:
-            encoded_text = self._feedforward(encoded_text)
-
-        logits = self.tag_projection_layer(encoded_text)
+        logits, mask = self.forward_internal(tokens, entry_id, dataset_id, tags, metadata, weight, **kwargs)
         best_paths = self.crf.viterbi_tags(logits, mask)
 
         # Just get the tags and ignore the score.
@@ -218,7 +272,7 @@ class CrfTagger(Model):
 
         if tags is not None:
             # Add negative log-likelihood as loss
-            log_likelihood = self.crf(logits, tags, mask, weight=weight)
+            log_likelihood = self.crf(logits, tags, mask, weight=weight, prob_labels=prob_labels)
             output["loss"] = -log_likelihood
 
             # Represent viterbi tags as "class probabilities" that we can

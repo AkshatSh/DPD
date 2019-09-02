@@ -14,7 +14,7 @@ import torch
 import numpy as np
 import allennlp
 
-from dpd.utils import TensorList
+from dpd.common import TensorList
 
 class FeaturePadder:
     @classmethod

@@ -5,7 +5,12 @@ from typing import (
     Union,
     Optional,
     Any,
+    Set,
 )
+
+import os 
+import sys
+import pickle
 
 import logging
 from tqdm import tqdm
@@ -29,6 +34,10 @@ from dpd.weak_supervision.dictionary_functions import (
 
 from dpd.weak_supervision.contextual_functions import (
     CONTEXTUAL_FUNCTIONS_IMPL,
+)
+
+from dpd.constants import (
+    SAVE_DIR
 )
 
 from dpd.weak_supervision.collator import (
@@ -67,8 +76,9 @@ def parallel_corpus_generation(
     function_args: List[Any],
 ) -> List[Tuple[str, AnnotatedDataType]]:
     # set pool size
+    executing: List[str] = list(map(lambda f: str(f), functions))
     pool: mp.Pool = mp.Pool(processes=5, maxtasksperchild=2)
-    annotated_corpora = pool.imap(
+    annotated_corpora = pool.imap_unordered(
         func=single_function_corpus_generation,
         iterable=[(function, train_data, unlabeled_corpus) for function, f_arg in zip(functions, function_args)],
     )
@@ -78,6 +88,10 @@ def parallel_corpus_generation(
     res = []
     for corpus in tqdm(annotated_corpora, total=len(functions)):
         res.append(corpus)
+        func_name = corpus[0]
+        executing.remove(func_name)
+        logger.warn(f'{len(executing)} functions still running')
+        logger.warn(f'{executing}')
 
     return res
 
@@ -107,7 +121,7 @@ def build_weak_data(
     collator_type: str = 'union',
     contextual_word_embeddings: Optional[List[CachedTextFieldEmbedder]] = None,
     spacy_feature_extractor: Optional[SpaCyFeatureExtractor] = None,
-    parallelize: bool = False,
+    parallelize: bool = True,
     threshold: Optional[float] = 0.7,
 ) -> DatasetType:
     '''
@@ -129,6 +143,10 @@ def build_weak_data(
         ``DatasetType``
             the weak dataset that can be used along side training
     '''
+    cached_weak_data_name: str = os.path.join(SAVE_DIR, f'{unlabeled_corpus.dataset_name}_{len(train_data)}')
+    if os.path.exists(cached_weak_data_name):
+        with open(cached_weak_data_name, 'rb') as f:
+            return pickle.load(f)
     if parallelize and contextual_word_embeddings is not None:
         # ensure the CWR modules are moved to shared memory
         for cwr in contextual_word_embeddings:
@@ -141,7 +159,12 @@ def build_weak_data(
             dict_functions.append(DICTIONARY_FUNCTION_IMPL[f](unlabeled_corpus.binary_class, threshold=threshold))
         elif f in CONTEXTUAL_FUNCTIONS_IMPL and contextual_word_embeddings is not None:
             for contextual_word_embedding in contextual_word_embeddings:
-                cwr_functions.append(CONTEXTUAL_FUNCTIONS_IMPL[f](unlabeled_corpus.binary_class, contextual_word_embedding, threshold=threshold))
+                cwr_functions.append(CONTEXTUAL_FUNCTIONS_IMPL[f](
+                        unlabeled_corpus.binary_class,
+                        FEATURE_EXTRACTOR_IMPL['cwr'](vocab=vocab, embedder=contextual_word_embedding),
+                        threshold=threshold
+                    ),
+                )
         elif f.startswith('context_window'):
             # format
             # context_window-{window}-{extractor}-{collator}-{type}
@@ -157,6 +180,7 @@ def build_weak_data(
                             feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab, embedder=embedder),
                             feature_summarizer=FeatureCollator.get(collator),
                             threshold=threshold,
+                            memory_efficent=True,
                         )
                     )
             else:
@@ -167,11 +191,12 @@ def build_weak_data(
                         feature_extractor=FEATURE_EXTRACTOR_IMPL[extractor](vocab=vocab, spacy_module=spacy_feature_extractor),
                         feature_summarizer=FeatureCollator.get(collator),
                         threshold=threshold,
+                        memory_efficent=True,
                     )
                 )
 
     collator = COLLATOR_IMPLEMENTATION[collator_type](positive_label=unlabeled_corpus.binary_class)
-    bio_converter = BIOConverter(binary_class=unlabeled_corpus.binary_class)
+    bio_converter = BIOConverter(binary_class=unlabeled_corpus.binary_class, vocab=vocab)
     logger.info(f'using {len(dict_functions) + len(cwr_functions) + len(window_functions)} weak functions ({len(dict_functions)} dict, {len(cwr_functions)} cwr, {len(window_functions)} window)')
     logger.info(f'using weak functions: {dict_functions}')
     annotated_corpora = []
@@ -202,4 +227,6 @@ def build_weak_data(
     bio_corpus = bio_converter.convert(fin_annotated_corpus)
     for i, item in enumerate(bio_corpus):
         item['weight'] = weight
+    with open(cached_weak_data_name, 'wb') as f:
+            pickle.dump(bio_corpus, f)
     return bio_corpus

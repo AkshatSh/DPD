@@ -16,7 +16,7 @@ import scipy.cluster.hierarchy
 
 from dpd.dataset import UnlabeledBIODataset
 from dpd.models.embedder import CachedTextFieldEmbedder, SentenceEmbedder
-from dpd.utils import TensorList
+from dpd.common import TensorList
 
 class ClusteringHeuristic(object):
     def __init__(

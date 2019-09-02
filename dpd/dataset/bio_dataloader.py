@@ -15,8 +15,10 @@ from allennlp.data.token_indexers import TokenIndexer, SingleIdTokenIndexer
 from allennlp.data.token_indexers.elmo_indexer import ELMoTokenCharactersIndexer
 from allennlp.data.tokenizers import Token
 
+from dpd.common import TensorList, TensorType
+
 from .bio_dataset import BIODataset
-from .fields import IntField, FloatField
+from .fields import IntField, FloatField, ProbabilisticLabelField
 
 logger = logging.getLogger(name=__name__)
 
@@ -33,7 +35,15 @@ class BIODatasetReader(DatasetReader):
         self.token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
         self.bio_dataset = bio_dataset
 
-    def text_to_instance(self, dataset_id: int, tokens: List[Token], tags: List[str] = None, entry_id: int = None, entry_weight: float = 1.0) -> Instance:
+    def text_to_instance(
+        self,
+        dataset_id: int,
+        tokens: List[Token],
+        tags: List[str] = None,
+        entry_id: int = None,
+        entry_weight: float = 1.0,
+        probabilistic_labels = None,
+    ) -> Instance:
         sentence_field = TextField(tokens, self.token_indexers)
         fields = {
             'sentence': sentence_field,
@@ -48,13 +58,25 @@ class BIODatasetReader(DatasetReader):
         if entry_id is not None:
             id_field = IntField(entry_id)
             fields['entry_id'] = id_field
+        
+        if probabilistic_labels is not None:
+            prob_field = ProbabilisticLabelField(labels=probabilistic_labels, sequence_field=sentence_field)
+            fields['prob_labels'] = prob_field
 
         return Instance(fields)
 
     def _read(self, file_path: str) -> Iterator[Instance]:
         for instance in self.bio_dataset.data:
             sentence = instance['input']
-            tags = instance['output'] if 'output' in instance else None
             entry_id = instance['id']
             entry_weight = instance['weight']
-            yield self.text_to_instance(self.bio_dataset.dataset_id, [Token(word) for word in sentence], tags, entry_id, entry_weight)
+            tags = instance.get('output', None)
+            probabilistic_label = instance.get('prob_labels', None)
+            yield self.text_to_instance(
+                self.bio_dataset.dataset_id,
+                [Token(word) for word in sentence],
+                tags,
+                entry_id,
+                entry_weight,
+                probabilistic_label,
+            )

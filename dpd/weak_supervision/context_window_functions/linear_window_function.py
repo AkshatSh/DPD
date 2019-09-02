@@ -10,6 +10,7 @@ from typing import (
 import os
 import sys
 import time
+import math
 
 import torch
 import allennlp
@@ -20,9 +21,11 @@ from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction, AnnotatedDataType, AnnotationType
 from dpd.models.embedder import CachedTextFieldEmbedder
 from dpd.models import LinearType, construct_linear_classifier
-from dpd.utils import TensorList, log_time
+from dpd.common import TensorList
+from dpd.utils import log_time
 from dpd.utils.model_utils import balance_dataset
 from dpd.weak_supervision.feature_extractor import FeatureExtractor, FeatureCollator
+from dpd.utils.memory_management import memory_retry
 
 from ..utils import get_context_window, get_context_range, label_index, NEGATIVE_LABEL
 from .window_function import WindowFunction
@@ -37,6 +40,7 @@ class LinearWindowFunction(WindowFunction):
         linear_type: LinearType = LinearType.SVM_LINEAR,
         use_batch: bool = True,
         threshold: Optional[float] = 0.7,
+        memory_efficent: bool = False,
         **kwargs,
     ):
         self.positive_label = positive_label
@@ -55,17 +59,30 @@ class LinearWindowFunction(WindowFunction):
         self.labels = TensorList()
         self.feature_summarizer = feature_summarizer
         self.linear_model = construct_linear_classifier(linear_type=linear_type)
+        self.memory_efficent = memory_efficent
     
-    @log_time(function_prefix='linear_window_train')
+    @log_time(function_prefix='linear_window:train')
     def _train_model(self, training_data: List[Tuple[List[str], List[Any], str]]):
+        output_dim = training_data[0][1][0].shape[-1]
+        if self.feature_summarizer != FeatureCollator.sum:
+            output_dim *= len(training_data[0][1])
+        
+        self.dictionary = torch.zeros(len(training_data), output_dim)
+        self.labels = torch.zeros(len(training_data))
         for i, (sentence_window, feature_window, label) in enumerate(training_data):
             window_summary = self.feature_summarizer(feature_window)
-            self.dictionary.append(window_summary)
-            self.labels.append(torch.Tensor([label_index(label)]))
+            self.dictionary[i] = window_summary
+            self.labels[i] = label_index(label)
+            # self.dictionary.append(window_summary)
+            # self.labels.append(torch.Tensor([label_index(label)]))
         x_train = self.dictionary.numpy()
         y_train = self.labels.numpy()
         x_train, y_train = balance_dataset(x_train, y_train)
         self.linear_model.fit(x_train, y_train)
+        if self.memory_efficent:
+            # delete saved tensors
+            del self.dictionary
+            del self.labels
 
     def _predict(self, features: List[torch.Tensor]) -> int:
         feature_summary = self.feature_summarizer(features).numpy()
@@ -76,20 +93,63 @@ class LinearWindowFunction(WindowFunction):
         feature_summary = self.feature_summarizer(features).numpy()
         confidence: np.ndarray = self.linear_model.decision_function(feature_summary)
         return confidence.item()
+    
+    def _block_execute(
+        self,
+        features: List[List[torch.Tensor]],
+        predictor: Callable[[np.ndarray], np.ndarray],
+        block_size: int,
+    ) -> List[np.ndarray]:
+        num_blocks: int = math.ceil(len(features) / block_size)
+        results: List[np.ndarray] = []
+        for i in range(num_blocks):
+            start: int = i * block_size
+            end: int = min(start + block_size, len(features))
+            block = features[start:end]
+            feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), block))
+            feature_summaries: np.ndarray = TensorList(feature_summaries).numpy()
+            if feature_summaries.shape == (1,):
+                feature_summaries = feature_summaries.reshape(-1, 1)
+            np_result: np.ndarray = predictor(feature_summaries)
+            results.append(np_result)
+        return results
+    
+    def block_execute_scikit(
+        self,
+        features: List[List[torch.Tensor]],
+        predictor: Callable[[np.ndarray], np.ndarray],
+        block_size: int = 10000,
+    ) -> List[float]:
+        batch_list: List[np.nddary] = self._block_execute(features, predictor, block_size)
+        flatten = lambda l: [item for sublist in l for item in sublist]
+        return list(map(lambda val: val.item(), flatten(batch_list)))
+    
+    @memory_retry
+    def _pred_label(self, batch_np: np.ndarray) -> np.ndarray:
+        return self.linear_model.predict(batch_np)
+    
+    @memory_retry
+    def _pred_probability(self, batch_np: np.ndarray) -> np.ndarray:
+        return self.linear_model.decision_function(batch_np)
 
-    @log_time(function_prefix='linear_window_snorkel_predict')
+    @log_time(function_prefix='linear_window_snorkel:predict')
     def _batch_probabilities(self, features: List[List[torch.Tensor]]) -> List[float]:
-        feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
-        batch_np: np.ndarray = TensorList(feature_summaries).numpy()
-        confidence_batch: np.ndarray = self.linear_model.decision_function(batch_np)
-        return list(map(lambda conf: conf.item(), TensorList([confidence_batch]).to_list()))
+        return self.block_execute_scikit(features, self._pred_probability)
+        # feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
+        # batch_np: np.ndarray = TensorList(feature_summaries).numpy()
+        # del feature_summaries
+        # confidence_batch: np.ndarray = self._pred_probability(batch_np)
+        # print(confidence_batch)
+        # return list(map(lambda conf: conf.item(), confidence_batch))
 
-    @log_time(function_prefix='linear_window_predict')
+    @log_time(function_prefix='linear_window:predict')
     def _batch_predict(self, features: List[List[torch.Tensor]]) -> List[int]:
-        feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
-        batch_np: np.ndarray = TensorList(feature_summaries).numpy()
-        label_batch: np.ndarray = self.linear_model.predict(batch_np)
-        return list(map(lambda label: label.item(), TensorList([label_batch]).to_list()))
+        return self.block_execute_scikit(features, self._pred_label)
+        # feature_summaries: List[np.ndarray] = list(map(lambda f: self.feature_summarizer(f).numpy(), features))
+        # batch_np: np.ndarray = TensorList(feature_summaries).numpy()
+        # del feature_summaries
+        # label_batch: np.ndarray = self.linear_model.predict(batch_np)
+        # return list(map(lambda label: label.item(), label_batch))
 
     @overrides
     def __str__(self):

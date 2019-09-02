@@ -114,6 +114,7 @@ logs/
 
 # ignore large saved files
 .saved/
+short_logs/
 
 # ignore snorkel files
 snorkel.db

@@ -60,6 +60,21 @@ CONLL_NER_ELMo = os.path.join(SAVE_DIR, 'conll_ner_elmo.tmp')
 CONLL_ELMo = os.path.join(SAVE_DIR, 'conll_elmo.tmp')
 CONLL_BERT = os.path.join(SAVE_DIR, 'conll_bert.tmp')
 
+ELMo_file = dict(
+    cadec=CADEC_ELMo,
+    conll=CONLL_ELMo,
+)
+
+NER_ELMo_file = dict(
+    cadec=CADEC_NER_ELMo,
+    conll=CONLL_NER_ELMo,
+)
+
+BERT_file = dict(
+    cadec=CADEC_BERT,
+    conll=CONLL_BERT,
+)
+
 # ELMo constants
 ELMO_OPTIONS_FILE = 'https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x1024_128_2048cnn_1xhighway/elmo_2x1024_128_2048cnn_1xhighway_options.json'
 ELMO_WEIGHT_FILE = 'https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x1024_128_2048cnn_1xhighway/elmo_2x1024_128_2048cnn_1xhighway_weights.hdf5'
@@ -72,6 +87,11 @@ CONLL_SPACY = os.path.join(SAVE_DIR, 'conll_spacy.tmp')
 SPACY_POS = ['UNK', 'ADJ','ADP','PUNCT','ADV','AUX','SYM','INTJ','CCONJ','X','NOUN','DET','PROPN','NUM','VERB','PART','PRON','SCONJ',]
 SPACY_POS_INDEX = {pos: i for i, pos in enumerate(SPACY_POS)}
 
+SPACY_file = dict(
+    cadec=CADEC_SPACY,
+    conll=CONLL_SPACY,
+)
+
 # if set to true, expects list strs as input to NLP in spacy
 USE_TOKEN_TOKENIZER = True
 def token_tokenizer(tokens):
@@ -79,3 +99,7 @@ def token_tokenizer(tokens):
 
 if USE_TOKEN_TOKENIZER:
     SPACY_NLP.tokenizer = token_tokenizer
+
+# MEMORY MANAGEMENT
+MAX_RETRY: int = 3
+MEMORY_WAIT: float = 7.

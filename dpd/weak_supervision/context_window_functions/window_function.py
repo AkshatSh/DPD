@@ -18,8 +18,9 @@ import logging
 from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction, AnnotatedDataType, AnnotationType
 from dpd.models.embedder import CachedTextFieldEmbedder
-from dpd.utils import TensorList
+from dpd.common import TensorList
 from dpd.weak_supervision.feature_extractor import FeatureExtractor, FeaturePadder
+from dpd.constants import STOP_WORDS
 
 from ..utils import get_context_window, get_context_range, NEGATIVE_LABEL, ABSTAIN_LABEL
 logger = logging.getLogger(name=__name__)
@@ -33,6 +34,7 @@ class WindowFunction(WeakFunction):
         padder: FeaturePadder = FeaturePadder.zero_tensor,
         use_batch: bool = True,
         threshold: Optional[float] = 0.7,
+        **kwargs,
     ):
         super(WindowFunction, self).__init__(positive_label, threshold)
         self.positive_label = positive_label
@@ -60,6 +62,8 @@ class WindowFunction(WeakFunction):
             s_id, sentence, tags = entry['id'], entry['input'], entry['output']
             features = self.feature_extractor.get_features(dataset_id=dataset_id, sentence_id=s_id, sentence=sentence)
             for i, (word, feature, tag) in enumerate(zip(sentence, features, tags)):
+                if word in STOP_WORDS:
+                    continue
                 word_window = get_context_window(sentence, index=i, window=self.context_window)
                 feature_window = get_context_window(features, index=i, window=self.context_window)
                 feature_window = self.padder(feature_window)

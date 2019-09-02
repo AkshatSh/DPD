@@ -8,8 +8,11 @@ from typing import (
 import os
 import argparse
 import logging
+import copy
+import random
 
 import torch
+import numpy as np
 from torch import optim
 
 from allennlp.models import Model
@@ -20,6 +23,7 @@ from allennlp.data.token_indexers import TokenIndexer, SingleIdTokenIndexer
 from allennlp.data.iterators import BucketIterator
 from allennlp.training.trainer import Trainer
 from allennlp.data.token_indexers import PretrainedBertIndexer
+from allennlp.training.tensorboard_writer import TensorboardWriter
 
 from dpd.dataset import (
     ActiveBIODataset,
@@ -36,7 +40,7 @@ from dpd.utils import (
 )
 
 from dpd.constants import (
-    CADEC_SPACY,
+    SPACY_file,
 )
 
 from dpd.weak_supervision.feature_extractor import SpaCyFeatureExtractor
@@ -48,8 +52,10 @@ from dpd.heuristics import RandomHeuristic, ClusteringHeuristic
 from dpd.weak_supervision import build_weak_data
 from dpd.utils import get_all_embedders, log_train_metrics
 from dpd.args import get_active_args
+from dpd.training.allennlp_trainer import AllenNLPTrainer
 
-ORACLE_SAMPLES = [10, 40, 50]
+ORACLE_SAMPLES = [10, 40, 50, 400]
+# ORACLE_SAMPLES = [10, 100, 400, 500]
 
 logger = logging.getLogger(name=__name__)
 
@@ -79,9 +85,11 @@ def train(
     patience: int,
     num_epochs: int,
     device: str,
+    dataset_name: str,
+    serialization_dir: str,
 ) -> Tuple[Model, MetricsType]:
     train_reader = BIODatasetReader(
-        ActiveBIODataset(train_data, dataset_id=0, binary_class=binary_class),
+        ActiveBIODataset(train_data, dataset_id=0, binary_class=binary_class, dataset_name=dataset_name),
         token_indexers={
             'tokens': ELMoTokenCharactersIndexer(),
         },
@@ -111,7 +119,7 @@ def train(
 
     iterator.index_with(vocab)
 
-    trainer = Trainer(
+    trainer = AllenNLPTrainer(
         model=model,
         optimizer=optimizer,
         iterator=iterator,
@@ -120,9 +128,22 @@ def train(
         patience=patience,
         num_epochs=num_epochs,
         cuda_device=cuda_device,
-        validation_metric='f1-measure-overall',
+        validation_metric='+f1-measure-overall',
+        serialization_dir=serialization_dir,
+        num_serialized_models_to_keep=2,
+    )
+
+    # HACK
+    trainer._tensorboard = TensorboardWriter(
+            get_batch_num_total=lambda: trainer._batch_num_total,
+            serialization_dir=None,
+            summary_interval=100,
+            histogram_interval=None,
+            should_log_parameter_statistics=False,
+            should_log_learning_rate=False
     )
     metrics = trainer.train()
+
 
     return model, metrics
 
@@ -150,6 +171,7 @@ def active_train_fine_tune_iteration(
     patience: int,
     num_epochs: int,
     device: str,
+    logger: Logger,
 ) -> Tuple[Model, Dict[str, object]]:
     # select new points from distribution
     distribution = heuristic.evaluate(unlabeled_dataset, sample_size)
@@ -202,7 +224,7 @@ def active_train_fine_tune_iteration(
             vocab=vocab,
         )
 
-        model, _ = train(
+        model, weak_metrics = train(
             model=model,
             binary_class=unlabeled_dataset.binary_class,
             train_data=weak_data,
@@ -213,9 +235,13 @@ def active_train_fine_tune_iteration(
             optimizer_weight_decay=optimizer_weight_decay,
             batch_size=batch_size,
             patience=patience,
-            num_epochs=num_epochs,
+            num_epochs=6,
             device=device,
+            dataset_name=unlabeled_dataset.dataset_name,
+            serialization_dir=f'/tmp/akshats/dpd/{random.random()}',
         )
+
+        log_train_metrics(logger, weak_metrics, step=len(train_data), prefix='weak')
 
     model, metrics = train(
         model=model,
@@ -230,6 +256,8 @@ def active_train_fine_tune_iteration(
         patience=patience,
         num_epochs=num_epochs,
         device=device,
+        dataset_name=unlabeled_dataset.dataset_name,
+        serialization_dir=os.path.join(logger.log_dir, 'saved_models', f'{len(train_data)}'),
     )
 
     return model, metrics
@@ -258,6 +286,7 @@ def active_train_iteration(
     patience: int,
     num_epochs: int,
     device: str,
+    logger: Logger,
 ) -> Tuple[Model, Dict[str, object]]:
     # select new points from distribution
     # distribution contains score for each index
@@ -328,6 +357,8 @@ def active_train_iteration(
         patience=patience,
         num_epochs=num_epochs,
         device=device,
+        dataset_name=unlabeled_dataset.dataset_name,
+        serialization_dir=os.path.join(logger.log_dir, 'saved_models', f'{len(train_data)}')
     )
 
     return model, metrics
@@ -354,7 +385,8 @@ def active_train(
     log_dir: str,
     model_name: str,
 ) -> Model:
-    heuristic =  ClusteringHeuristic(model.word_embeddings, unlabeled_dataset) # RandomHeuristic()
+    # heuristic =  ClusteringHeuristic(model.word_embeddings, unlabeled_dataset)
+    heuristic = RandomHeuristic()
 
     log_dir = os.path.join(log_dir, model_name)
     logger = Logger(logdir=log_dir)
@@ -373,9 +405,9 @@ def active_train(
         },
     )
 
-    cached_text_field_embedders: List[CachedTextFieldEmbedder] = get_all_embedders()
+    cached_text_field_embedders: List[CachedTextFieldEmbedder] = get_all_embedders(unlabeled_dataset.dataset_name, share_memory=True)
     spacy_feature_extractor: SpaCyFeatureExtractor = SpaCyFeatureExtractor.setup(dataset_ids=[0, 1])
-    spacy_feature_extractor.load(save_file=PickleSaveFile(CADEC_SPACY))
+    spacy_feature_extractor.load(save_file=PickleSaveFile(SPACY_file[unlabeled_dataset.dataset_name]))
 
     for i, sample_size in enumerate(ORACLE_SAMPLES):
         active_iteration_kwargs = dict(
@@ -402,6 +434,7 @@ def active_train(
             patience=patience,
             num_epochs=num_epochs,
             device=device,
+            logger=logger,
         )
 
         if weak_fine_tune:
@@ -409,6 +442,7 @@ def active_train(
         else:
             model, metrics = active_train_iteration(**active_iteration_kwargs)
 
+        logger.save_model(model=model, step=len(train_data))
         log_train_metrics(logger, metrics, step=len(train_data))
 
         print(f'Finished experiment on training set size: {len(train_data)}')
@@ -448,6 +482,7 @@ def main():
         dataset_id=0,
         file_name=train_file,
         binary_class=args.binary_class,
+        dataset_name=args.dataset,
     )
 
     train_bio.parse_file()
@@ -458,15 +493,22 @@ def main():
         dataset_id=1,
         file_name=valid_file if not args.test else test_file,
         binary_class=args.binary_class,
+        dataset_name=args.dataset,
     )
 
     valid_bio.parse_file()
 
     vocab = construct_vocab([train_bio, valid_bio])
 
+    if args.seed is not None:
+        print(f'seeding experiment to: {args.seed}')
+        random.seed(args.seed)
+        torch.torch.manual_seed(args.seed)
+        np.random.seed(args.seed)
     unlabeled_corpus = UnlabeledBIODataset(
         dataset_id=train_bio.dataset_id,
         bio_data=train_bio,
+        shuffle=args.seed is not None
     )
 
     model = build_model(
@@ -475,6 +517,7 @@ def main():
         hidden_dim=args.hidden_dim,
         class_labels=class_labels,
         cached=args.cached,
+        dataset_name=args.dataset.lower(),
     )
 
     oracle = GoldOracle(train_bio)

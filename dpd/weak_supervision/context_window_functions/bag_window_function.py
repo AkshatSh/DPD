@@ -20,8 +20,9 @@ from torch import multiprocessing
 from dpd.dataset import UnlabeledBIODataset
 from dpd.weak_supervision import WeakFunction, AnnotatedDataType, AnnotationType
 from dpd.models.embedder import CachedTextFieldEmbedder
-from dpd.utils import TensorList, SparseTensorList
+from dpd.common import TensorList, SparseTensorList
 from dpd.weak_supervision.feature_extractor import FeatureExtractor, FeatureCollator
+from dpd.utils import log_time
 
 from ..utils import get_context_window, get_context_range, label_index, NEGATIVE_LABEL, ABSTAIN_LABEL, is_negative
 from .window_function import WindowFunction
@@ -55,8 +56,15 @@ class BagWindowFunction(WindowFunction):
         self.dictionary = SparseTensorList() if use_sparse else TensorList()
         self.labels = TensorList()
         self.feature_summarizer = feature_summarizer
-    
+
+    @log_time(function_prefix='bag_window:train')
     def _train_model(self, training_data: List[Tuple[List[str], List[Any], str]]):
+        output_dim = training_data[0][1][0].shape[-1]
+        if self.feature_summarizer != FeatureCollator.sum:
+            output_dim *= len(training_data[0][1])
+        
+        self.dictionary.preallocate((len(training_data), output_dim))
+        self.labels.preallocate((len(training_data),1))
         for i, (sentence_window, feature_window, label) in enumerate(training_data):
             if is_negative(label):
                 continue
@@ -82,6 +90,7 @@ class BagWindowFunction(WindowFunction):
         label = labels[found_index]
         return 2 * label.item() - 1 # (0 -> -1 ,1 -> 1)
     
+    @log_time(function_prefix='bag_window:predict')
     def _batch_predict(self, features: List[List[torch.Tensor]]) -> List[int]:
         return list(map(lambda f: self._predict(f), features))
     
