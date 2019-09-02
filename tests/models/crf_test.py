@@ -10,6 +10,7 @@ import itertools
 from pytest import approx
 import math
 import torch
+from torch.nn import functional as F
 import allennlp
 
 from dpd.models.modules import WeightedCRF
@@ -161,3 +162,32 @@ class CRFTest(unittest.TestCase):
         # The manually computed log likelihood should equal the result of crf.forward.
         # print(log_likelihood, manual_log_likelihood)
         assert manual_log_likelihood.item() == approx(log_likelihood)
+    
+    def test_forward_with_soft_labels(self):
+        weight = torch.Tensor([1, 1])
+        prob_labels = torch.zeros((*self.tags.shape, 5)).fill_(0)
+        for batch in range(self.tags.shape[0]):
+            for i, seq in enumerate(self.tags[batch]):
+                prob_labels[batch][i][seq] = 1
+
+        # prob_labels = F.softmax(prob_labels, dim=0)
+        print(prob_labels.shape, (prob_labels == 0).nonzero().shape)
+        prob_labels[(prob_labels == 0).nonzero()] = 1e-9
+
+        # ensure the normal CRF API is still consistent
+        log_likelihood = self.crf(self.logits, self.tags, weight=weight, prob_labels=prob_labels).item()
+        # Now compute the log-likelihood manually
+        manual_log_likelihood = 0.0
+
+        # For each instance, manually compute the numerator
+        # (which is just the score for the logits and actual tags)
+        # and the denominator
+        # (which is the log-sum-exp of the scores for the logits across all possible tags)
+        for logits_i, tags_i in zip(self.logits, self.tags):
+            numerator = self.score(logits_i.detach(), tags_i.detach())
+            all_scores = [self.score(logits_i.detach(), tags_j)
+                          for tags_j in itertools.product(range(5), repeat=3)]
+            denominator = math.log(sum(math.exp(score) for score in all_scores))
+            # And include them in the manual calculation.
+            manual_log_likelihood += numerator - denominator
+        print(log_likelihood)
